@@ -9,8 +9,9 @@ import App.Dims (AU, _AU)
 import App.Rect (Rect)
 
 data GameState = GameState
-  { rect :: Rect (AU Int)
-  , camera :: Camera (AU Int) Int
+  { rect :: Rect (AU Double)
+  , movingViewport :: Bool
+  , camera :: Camera (AU Double) Double
   , totalTime :: Float
   , quit :: Bool
   }
@@ -19,6 +20,7 @@ data GameState = GameState
 initial :: GameState
 initial = GameState
   { rect = Rect.fromMinSize 0 1
+  , movingViewport = False
   , camera = Camera 
     { conversion = _AU
     , scale = 48

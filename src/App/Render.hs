@@ -16,5 +16,5 @@ render renderer GameState{ rect, camera } = do
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   SDL.rendererDrawColor renderer $= V4 0 0 255 255
-  SDL.drawRect renderer . Just . fmap fromIntegral . Rect.toSdl . Camera.rectToScreen camera $ rect
+  SDL.drawRect renderer . Just . Rect.toSdl . Camera.rectToScreen camera $ rect
   SDL.present renderer
