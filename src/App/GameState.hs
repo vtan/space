@@ -2,15 +2,14 @@ module App.GameState where
 
 import App.Prelude
 
-import qualified App.Camera as Camera
 import qualified App.Rect as Rect
 
-import App.Camera (Camera)
+import App.Camera (Camera(..))
 import App.Rect (Rect)
 
 data GameState = GameState
   { rect :: Rect Int
-  , camera :: Camera Int
+  , camera :: Camera Int Int
   , totalTime :: Float
   , quit :: Bool
   }
@@ -19,7 +18,11 @@ data GameState = GameState
 initial :: GameState
 initial = GameState
   { rect = Rect.fromMinSize 0 1
-  , camera = Camera.initial
+  , camera = Camera 
+    { conversion = id
+    , scale = 48
+    , translate = 16
+    }
   , totalTime = 0
   , quit = False
   }

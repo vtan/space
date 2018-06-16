@@ -9,6 +9,7 @@ import Control.Lens.Each as X
 import Control.Lens.Empty as X
 import Control.Lens.Getter as X
 import Control.Lens.Fold as X
+import Control.Lens.Iso as X
 import Control.Lens.Operators as X
 import Control.Lens.Prism as X
 import Control.Lens.Setter as X
@@ -39,4 +40,4 @@ import Foreign.C.Types as X
 import GHC.Generics as X
   (Generic)
 import Linear as X
-  (V2(..), V4(..), (*^), _x, _y)
+  (V2(..), V4(..), (*^), (^/), _x, _y)
