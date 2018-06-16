@@ -37,6 +37,7 @@ default-extensions:
   - DeriveFunctor
   - DeriveGeneric
   - FlexibleInstances
+  - GeneralizedNewtypeDeriving
   - LambdaCase
   - MultiParamTypeClasses
   - MultiWayIf
