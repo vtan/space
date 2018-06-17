@@ -30,6 +30,7 @@ dependencies:
   - sdl2
   - text
   - unordered-containers
+  - vector
   - writer-cps-mtl
 
 default-extensions:
