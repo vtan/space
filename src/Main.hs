@@ -5,6 +5,7 @@ import App.Prelude
 import qualified App.FpsCounter as FpsCounter
 import qualified App.GameState as GameState
 import qualified App.Render as Render
+import qualified App.Render.Context as Render.Context
 import qualified App.Update as Update
 import qualified Data.Text as Text
 import qualified SDL
@@ -20,6 +21,8 @@ main = do
     $ SDL.defaultWindow { SDL.windowInitialSize = V2 1280 720 }
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
+  let renderContext = Render.Context.fromRenderer renderer
+
   fcInitial <- FpsCounter.new
   flip fix (fcInitial, GameState.initial) $ \cont (fpsCounter, gs) -> do
     start <- SDL.Raw.getPerformanceCounter
@@ -30,7 +33,7 @@ main = do
     events <- SDL.pollEvents
     let !gs' = gs & Update.update (fpsCounter ^. #lastFrameTime) events
 
-    Render.render renderer gs'
+    Render.render renderContext gs'
 
     end <- SDL.Raw.getPerformanceCounter
     if gs' ^. #quit
