@@ -16,7 +16,8 @@ import Text.Printf (printf)
 main :: IO ()
 main = do
   SDL.initializeAll
-  window <- SDL.createWindow "" SDL.defaultWindow
+  window <- SDL.createWindow "" 
+    $ SDL.defaultWindow { SDL.windowInitialSize = V2 1280 720 }
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
   fcInitial <- FpsCounter.new

@@ -31,7 +31,7 @@ initial = GameState
   , camera = Camera 
     { conversion = _AU
     , eyeFrom = V2 0 0
-    , eyeTo = V2 400 300
+    , eyeTo = V2 640 360
     , scale = V2 200 (-200)
     }
   , totalTime = 0
