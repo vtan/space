@@ -6,27 +6,31 @@ import App.Rect (Rect(..))
 
 data Camera a b = Camera
   { conversion :: AnIso' a b
-  , scale :: b
-  , translate :: V2 b
+  , eyeFrom :: V2 a
+  , eyeTo :: V2 b
+  , scale :: V2 b
   }
   deriving (Generic)
 
-instance Show b => Show (Camera a b) where
-  show (Camera _ scale translate) = show (scale, translate)
-
-screenToPoint :: Fractional b => Camera a b -> V2 b -> V2 a
-screenToPoint (Camera conversion scale translate) p =
-  (p - translate) ^/ scale
-    <&> view (from conversion)
-
-pointToScreen :: Num b => Camera a b -> V2 a -> V2 b
-pointToScreen (Camera conversion scale translate) (fmap (view $ cloneIso conversion) -> p) =
-  scale *^ p + translate
+instance (Show a, Show b) => Show (Camera a b) where
+  show Camera{ eyeFrom, scale } = show (eyeFrom, scale)
 
 vectorToScreen :: Num b => Camera a b -> V2 a -> V2 b
-vectorToScreen (Camera conversion scale _) (fmap (view $ cloneIso conversion) -> p) =
-  scale *^ p
+vectorToScreen Camera{ conversion, scale } p =
+  fmap (view $ cloneIso conversion) p * scale
 
-rectToScreen :: Num b => Camera a b -> Rect a -> Rect b
+pointToScreen :: (Num a, Num b) => Camera a b -> V2 a -> V2 b
+pointToScreen Camera{ conversion, eyeFrom, eyeTo, scale } p =
+  fmap (view $ cloneIso conversion) (p - eyeFrom) * scale + eyeTo
+
+screenToVector :: (Fractional b) => Camera a b -> V2 b -> V2 a
+screenToVector Camera{ conversion, scale } p =
+  fmap (view $ from conversion) (p / scale)
+
+screenToPoint :: (Num a, Fractional b) => Camera a b -> V2 b -> V2 a
+screenToPoint Camera{ conversion, eyeFrom, eyeTo, scale } p =
+  fmap (view $ from conversion) ((p - eyeTo) / scale) + eyeFrom
+
+rectToScreen :: (Num a, Num b) => Camera a b -> Rect a -> Rect b
 rectToScreen cam (Rect xy wh) =
   Rect (pointToScreen cam xy) (vectorToScreen cam wh)

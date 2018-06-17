@@ -44,6 +44,7 @@ default-extensions:
   - MultiWayIf
   - NamedFieldPuns
   - NoImplicitPrelude
+  - NoMonomorphismRestriction
   - OverloadedLabels
   - OverloadedLists
   - OverloadedStrings

@@ -6,8 +6,10 @@ import App.Prelude
 
 import qualified SDL as SDL
 
+import qualified App.Camera as Camera
 import App.GameState (GameState(..))
 import App.Update.Events
+import App.Util (clamp)
 
 update :: Float -> [SDL.Event] -> GameState -> GameState
 update lastFrameTime events =
@@ -22,12 +24,19 @@ handleEvent gs = \case
     gs & #movingViewport .~ True
   MouseReleaseEvent (_ :: V2 Int) ->
     gs & #movingViewport .~ False
-  MouseMotionEvent (relMotion :: V2 Int) ->
+  MouseMotionEvent (motionPx :: V2 Double) ->
     if gs ^. #movingViewport
-    then gs & #camera . #translate +~ fmap fromIntegral relMotion
+    then 
+      let motionAu = Camera.screenToVector (gs ^. #camera) motionPx
+      in gs & #camera . #eyeFrom -~ motionAu
     else gs
   MouseWheelEvent amount ->
     if gs ^. #movingViewport
     then gs
-    else gs & #camera . #scale +~ amount
+    else
+      let zoomLevel = sqrt $ gs ^. #camera . #scale . _x
+          zoomLevel' = clamp 1.5 (zoomLevel + 0.5 * amount) 30
+          auInPixels' = zoomLevel' * zoomLevel'
+          scale' = V2 auInPixels' (- auInPixels')
+      in gs & #camera . #scale .~ scale'
   _ -> gs

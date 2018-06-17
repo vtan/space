@@ -37,7 +37,9 @@ renderOrbit renderer camera Body{ position, orbitRadius } =
     SDL.drawLines renderer bodyPoints
 
 circlePoints :: (Floating a, Vector.Storable a) => Vector (V2 a)
-circlePoints = Vector.fromListN 32 $ do
-  n <- [0..31] :: [Int]
-  let t = fromIntegral n / 31 * 2 * pi
-  pure $ V2 (cos t) (sin t)
+circlePoints = 
+  let size = 64
+  in Vector.fromListN (size + 1) $ do
+    n <- [0 .. size] :: [Int]
+    let t = fromIntegral n / size * 2 * pi
+    pure $ V2 (cos t) (sin t)

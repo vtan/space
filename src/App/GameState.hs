@@ -25,13 +25,14 @@ initial = GameState
     , Body { position = 5.20 *^ V2 0 1, orbitRadius = 5.20 }
     , Body { position = 9.53 *^ V2 1 0, orbitRadius = 9.53 }
     , Body { position = 19.19 *^ V2 0 1, orbitRadius = 19.19 }
-    , Body { position = 30.96 *^ V2 0 1, orbitRadius = 30.06 }
+    , Body { position = 30.06 *^ V2 0 1, orbitRadius = 30.06 }
     ]
   , movingViewport = False
   , camera = Camera 
     { conversion = _AU
-    , scale = 48
-    , translate = 16
+    , eyeFrom = V2 0 0
+    , eyeTo = V2 400 300
+    , scale = V2 200 (-200)
     }
   , totalTime = 0
   , quit = False
