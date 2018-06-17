@@ -51,3 +51,11 @@ pattern MouseMotionEvent relMotion <-
         { SDL.mouseMotionEventRelMotion = fmap fromIntegral -> relMotion }
       )
     }
+pattern MouseWheelEvent :: Num a => a -> SDL.Event
+pattern MouseWheelEvent amount <-
+  SDL.Event
+    { SDL.eventPayload = SDL.MouseWheelEvent
+      ( SDL.MouseWheelEventData
+        { SDL.mouseWheelEventPos = view _y >>> signum >>> fromIntegral -> amount }
+      )
+    }

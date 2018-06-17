@@ -26,4 +26,8 @@ handleEvent gs = \case
     if gs ^. #movingViewport
     then gs & #camera . #translate +~ fmap fromIntegral relMotion
     else gs
+  MouseWheelEvent amount ->
+    if gs ^. #movingViewport
+    then gs
+    else gs & #camera . #scale +~ amount
   _ -> gs
