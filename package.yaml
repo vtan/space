@@ -28,6 +28,7 @@ dependencies:
   - mtl
   - StateVar
   - sdl2
+  - sdl2-ttf
   - text
   - unordered-containers
   - vector
@@ -37,6 +38,7 @@ default-extensions:
   - DataKinds
   - DeriveFunctor
   - DeriveGeneric
+  - FlexibleContexts
   - FlexibleInstances
   - GeneralizedNewtypeDeriving
   - LambdaCase

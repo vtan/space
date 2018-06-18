@@ -14,18 +14,17 @@ import App.Body (Body(..))
 import App.Camera (Camera)
 import App.Dims
 import App.GameState (GameState(..))
-import App.Render.Context (Context)
 import App.Render.Rendering (Rendering)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
-render :: Context -> GameState -> IO ()
-render context GameState{ bodies, camera } = Rendering.run context $ do
+render :: GameState -> Rendering ()
+render GameState{ bodies, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   for_ bodies $ renderOrbit camera
-  SDL.present renderer
+  Rendering.text (V2 64 64) "Hello text"
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
 renderOrbit camera Body{ position, orbitRadius } =
