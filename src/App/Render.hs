@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.Render.Rendering as Rendering
 import qualified Data.Vector.Storable as Vector
@@ -19,12 +20,13 @@ import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render GameState{ bodies, camera } = do
+render GameState{ bodies, selectedBodyUid, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   for_ bodies $ renderOrbit camera
-  Rendering.text (V2 64 64) "Hello text"
+  for_ (selectedBodyUid >>= \uid -> bodies ^. at uid) $ \Body{ name } ->
+    Rendering.text (V2 8 8) name
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
 renderOrbit camera Body{ position, orbitRadius } =
@@ -32,7 +34,7 @@ renderOrbit camera Body{ position, orbitRadius } =
         & Vector.map (fmap AU >>> (orbitRadius *^) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
       bodyCenter = Camera.pointToScreen camera position
       bodyPoints = circlePoints
-        & Vector.map ((4 *^) >>> (bodyCenter +) >>> fmap round >>> Lin.P)
+        & Vector.map ((Body.drawnRadius *^) >>> (bodyCenter +) >>> fmap round >>> Lin.P)
   in do
     renderer <- view #renderer
     SDL.rendererDrawColor renderer $= V4 0 255 255 255

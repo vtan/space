@@ -29,7 +29,7 @@ render text = do
     Nothing -> do
       renderer <- view #renderer
       font <- view #font
-      let color = traceShowId 255
+      let color = 255
       surface <- SDL.TTF.blended font color text
       texture <- SDL.createTextureFromSurface renderer surface
       SDL.freeSurface surface

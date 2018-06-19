@@ -41,6 +41,7 @@ default-extensions:
   - FlexibleContexts
   - FlexibleInstances
   - GeneralizedNewtypeDeriving
+  - InstanceSigs
   - LambdaCase
   - MultiParamTypeClasses
   - MultiWayIf
@@ -51,6 +52,7 @@ default-extensions:
   - OverloadedLists
   - OverloadedStrings
   - PatternSynonyms
+  - RankNTypes
   - ScopedTypeVariables
   - StrictData
   - TupleSections

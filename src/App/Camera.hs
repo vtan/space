@@ -34,3 +34,7 @@ screenToPoint Camera{ conversion, eyeFrom, eyeTo, scale } p =
 rectToScreen :: (Num a, Num b) => Camera a b -> Rect a -> Rect b
 rectToScreen cam (Rect xy wh) =
   Rect (pointToScreen cam xy) (vectorToScreen cam wh)
+
+unscale :: Fractional b => Camera a b -> b -> a
+unscale Camera{ conversion, scale } x =
+  view (from conversion) (x / (scale ^. _x)) -- hacky, but scale.y should be -scale.x
