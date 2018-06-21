@@ -18,20 +18,22 @@ import App.Dims
 import App.GameState (GameState(..))
 import App.Render.Rendering (Rendering)
 import App.Ship (Ship(..))
+import Data.String (fromString)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render GameState{ bodies, ships, selectedBodyUid, selectedShipUid, camera } = do
+render GameState{ bodies, ships, selectedBodyUid, selectedShipUid, time, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   for_ bodies $ renderOrbit camera
   for_ ships $ renderShip camera
+  Rendering.text (V2 8 8) (timeText time)
   for_ (selectedBodyUid >>= \uid -> bodies ^. at uid) $ \Body{ Body.name } ->
-    Rendering.text (V2 8 8) name
-  for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name } ->
     Rendering.text (V2 8 24) name
+  for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name } ->
+    Rendering.text (V2 8 40) name
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
 renderOrbit camera Body{ Body.position, orbitRadius } =
@@ -64,3 +66,11 @@ circlePoints =
     n <- [0 .. size] :: [Int]
     let t = fromIntegral n / size * 2 * pi
     pure $ V2 (cos t) (sin t)
+
+timeText :: Int -> Text
+timeText t =
+  let secs = t `rem` 60
+      mins = t `quot` 60 `rem` 60
+      hours = t `quot` 3600 `rem` 24
+      days = t `quot` (24 * 3600)
+  in fromString $ show days ++ "d " ++ show hours ++ ":" ++ show mins ++ ":" ++ show secs

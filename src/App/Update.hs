@@ -20,7 +20,7 @@ import Data.String (fromString)
 
 update :: Float -> [SDL.Event] -> GameState -> GameState
 update lastFrameTime events =
-  over #totalTime (+ lastFrameTime)
+  over #totalRealTime (+ lastFrameTime)
   >>> (\gs -> foldl' handleEvent gs events)
 
 handleEvent :: GameState -> SDL.Event -> GameState
@@ -62,6 +62,12 @@ handleEvent gs = \case
           auInPixels' = zoomLevel' * zoomLevel'
           scale' = V2 auInPixels' (- auInPixels')
       in gs & #camera . #scale .~ scale'
+  KeyPressEvent SDL.Scancode1 -> gs & stepTime 1
+  KeyPressEvent SDL.Scancode2 -> gs & stepTime 60
+  KeyPressEvent SDL.Scancode3 -> gs & stepTime 600
+  KeyPressEvent SDL.Scancode4 -> gs & stepTime 3600
+  KeyPressEvent SDL.Scancode5 -> gs & stepTime (3 * 3600)
+  KeyPressEvent SDL.Scancode6 -> gs & stepTime (24 * 3600)
   _ -> gs
 
 handleClick :: V2 Int -> GameState -> GameState
@@ -84,3 +90,9 @@ handleClick clickPosPx gs =
         Nothing -> gs
           & #selectedBodyUid .~ Nothing
           & #selectedShipUid .~ Nothing
+
+stepTime :: Int -> GameState -> GameState
+stepTime dt gs =
+  gs
+    & #time +~ dt
+    & #bodies . traversed %~ Body.move (fromIntegral dt)

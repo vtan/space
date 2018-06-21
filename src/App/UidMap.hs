@@ -7,7 +7,7 @@ import qualified Data.IntMap as IntMap
 import App.Uid (Uid(..), getInt)
 
 newtype UidMap a = UidMap { getIntMap :: IntMap a }
-  deriving (Show, Semigroup, Monoid, Foldable)
+  deriving (Show, Semigroup, Monoid, Foldable, Functor, Traversable)
 
 fromEntities :: (a -> Uid a) -> [a] -> UidMap a
 fromEntities f xs = UidMap . IntMap.fromList $ zip (map (getInt . f) xs) xs

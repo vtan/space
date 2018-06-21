@@ -26,6 +26,7 @@ dependencies:
   - lens
   - linear
   - mtl
+  - numeric-extras
   - StateVar
   - sdl2
   - sdl2-ttf
@@ -38,6 +39,7 @@ default-extensions:
   - DataKinds
   - DeriveFunctor
   - DeriveGeneric
+  - DeriveTraversable
   - FlexibleContexts
   - FlexibleInstances
   - GeneralizedNewtypeDeriving

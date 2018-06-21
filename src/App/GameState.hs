@@ -2,6 +2,7 @@ module App.GameState where
 
 import App.Prelude
 
+import qualified App.Body as Body
 import qualified App.UidMap as UidMap
 
 import App.Body (Body(..))
@@ -16,10 +17,11 @@ data GameState = GameState
   , ships :: UidMap Ship
   , selectedBodyUid :: Maybe (Uid Body)
   , selectedShipUid :: Maybe (Uid Ship)
+  , time :: Int
   , movingViewport :: Bool
   , draggedViewport :: Bool
   , camera :: Camera (AU Double) Double
-  , totalTime :: Float
+  , totalRealTime :: Float
   , quit :: Bool
   }
   deriving (Show, Generic)
@@ -27,18 +29,19 @@ data GameState = GameState
 initial :: GameState
 initial = GameState
   { bodies = UidMap.fromEntities (view #uid) $
-    [ Body { uid = Uid 0, name = "Mercury", position = 0.38 *^ V2 1 0, orbitRadius = 0.38 }
-    , Body { uid = Uid 1, name = "Venus", position = 0.72 *^ V2 0 1, orbitRadius = 0.72 }
-    , Body { uid = Uid 2, name = "Earth", position = 1.00 *^ V2 0 1, orbitRadius = 1 }
-    , Body { uid = Uid 3, name = "Mars", position = 1.52 *^ V2 0 1, orbitRadius = 1.52 }
-    , Body { uid = Uid 4, name = "Jupiter", position = 5.20 *^ V2 0 1, orbitRadius = 5.20 }
-    , Body { uid = Uid 5, name = "Saturn", position = 9.53 *^ V2 1 0, orbitRadius = 9.53 }
-    , Body { uid = Uid 6, name = "Uranus", position = 19.19 *^ V2 0 1, orbitRadius = 19.19 }
-    , Body { uid = Uid 7, name = "Neptune", position = 30.06 *^ V2 0 1, orbitRadius = 30.06 }
+    [ Body.new (Uid 0) "Mercury" 0.38 (2 * pi / (0.24 * 365 * 24 * 60 * 60))
+    , Body.new (Uid 1) "Venus" 0.72 (2 * pi / (0.61 * 365 * 24 * 60 * 60))
+    , Body.new (Uid 2) "Earth" 1.00 (2 * pi / (365 * 24 * 60 * 60))
+    , Body.new (Uid 3) "Mars" 1.52 (2 * pi / (1.88 * 365 * 24 * 60 * 60))
+    , Body.new (Uid 4) "Jupiter" 5.20 (2 * pi / (11.86 * 365 * 24 * 60 * 60))
+    , Body.new (Uid 5) "Saturn" 9.53 (2 * pi / (29.44 * 365 * 24 * 60 * 60))
+    , Body.new (Uid 6) "Uranus" 19.19 (2 * pi / (84.01 * 365 * 24 * 60 * 60))
+    , Body.new (Uid 7) "Neptune" 30.06 (2 * pi / (164.79 * 365 * 24 * 60 * 60))
     ]
   , ships = mempty
   , selectedBodyUid = Nothing
   , selectedShipUid = Nothing
+  , time = 0
   , movingViewport = False
   , draggedViewport = False
   , camera = Camera 
@@ -47,6 +50,6 @@ initial = GameState
     , eyeTo = V2 640 360
     , scale = V2 200 (-200)
     }
-  , totalTime = 0
+  , totalRealTime = 0
   , quit = False
   }

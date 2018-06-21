@@ -2,16 +2,41 @@ module App.Body where
 
 import App.Prelude
 
+import qualified Linear as Lin
+
 import App.Dims
 import App.Uid (Uid)
+import Numeric.Extras (fmod)
 
 data Body = Body
   { uid :: Uid Body
   , name :: Text
-  , position :: V2 (AU Double)
   , orbitRadius :: AU Double 
+  , angularVelocity :: Double
+  , phase :: Double
+  , position :: V2 (AU Double)
   }
   deriving (Show, Generic)
+
+new :: Uid Body -> Text -> AU Double -> Double -> Body
+new uid name orbitRadius angularVelocity = Body
+  { uid = uid
+  , name = name
+  , orbitRadius = orbitRadius
+  , angularVelocity = angularVelocity
+  , phase = 0
+  , position = V2 orbitRadius 0
+  }
+
+move :: Double -> Body -> Body
+move dt body@Body{ orbitRadius, angularVelocity, phase } =
+  let dphase = dt * angularVelocity
+      phase' = fmod (phase + dphase) (2 * pi)
+      position' = orbitRadius *^ (AU <$> Lin.angle phase')
+  in body
+    { phase = phase'
+    , position = position'
+    }
 
 drawnRadius :: Num a => a
 drawnRadius = 6
