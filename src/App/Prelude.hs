@@ -50,6 +50,8 @@ import Debug.Trace as X
   (traceShowId)
 import Foreign.C.Types as X
   (CInt)
+import Foreign.Storable as X
+  (Storable)
 import GHC.Generics as X
   (Generic)
 import Linear as X

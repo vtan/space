@@ -16,6 +16,7 @@ import App.Body (Body(..))
 import App.Camera (Camera)
 import App.Dims
 import App.GameState (GameState(..))
+import App.PlottedPath (PlottedPath(..))
 import App.Render.Rendering (Rendering)
 import App.Ship (Ship(..))
 import Data.String (fromString)
@@ -32,8 +33,10 @@ render GameState{ bodies, ships, selectedBodyUid, selectedShipUid, time, camera 
   Rendering.text (V2 8 8) (timeText time)
   for_ (selectedBodyUid >>= \uid -> bodies ^. at uid) $ \Body{ Body.name } ->
     Rendering.text (V2 8 24) name
-  for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name } ->
+  for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name, path } -> do
     Rendering.text (V2 8 40) name
+    for_ path $ \PlottedPath{ end } ->
+      Rendering.text (V2 8 56) (timeText $ end - time)
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
 renderOrbit camera Body{ Body.position, orbitRadius } =
@@ -50,7 +53,7 @@ renderOrbit camera Body{ Body.position, orbitRadius } =
     SDL.drawLines renderer bodyPoints
 
 renderShip :: Camera (AU Double) Double -> Ship -> Rendering ()
-renderShip camera Ship{ Ship.position } =
+renderShip camera Ship{ Ship.position, path } =
   let center = Camera.pointToScreen camera position
       points = circlePoints
         & Vector.map ((Ship.drawnRadius *^) >>> (center +) >>> fmap round >>> Lin.P)
@@ -58,6 +61,10 @@ renderShip camera Ship{ Ship.position } =
     renderer <- view #renderer
     SDL.rendererDrawColor renderer $= V4 255 255 0 255
     SDL.drawLines renderer points
+    for_ path $ \PlottedPath{ waypoints } -> do
+      SDL.rendererDrawColor renderer $= V4 255 255 255 255
+      let pathPoints = waypoints & Vector.map (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
+      SDL.drawLines renderer pathPoints
 
 circlePoints :: (Floating a, Vector.Storable a) => Vector (V2 a)
 circlePoints = 
