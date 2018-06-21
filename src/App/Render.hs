@@ -7,6 +7,7 @@ import App.Prelude
 import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.Render.Rendering as Rendering
+import qualified App.Ship as Ship
 import qualified Data.Vector.Storable as Vector
 import qualified Linear.Affine as Lin
 import qualified SDL as SDL
@@ -16,20 +17,24 @@ import App.Camera (Camera)
 import App.Dims
 import App.GameState (GameState(..))
 import App.Render.Rendering (Rendering)
+import App.Ship (Ship(..))
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render GameState{ bodies, selectedBodyUid, camera } = do
+render GameState{ bodies, ships, selectedBodyUid, selectedShipUid, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   for_ bodies $ renderOrbit camera
-  for_ (selectedBodyUid >>= \uid -> bodies ^. at uid) $ \Body{ name } ->
+  for_ ships $ renderShip camera
+  for_ (selectedBodyUid >>= \uid -> bodies ^. at uid) $ \Body{ Body.name } ->
     Rendering.text (V2 8 8) name
+  for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name } ->
+    Rendering.text (V2 8 24) name
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
-renderOrbit camera Body{ position, orbitRadius } =
+renderOrbit camera Body{ Body.position, orbitRadius } =
   let orbitPoints = circlePoints
         & Vector.map (fmap AU >>> (orbitRadius *^) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
       bodyCenter = Camera.pointToScreen camera position
@@ -41,6 +46,16 @@ renderOrbit camera Body{ position, orbitRadius } =
     SDL.drawLines renderer orbitPoints
     SDL.rendererDrawColor renderer $= V4 255 255 255 255
     SDL.drawLines renderer bodyPoints
+
+renderShip :: Camera (AU Double) Double -> Ship -> Rendering ()
+renderShip camera Ship{ Ship.position } =
+  let center = Camera.pointToScreen camera position
+      points = circlePoints
+        & Vector.map ((Ship.drawnRadius *^) >>> (center +) >>> fmap round >>> Lin.P)
+  in do
+    renderer <- view #renderer
+    SDL.rendererDrawColor renderer $= V4 255 255 0 255
+    SDL.drawLines renderer points
 
 circlePoints :: (Floating a, Vector.Storable a) => Vector (V2 a)
 circlePoints = 

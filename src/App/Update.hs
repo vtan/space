@@ -6,13 +6,17 @@ import App.Prelude
 
 import qualified App.Body as Body
 import qualified App.Camera as Camera
+import qualified App.Ship as Ship
 import qualified Linear as Lin
 import qualified SDL as SDL
 
 import App.Body (Body(..))
 import App.GameState (GameState(..))
+import App.Ship (Ship(..))
+import App.Uid (Uid(..))
 import App.Update.Events
 import App.Util (clamp)
+import Data.String (fromString)
 
 update :: Float -> [SDL.Event] -> GameState -> GameState
 update lastFrameTime events =
@@ -23,10 +27,20 @@ handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case
   QuitEvent -> 
     gs & #quit .~ True
-  MousePressEvent (_ :: V2 Int) ->
+  MousePressEvent SDL.ButtonLeft (_ :: V2 Int) ->
     gs
       & #movingViewport .~ True
       & #draggedViewport .~ False
+  MousePressEvent SDL.ButtonRight posPx ->
+    let pos = posPx & Camera.screenToPoint (gs ^. #camera)
+        shipNo = length (gs ^. #ships)
+        shipUid = Uid shipNo
+        ship = Ship
+          { Ship.uid = shipUid
+          , Ship.name = fromString $ "Ship " ++ show shipNo
+          , Ship.position = pos
+          }
+    in gs & #ships . at shipUid .~ Just ship
   MouseReleaseEvent pos ->
     gs
       & #movingViewport .~ False
@@ -56,9 +70,17 @@ handleClick clickPosPx gs =
       clickPos = clickPosPx & fmap fromIntegral & Camera.screenToPoint camera
       radius = Body.drawnRadius & Camera.unscale camera
       rsq = radius * radius
-      clickedBody = gs ^. #bodies & find (\Body{ position } ->
+      clickedBody = gs ^. #bodies & find (\Body{ Body.position } ->
+          Lin.qd position clickPos <= rsq
+        )
+      clickedShip = gs ^. #ships & find (\Ship{ Ship.position } ->
           Lin.qd position clickPos <= rsq
         )
   in case clickedBody of
-    Just Body{ uid } -> gs & #selectedBodyUid .~ Just uid
-    Nothing -> gs & #selectedBodyUid .~ Nothing
+    Just Body{ Body.uid } -> gs & #selectedBodyUid .~ Just uid
+    Nothing -> 
+      case clickedShip of
+        Just Ship{ Ship.uid } -> gs & #selectedShipUid .~ Just uid
+        Nothing -> gs
+          & #selectedBodyUid .~ Nothing
+          & #selectedShipUid .~ Nothing

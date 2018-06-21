@@ -19,13 +19,13 @@ pattern KeyPressEvent scancode <-
       )
     }
 
-pattern MousePressEvent :: Num a => V2 a -> SDL.Event
-pattern MousePressEvent pos <-
+pattern MousePressEvent :: Num a => SDL.MouseButton -> V2 a -> SDL.Event
+pattern MousePressEvent button pos <-
   SDL.Event
     { SDL.eventPayload = SDL.MouseButtonEvent
       ( SDL.MouseButtonEventData
         { SDL.mouseButtonEventMotion = SDL.Pressed
-        , SDL.mouseButtonEventButton = SDL.ButtonLeft
+        , SDL.mouseButtonEventButton = button
         , SDL.mouseButtonEventPos = SDL.P (fmap fromIntegral -> pos)
         }
       )

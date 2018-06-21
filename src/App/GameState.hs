@@ -7,12 +7,15 @@ import qualified App.UidMap as UidMap
 import App.Body (Body(..))
 import App.Camera (Camera(..))
 import App.Dims (AU(..), _AU)
+import App.Ship (Ship)
 import App.Uid (Uid(..))
 import App.UidMap (UidMap)
 
 data GameState = GameState
   { bodies :: UidMap Body
+  , ships :: UidMap Ship
   , selectedBodyUid :: Maybe (Uid Body)
+  , selectedShipUid :: Maybe (Uid Ship)
   , movingViewport :: Bool
   , draggedViewport :: Bool
   , camera :: Camera (AU Double) Double
@@ -33,7 +36,9 @@ initial = GameState
     , Body { uid = Uid 6, name = "Uranus", position = 19.19 *^ V2 0 1, orbitRadius = 19.19 }
     , Body { uid = Uid 7, name = "Neptune", position = 30.06 *^ V2 0 1, orbitRadius = 30.06 }
     ]
+  , ships = mempty
   , selectedBodyUid = Nothing
+  , selectedShipUid = Nothing
   , movingViewport = False
   , draggedViewport = False
   , camera = Camera 
