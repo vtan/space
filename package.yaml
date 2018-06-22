@@ -36,6 +36,7 @@ dependencies:
   - writer-cps-mtl
 
 default-extensions:
+  - BangPatterns
   - DataKinds
   - DeriveFunctor
   - DeriveGeneric

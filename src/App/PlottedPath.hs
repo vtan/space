@@ -1,4 +1,8 @@
-module App.PlottedPath where
+module App.PlottedPath 
+  ( PlottedPath(..)
+  , plot, atTime
+  )
+where
 
 import App.Prelude
 
@@ -18,53 +22,39 @@ data PlottedPath = PlottedPath
   , endPos :: V2 (AU Double)
   , waypoints :: Vector (V2 (AU Double))
   }
-  deriving (Generic)
+  deriving (Generic, Show)
 
-instance Show PlottedPath where
-  show PlottedPath{ startTime, endTime } = show (startTime, endTime)
-
-data Waypoint = Waypoint
-  { time :: Int
-  , position :: V2 (AU Double)
-  }
-  deriving (Generic)
-
--- TODO horrible
 -- TODO add check against divergence
 plot :: Int -> V2 (AU Double) -> AU Double -> Body -> PlottedPath
-plot time0 position0 speed body =
-  let waypointDistance = waypointTime * speed
-      waypointDistSq = waypointDistance * waypointDistance
-      initialWaypoint = Waypoint { time = time0, position = position0}
-      furtherWaypoints = flip fix (time0, position0, body) $ \nextWaypoints (time, shipPos, body) ->
-        let bodyPos = body ^. #position
-            distSq = Lin.qd shipPos bodyPos
-        in if distSq <= waypointDistSq
-        then
-          let ratio = sqrt $ distSq / waypointDistSq
-              finalTime = round $ fromIntegral time + ratio * waypointTime
-              finalPos = Body.atTime finalTime body ^. #position
-              finalWaypoint = Waypoint { time = finalTime, position = finalPos }
-          in [finalWaypoint]
-        else
-          let time' = time + waypointTime
-              shipPos' = shipPos + waypointDistance *^ Lin.normalize (bodyPos - shipPos)
-              body' = Body.atTime time' body
-              waypoint = Waypoint { time = time', position = shipPos' }
-          in waypoint : nextWaypoints (time', shipPos', body')
-  in fromWaypoints (initialWaypoint :| furtherWaypoints)
-
-fromWaypoints :: NonEmpty Waypoint -> PlottedPath
-fromWaypoints waypoints =
-  let start = NonEmpty.head waypoints
-      end = NonEmpty.last waypoints
+plot time position speed body =
+  let waypointDistance = speed * waypointTime
+      (furtherWaypoints, endTime) = plotWaypoints body waypointDistance time position
+      waypoints = position :| furtherWaypoints
   in PlottedPath
-  { startTime = start ^. #time
-  , startPos = start ^. #position
-  , endTime = end ^. #time
-  , endPos = end ^. #position
-  , waypoints = waypoints & fmap (view #position) & toList & Vector.fromList
-  }
+    { startTime = time
+    , startPos = NonEmpty.head waypoints
+    , endTime = endTime
+    , endPos = NonEmpty.last waypoints
+    , waypoints = waypoints & toList & Vector.fromList
+    }
+
+plotWaypoints :: Body -> AU Double -> Int -> V2 (AU Double) -> ([V2 (AU Double)], Int)
+plotWaypoints !bodyAtStart !waypointDistance !time !pos =
+  let waypointDistSq = waypointDistance * waypointDistance
+      body = Body.atTime time bodyAtStart
+      bodyPos = body ^. #position
+      distSq = Lin.qd pos bodyPos
+  in if distSq <= waypointDistSq
+  then
+    let ratio = sqrt $ distSq / waypointDistSq
+        finalTime = round $ fromIntegral time + ratio * waypointTime
+        finalPos = Body.atTime finalTime body ^. #position
+    in ([finalPos], finalTime)
+  else
+    let time' = time + waypointTime
+        pos' = pos + waypointDistance *^ Lin.normalize (bodyPos - pos)
+        (nextPositions, finalTime) = plotWaypoints bodyAtStart waypointDistance time' pos'
+    in (pos' : nextPositions, finalTime)
 
 atTime :: Int -> PlottedPath -> V2 (AU Double)
 atTime time PlottedPath{ startTime, startPos, endTime, endPos, waypoints }
