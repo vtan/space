@@ -13,7 +13,6 @@ import qualified SDL as SDL
 
 import App.Body (Body(..))
 import App.GameState (GameState(..))
-import App.PlottedPath (PlottedPath(..))
 import App.Ship (Ship(..))
 import App.Uid (Uid(..))
 import App.Update.Events
@@ -76,9 +75,9 @@ handleEvent gs = \case
     let bodyMay = gs ^. #selectedBodyUid >>= \uid -> gs ^. #bodies . at uid
         shipMay = gs ^. #selectedShipUid >>= \uid -> gs ^. #ships . at uid
     in case (bodyMay, shipMay) of
-      (Just body, Just ship) ->
-        let path = plotPath gs ship body
-        in gs & #ships . at (ship ^. #uid) . _Just . #path .~ Just path
+      (Just body, Just Ship{ Ship.uid, Ship.position, speed }) ->
+        let path = PlottedPath.plot (gs ^. #time) position speed body
+        in gs & #ships . at uid . _Just . #path .~ Just path
       _ -> gs
   _ -> gs
 
@@ -116,28 +115,3 @@ stepTime dt gs =
             & (if time >= path ^. #endTime then #path .~ Nothing else id)
           Nothing -> ship
       )
-
--- TODO horrible
--- TODO add check against divergence
-plotPath :: GameState -> Ship -> Body -> PlottedPath
-plotPath gs ship body =
-  let waypointDistance = PlottedPath.waypointTime * ship ^. #speed
-      waypointDistSq = waypointDistance * waypointDistance
-      initialWaypoint = PlottedPath.Waypoint { PlottedPath.time = gs ^. #time, PlottedPath.position = ship ^. #position}
-      furtherWaypoints = flip fix (gs ^. #time, ship ^. #position, body) $ \nextWaypoints (time, shipPos, body) ->
-        let bodyPos = body ^. #position
-            distSq = Lin.qd shipPos bodyPos
-        in if distSq <= waypointDistSq
-        then
-          let ratio = sqrt $ distSq / waypointDistSq
-              finalTime = round $ fromIntegral time + ratio * PlottedPath.waypointTime
-              finalPos = Body.atTime finalTime body ^. #position
-              finalWaypoint = PlottedPath.Waypoint { PlottedPath.time = finalTime, PlottedPath.position = finalPos }
-          in [finalWaypoint]
-        else
-          let time' = time + PlottedPath.waypointTime
-              shipPos' = shipPos + waypointDistance *^ Lin.normalize (bodyPos - shipPos)
-              body' = Body.atTime time' body
-              waypoint = PlottedPath.Waypoint { PlottedPath.time = time', PlottedPath.position = shipPos' }
-          in waypoint : nextWaypoints (time', shipPos', body')
-  in PlottedPath.fromWaypoints (initialWaypoint :| furtherWaypoints)
