@@ -105,9 +105,17 @@ handleClick clickPosPx gs =
 
 stepTime :: Int -> GameState -> GameState
 stepTime dt gs =
-  gs
-    & #time +~ dt
+  let time = dt + gs ^. #time
+  in gs
+    & #time .~ time
     & #bodies . traversed %~ Body.move (fromIntegral dt)
+    & #ships . traversed %~ (\ship ->
+        case ship ^. #path of
+          Just path -> ship
+            & #position .~ (path & PlottedPath.atTime time)
+            & (if time >= path ^. #endTime then #path .~ Nothing else id)
+          Nothing -> ship
+      )
 
 -- TODO horrible
 -- TODO add check against divergence

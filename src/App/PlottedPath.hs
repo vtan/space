@@ -4,19 +4,22 @@ import App.Prelude
 
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Vector.Storable as Vector
+import qualified Linear as Lin
 
 import App.Dims (AU)
 import Data.Vector.Storable (Vector)
 
 data PlottedPath = PlottedPath
-  { start :: Int
-  , end :: Int
+  { startTime :: Int 
+  , startPos :: V2 (AU Double) 
+  , endTime :: Int
+  , endPos :: V2 (AU Double)
   , waypoints :: Vector (V2 (AU Double))
   }
   deriving (Generic)
 
 instance Show PlottedPath where
-  show PlottedPath{ start, end } = show (start, end)
+  show PlottedPath{ startTime, endTime } = show (startTime, endTime)
 
 data Waypoint = Waypoint
   { time :: Int
@@ -25,11 +28,28 @@ data Waypoint = Waypoint
   deriving (Generic)
 
 fromWaypoints :: NonEmpty Waypoint -> PlottedPath
-fromWaypoints waypoints = PlottedPath
-  { start = NonEmpty.head waypoints ^. #time
-  , end = NonEmpty.last waypoints ^. #time
+fromWaypoints waypoints =
+  let start = NonEmpty.head waypoints
+      end = NonEmpty.last waypoints
+  in PlottedPath
+  { startTime = start ^. #time
+  , startPos = start ^. #position
+  , endTime = end ^. #time
+  , endPos = end ^. #position
   , waypoints = waypoints & fmap (view #position) & toList & Vector.fromList
   }
+
+atTime :: Int -> PlottedPath -> V2 (AU Double)
+atTime time PlottedPath{ startTime, startPos, endTime, endPos, waypoints }
+  | time <= startTime = startPos
+  | time >= endTime = endPos
+  | otherwise =
+    let i = quot (time - startTime) waypointTime
+        timeSinceLastWaypoint = time - (startTime + i * waypointTime)
+        ratio = fromIntegral timeSinceLastWaypoint / waypointTime
+    in case (,) <$> waypoints ^? ix i <*> waypoints ^? ix (i + 1) of
+      Just (prevPos, nextPos) -> Lin.lerp ratio nextPos prevPos
+      Nothing -> error "Invariant broken in PlottedPath"
 
 waypointTime :: Num a => a
 waypointTime = 24 * 3600

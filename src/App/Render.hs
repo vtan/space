@@ -35,8 +35,8 @@ render GameState{ bodies, ships, selectedBodyUid, selectedShipUid, time, camera 
     Rendering.text (V2 8 24) name
   for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name, path } -> do
     Rendering.text (V2 8 40) name
-    for_ path $ \PlottedPath{ end } ->
-      Rendering.text (V2 8 56) (timeText $ end - time)
+    for_ path $ \PlottedPath{ endTime } ->
+      Rendering.text (V2 8 56) (timeText $ endTime - time)
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
 renderOrbit camera Body{ Body.position, orbitRadius } =
