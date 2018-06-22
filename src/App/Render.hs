@@ -21,6 +21,7 @@ import App.Render.Rendering (Rendering)
 import App.Ship (Ship(..))
 import Data.String (fromString)
 import Data.Vector.Storable (Vector)
+import Text.Printf (printf)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
@@ -80,4 +81,4 @@ timeText t =
       mins = t `quot` 60 `rem` 60
       hours = t `quot` 3600 `rem` 24
       days = t `quot` (24 * 3600)
-  in fromString $ show days ++ "d " ++ show hours ++ ":" ++ show mins ++ ":" ++ show secs
+  in fromString $ printf "%dd %02d:%02d:%02d" days hours mins secs
