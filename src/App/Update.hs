@@ -108,7 +108,7 @@ stepTime dt gs =
   let time = dt + gs ^. #time
   in gs
     & #time .~ time
-    & #bodies . traversed %~ Body.move (fromIntegral dt)
+    & #bodies . traversed %~ Body.atTime time
     & #ships . traversed %~ (\ship ->
         case ship ^. #path of
           Just path -> ship
@@ -137,7 +137,7 @@ plotPath gs ship body =
         else
           let time' = time + PlottedPath.waypointTime
               shipPos' = shipPos + waypointDistance *^ Lin.normalize (bodyPos - shipPos)
-              body' = Body.move PlottedPath.waypointTime body
+              body' = Body.atTime time' body
               waypoint = PlottedPath.Waypoint { PlottedPath.time = time', PlottedPath.position = shipPos' }
           in waypoint : nextWaypoints (time', shipPos', body')
   in PlottedPath.fromWaypoints (initialWaypoint :| furtherWaypoints)

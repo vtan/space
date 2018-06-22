@@ -28,10 +28,9 @@ new uid name orbitRadius angularVelocity = Body
   , position = V2 orbitRadius 0
   }
 
-move :: Double -> Body -> Body
-move dt body@Body{ orbitRadius, angularVelocity, phase } =
-  let dphase = dt * angularVelocity
-      phase' = fmod (phase + dphase) (2 * pi)
+atTime :: Int -> Body -> Body
+atTime time body@Body{ orbitRadius, angularVelocity } =
+  let phase' = fmod (fromIntegral time * angularVelocity) (2 * pi)
       position' = orbitRadius *^ (AU <$> Lin.angle phase')
   in body
     { phase = phase'
