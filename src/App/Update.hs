@@ -76,8 +76,8 @@ handleEvent gs = \case
         shipMay = gs ^. #selectedShipUid >>= \uid -> gs ^. #ships . at uid
     in case (bodyMay, shipMay) of
       (Just body, Just Ship{ Ship.uid, Ship.position, speed }) ->
-        let path = PlottedPath.plot (gs ^. #time) position speed body
-        in gs & #ships . at uid . _Just . #path .~ Just path
+        let pathMay = PlottedPath.plot (gs ^. #time) position speed body
+        in gs & #ships . at uid . _Just . #path .~ pathMay
       _ -> gs
   _ -> gs
 
