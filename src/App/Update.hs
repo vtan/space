@@ -130,10 +130,10 @@ plotPath gs ship body =
         in if distSq <= waypointDistSq
         then
           let ratio = sqrt $ distSq / waypointDistSq
-              finalTime = fromIntegral time + ratio * PlottedPath.waypointTime
-              finalPos = bodyPos
-              waypoint = PlottedPath.Waypoint { PlottedPath.time = round finalTime, PlottedPath.position = finalPos }
-          in [waypoint]
+              finalTime = round $ fromIntegral time + ratio * PlottedPath.waypointTime
+              finalPos = Body.atTime finalTime body ^. #position
+              finalWaypoint = PlottedPath.Waypoint { PlottedPath.time = finalTime, PlottedPath.position = finalPos }
+          in [finalWaypoint]
         else
           let time' = time + PlottedPath.waypointTime
               shipPos' = shipPos + waypointDistance *^ Lin.normalize (bodyPos - shipPos)

@@ -45,8 +45,12 @@ atTime time PlottedPath{ startTime, startPos, endTime, endPos, waypoints }
   | time >= endTime = endPos
   | otherwise =
     let i = quot (time - startTime) waypointTime
-        timeSinceLastWaypoint = time - (startTime + i * waypointTime)
-        ratio = fromIntegral timeSinceLastWaypoint / waypointTime
+        timeOfLastWaypoint = startTime + i * waypointTime
+        timeSinceLastWaypoint = time - timeOfLastWaypoint
+        currentSectionTime
+          | (i + 2 == Vector.length waypoints) = endTime - timeOfLastWaypoint
+          | otherwise = waypointTime
+        ratio = fromIntegral timeSinceLastWaypoint / fromIntegral currentSectionTime
     in case (,) <$> waypoints ^? ix i <*> waypoints ^? ix (i + 1) of
       Just (prevPos, nextPos) -> Lin.lerp ratio nextPos prevPos
       Nothing -> error "Invariant broken in PlottedPath"
