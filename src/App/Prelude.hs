@@ -14,6 +14,7 @@ import Control.Lens.Lens as X
 import Control.Lens.Operators as X
 import Control.Lens.Prism as X
 import Control.Lens.Setter as X
+import Control.Lens.Tuple as X
 import Control.Lens.Traversal as X
 import Control.Lens.Zoom as X
 import Data.Foldable as X

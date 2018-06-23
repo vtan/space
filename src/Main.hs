@@ -9,13 +9,11 @@ import qualified App.Render.RenderContext as RenderContext
 import qualified App.Render.Rendering as Rendering
 import qualified App.Render.RenderState as RenderState
 import qualified App.Update as Update
-import qualified Data.Text as Text
 import qualified SDL
 import qualified SDL.Raw
 import qualified SDL.Font as SDL.TTF
 
 import SDL (($=))
-import Text.Printf (printf)
 
 main :: IO ()
 main = do
@@ -31,8 +29,8 @@ main = do
   fcInitial <- FpsCounter.new
   flip fix (fcInitial, GameState.initial, RenderState.initial) $ \cont (fpsCounter, gs, rs) -> do
     start <- SDL.Raw.getPerformanceCounter
-    case fpsCounter ^. #updatedFps of
-      Just updated -> SDL.windowTitle window $= Text.pack (printf "FPS: %.2f" updated)
+    case fpsCounter ^. #updatedText of
+      Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
     events <- SDL.pollEvents
@@ -43,6 +41,8 @@ main = do
     end <- SDL.Raw.getPerformanceCounter
     if gs' ^. #quit
     then pure ()
-    else cont (FpsCounter.record fpsCounter (end - start), gs', rs')
+    else do
+      fc' <- FpsCounter.record fpsCounter (end - start)
+      cont (fc', gs', rs')
   SDL.TTF.quit
   SDL.quit
