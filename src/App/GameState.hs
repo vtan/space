@@ -21,7 +21,7 @@ data GameState = GameState
   , movingViewport :: Bool
   , draggedViewport :: Bool
   , camera :: Camera (AU Double) Double
-  , totalRealTime :: Float
+  , totalRealTime :: Double
   , quit :: Bool
   }
   deriving (Show, Generic)

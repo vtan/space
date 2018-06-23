@@ -19,7 +19,7 @@ import App.Update.Events
 import App.Util (clamp)
 import Data.String (fromString)
 
-update :: Float -> [SDL.Event] -> GameState -> GameState
+update :: Double -> [SDL.Event] -> GameState -> GameState
 update lastFrameTime events =
   over #totalRealTime (+ lastFrameTime)
   >>> (\gs -> foldl' handleEvent gs events)

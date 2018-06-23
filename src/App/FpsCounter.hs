@@ -13,7 +13,7 @@ import Data.String (fromString)
 import Data.Word (Word64)
 import Text.Printf (printf)
 
-sampledFrameCount :: Int
+sampledFrameCount :: Num a => a
 sampledFrameCount = 60
 
 data Counter = Counter
@@ -22,14 +22,16 @@ data Counter = Counter
   , frameCount :: Int
   , totalFrameTime :: Word64
   , gcAtLastUpdate :: GHC.RtsTime
+  , allocatedBytesAtLastUpdate :: Word64
   , updatedText :: Maybe Text
-  , lastFrameTime :: Float
+  , lastFrameTime :: Double
   }
   deriving (Show, Generic)
 
--- TODO measure the stats per frame instead of per update cycle?
 data RTSStats = RTSStats
-  { gcMs :: Float }
+  { gcMsPerFrame :: Double
+  , allocPerFrame :: Double
+  }
   deriving (Show, Generic)
 
 new :: IO Counter
@@ -42,6 +44,7 @@ new = do
     , frameCount = 0
     , totalFrameTime = 0
     , gcAtLastUpdate = 0
+    , allocatedBytesAtLastUpdate = 0
     , updatedText = Nothing
     , lastFrameTime = 0
     }
@@ -68,19 +71,25 @@ updateIfNeeded counter@Counter{ frameCount, rtsStatsEnabled }
   | otherwise = pure counter
 
 updateRTS :: Counter -> IO (Counter, RTSStats)
-updateRTS counter@Counter{ gcAtLastUpdate } = do
-  GHC.RTSStats { GHC.gc_elapsed_ns } <- GHC.getRTSStats
+updateRTS counter@Counter{ gcAtLastUpdate, allocatedBytesAtLastUpdate } = do
+  GHC.RTSStats { GHC.gc_elapsed_ns, GHC.allocated_bytes } <- GHC.getRTSStats
   let rtsStats = RTSStats
-        { gcMs = fromIntegral (gc_elapsed_ns - gcAtLastUpdate) / 1000000 }
+        { gcMsPerFrame = fromIntegral (gc_elapsed_ns - gcAtLastUpdate) / 1000000 / sampledFrameCount
+        , allocPerFrame = fromIntegral (allocated_bytes - allocatedBytesAtLastUpdate) / sampledFrameCount
+        }
       counter' = counter
         & #gcAtLastUpdate .~ gc_elapsed_ns
+        & #allocatedBytesAtLastUpdate .~ allocated_bytes
   pure (counter', rtsStats)
 
 printStats :: Counter -> Maybe RTSStats -> Text
 printStats Counter{ totalFrameTime, frameCount, counterFrequency } rtsStats =
-  let fps :: Float = 1 / (fromIntegral totalFrameTime / fromIntegral frameCount / fromIntegral counterFrequency)
+  let fps :: Double = 1 / (fromIntegral totalFrameTime / fromIntegral frameCount / fromIntegral counterFrequency)
   in case rtsStats of
-    Just RTSStats{ gcMs } ->
-      fromString $ printf "FPS: %.2f | GC: %.2f ms" fps gcMs
+    Just RTSStats{ gcMsPerFrame, allocPerFrame } ->
+      let alloc :: String
+            | allocPerFrame < 1024 * 1024 = printf "%.2f kB" (allocPerFrame / 1024)
+            | otherwise = printf "%.2f MB" (allocPerFrame / 1024 / 1024)
+      in fromString $ printf "FPS: %.2f | GC: %.2f ms | alloc: %s" fps gcMsPerFrame alloc
     Nothing ->
       fromString $ printf "FPS: %.2f" fps
