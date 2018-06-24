@@ -7,6 +7,7 @@ import App.Prelude
 import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.PlottedPath as PlottedPath
+import qualified App.Update.UpdateState as UpdateState
 import qualified App.Ship as Ship
 import qualified Linear as Lin
 import qualified SDL as SDL
@@ -21,18 +22,19 @@ import Data.String (fromString)
 
 update :: Double -> [SDL.Event] -> GameState -> GameState
 update lastFrameTime events =
-  over #totalRealTime (+ lastFrameTime)
-  >>> (\gs -> foldl' handleEvent gs events)
+  let st = UpdateState.applyEvents events UpdateState.initial
+  in 
+    over #totalRealTime (+ lastFrameTime)
+    >>> (if st ^. #quit then set #quit True else id)
+    >>> (\gs -> foldl' handleEvent gs (st ^. #events))
 
 handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case
-  QuitEvent -> 
-    gs & #quit .~ True
-  MousePressEvent SDL.ButtonLeft (_ :: V2 Int) ->
+  MousePressEvent SDL.ButtonLeft _ ->
     gs
       & #movingViewport .~ True
       & #draggedViewport .~ False
-  MousePressEvent SDL.ButtonRight posPx ->
+  MousePressEvent SDL.ButtonRight (fmap fromIntegral -> posPx) ->
     let pos = posPx & Camera.screenToPoint (gs ^. #camera)
         shipNo = length (gs ^. #ships)
         shipUid = Uid shipNo
@@ -44,11 +46,11 @@ handleEvent gs = \case
           , Ship.path = Nothing
           }
     in gs & #ships . at shipUid .~ Just ship
-  MouseReleaseEvent pos ->
+  MouseReleaseEvent (fmap fromIntegral -> pos) ->
     gs
       & #movingViewport .~ False
       & (if gs ^. #draggedViewport then id else handleClick pos)
-  MouseMotionEvent (motionPx :: V2 Double) ->
+  MouseMotionEvent (fmap fromIntegral -> motionPx) ->
     if gs ^. #movingViewport
     then 
       let motionAu = Camera.screenToVector (gs ^. #camera) motionPx
@@ -56,7 +58,7 @@ handleEvent gs = \case
         & #camera . #eyeFrom -~ motionAu
         & #draggedViewport .~ True
     else gs
-  MouseWheelEvent amount ->
+  MouseWheelEvent (fromIntegral -> amount) ->
     if gs ^. #movingViewport
     then gs
     else
