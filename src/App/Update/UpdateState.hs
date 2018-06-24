@@ -8,6 +8,7 @@ import App.Update.Events
 
 data UpdateState = UpdateState
   { events :: [SDL.Event]
+  , totalRealTime :: Double
   , quit :: Bool
   }
   deriving (Show, Generic)
@@ -15,6 +16,7 @@ data UpdateState = UpdateState
 initial :: UpdateState
 initial = UpdateState
   { events = []
+  , totalRealTime = 0
   , quit = False
   }
 

@@ -7,7 +7,6 @@ import App.Prelude
 import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.PlottedPath as PlottedPath
-import qualified App.Update.UpdateState as UpdateState
 import qualified App.Ship as Ship
 import qualified Linear as Lin
 import qualified SDL as SDL
@@ -17,16 +16,13 @@ import App.GameState (GameState(..))
 import App.Ship (Ship(..))
 import App.Uid (Uid(..))
 import App.Update.Events
+import App.Update.Updating (Updating)
 import App.Util (clamp)
 import Data.String (fromString)
 
-update :: Double -> [SDL.Event] -> GameState -> GameState
-update lastFrameTime events =
-  let st = UpdateState.applyEvents events UpdateState.initial
-  in 
-    over #totalRealTime (+ lastFrameTime)
-    >>> (if st ^. #quit then set #quit True else id)
-    >>> (\gs -> foldl' handleEvent gs (st ^. #events))
+update :: GameState -> Updating GameState
+update gs =
+  use #events <&> foldl' handleEvent gs
 
 handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case

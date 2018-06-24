@@ -21,8 +21,6 @@ data GameState = GameState
   , movingViewport :: Bool
   , draggedViewport :: Bool
   , camera :: Camera (AU Double) Double
-  , totalRealTime :: Double
-  , quit :: Bool
   }
   deriving (Show, Generic)
 
@@ -50,6 +48,4 @@ initial = GameState
     , eyeTo = V2 640 360
     , scale = V2 200 (-200)
     }
-  , totalRealTime = 0
-  , quit = False
   }
