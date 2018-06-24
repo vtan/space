@@ -2,14 +2,17 @@ module App.Update.UpdateState where
 
 import App.Prelude
 
+import qualified App.Update.UIState as UIState
 import qualified SDL
 
 import App.Update.Events
+import App.Update.UIState (UIState)
 
 data UpdateState = UpdateState
   { events :: [SDL.Event]
   , totalRealTime :: Double
   , quit :: Bool
+  , ui :: UIState
   }
   deriving (Show, Generic)
 
@@ -18,6 +21,7 @@ initial = UpdateState
   { events = []
   , totalRealTime = 0
   , quit = False
+  , ui = UIState.initial
   }
 
 applyEvents :: [SDL.Event] -> UpdateState -> UpdateState

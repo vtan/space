@@ -7,6 +7,8 @@ import App.Prelude
 import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.PlottedPath as PlottedPath
+import qualified App.Render.Rendering as Rendering
+import qualified App.Update.Updating as Updating
 import qualified App.Ship as Ship
 import qualified Linear as Lin
 import qualified SDL as SDL
@@ -18,11 +20,16 @@ import App.Uid (Uid(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
 import App.Util (clamp)
+import Control.Monad.Writer.CPS (tell)
 import Data.String (fromString)
 
 update :: GameState -> Updating GameState
-update gs =
-  use #events <&> foldl' handleEvent gs
+update gs = do
+  toggleShips <- Updating.consumeEvents (\case KeyPressEvent SDL.ScancodeS -> True; _ -> False)
+    <&> (not . null)
+  when toggleShips $ #ui . #shipWindowOpen %= not
+  gs' <- handleUI gs
+  use #events <&> foldl' handleEvent gs'
 
 handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case
@@ -113,3 +120,12 @@ stepTime dt gs =
             & (if time >= path ^. #endTime then #path .~ Nothing else id)
           Nothing -> ship
       )
+
+handleUI :: GameState -> Updating GameState
+handleUI gs =
+  use (#ui . #shipWindowOpen) >>= \case
+    True ->
+      let ui = ifor_ (gs ^.. #ships . folded) $ \i Ship { Ship.name } -> do
+            Rendering.text (V2 64 (64 + fromIntegral i * 16)) name
+      in tell [ui] *> pure gs
+    False -> pure gs

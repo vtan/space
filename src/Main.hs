@@ -29,21 +29,23 @@ main = do
   let renderContext = RenderContext.new renderer font
 
   fcInitial <- FpsCounter.new
-  flip fix (fcInitial, GameState.initial, UpdateState.initial, RenderState.initial) $ \cont (fpsCounter, gs, us, rs) -> do
+  flip fix (fcInitial, GameState.initial, UpdateState.initial, RenderState.initial) $ \cont (fc, gs, us, rs) -> do
     start <- SDL.Raw.getPerformanceCounter
-    case fpsCounter ^. #updatedText of
+    case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
     events <- SDL.pollEvents
-    let (gs', us') = Update.update gs & Updating.runFrame (fpsCounter ^. #lastFrameTime) events us
-    ((), rs') <- Render.render gs' & Rendering.runFrame renderContext rs 
+    let (gs', us', uiRendering) = Update.update gs
+          & Updating.runFrame (fc ^. #lastFrameTime) events us
+    ((), rs') <- (Render.render gs' *> uiRendering)
+          & Rendering.runFrame renderContext rs 
 
     end <- SDL.Raw.getPerformanceCounter
     if us' ^. #quit
     then pure ()
     else do
-      fc' <- FpsCounter.record fpsCounter (end - start)
+      fc' <- FpsCounter.record fc (end - start)
       cont (fc', gs', us', rs')
   SDL.TTF.quit
   SDL.quit
