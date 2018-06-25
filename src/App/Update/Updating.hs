@@ -12,15 +12,16 @@ import App.Update.UpdateState (UpdateState)
 import Control.Monad.State.Strict (runStateT)
 import Control.Monad.Writer.CPS (runWriterT, tell)
 
-type Updating a = StateT UpdateState (WriterT (Endo [Rendering ()]) Identity) a
+type Updating a = StateT UpdateState (WriterT (Endo [Rendering ()]) IO) a
 
-runFrame :: Double -> [SDL.Event] -> UpdateState -> Updating a -> (a, UpdateState, Rendering ())
+runFrame :: Double -> [SDL.Event] -> UpdateState -> Updating a -> IO (a, UpdateState, Rendering ())
 runFrame dtime events st u =
   let st' = st
         & #totalRealTime +~ dtime
         & UpdateState.applyEvents events
-      Identity ((a, st''), rs) = runWriterT (runStateT u st')
-  in (a, st'', sequence_ (appEndo rs []))
+  in do
+    ((a, st''), rs) <- runWriterT (runStateT u st')
+    pure $ (a, st'', sequence_ (appEndo rs []))
 
 renderUI :: Rendering () -> Updating ()
 renderUI ui = tell $ Semigroup.diff [ui]

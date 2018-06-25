@@ -2,17 +2,22 @@ module App.Update.UIState where
 
 import App.Prelude
 
+import qualified App.Update.Slot as Slot
+
 import App.Ship (Ship)
 import App.Uid (Uid)
+import App.Update.Slot (Slot)
 
 data UIState = UIState
   { shipWindowOpen :: Bool 
-  , selectedShipUid :: Maybe (Uid Ship)
+  , selectedShipUid :: Slot (Maybe (Uid Ship))
   }
-  deriving (Show, Generic)
+  deriving (Generic)
 
-initial :: UIState
-initial = UIState
-  { shipWindowOpen = False 
-  , selectedShipUid = Nothing
-  }
+initial :: IO UIState
+initial = do
+  selectedShipUid <- Slot.new Nothing
+  pure $ UIState
+    { shipWindowOpen = False 
+    , selectedShipUid = selectedShipUid
+    }

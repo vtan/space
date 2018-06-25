@@ -10,6 +10,7 @@ import qualified App.PlottedPath as PlottedPath
 import qualified App.Rect as Rect
 import qualified App.Render.Rendering as Rendering
 import qualified App.Ship as Ship
+import qualified App.Update.Slot as Slot
 import qualified App.Update.Widget as Widget
 import qualified App.Update.Updating as Updating
 import qualified Linear as Lin
@@ -126,11 +127,11 @@ handleUI :: GameState -> Updating GameState
 handleUI gs =
   use (#ui . #shipWindowOpen) >>= \case
     True -> do
-      selectedShipUid <- use $ #ui . #selectedShipUid
+      selectedShipUid <- Slot.use $ #ui . #selectedShipUid
       ifor_ (gs ^.. #ships . folded) $ \i Ship{ Ship.uid, Ship.name } -> do
         let rect = Rect.fromMinSize (V2 64 (64 + fromIntegral i * 16)) (V2 256 16)
         selected <- Widget.selectable (elem uid selectedShipUid) rect name
-        when selected $ #ui . #selectedShipUid .= Just uid
+        when selected $ Slot.assign (#ui . #selectedShipUid) (Just uid)
       let selectedShip = selectedShipUid >>= (\uid -> gs ^. #ships . at uid)
       for_ selectedShip $ \Ship{ Ship.name, Ship.speed } ->
         Updating.renderUI $ do
