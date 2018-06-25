@@ -7,9 +7,11 @@ import App.Prelude
 import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.PlottedPath as PlottedPath
+import qualified App.Rect as Rect
 import qualified App.Render.Rendering as Rendering
-import qualified App.Update.Updating as Updating
 import qualified App.Ship as Ship
+import qualified App.Update.Widget as Widget
+import qualified App.Update.Updating as Updating
 import qualified Linear as Lin
 import qualified SDL as SDL
 
@@ -20,7 +22,6 @@ import App.Uid (Uid(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
 import App.Util (clamp)
-import Control.Monad.Writer.CPS (tell)
 import Data.String (fromString)
 
 update :: GameState -> Updating GameState
@@ -124,8 +125,16 @@ stepTime dt gs =
 handleUI :: GameState -> Updating GameState
 handleUI gs =
   use (#ui . #shipWindowOpen) >>= \case
-    True ->
-      let ui = ifor_ (gs ^.. #ships . folded) $ \i Ship { Ship.name } -> do
-            Rendering.text (V2 64 (64 + fromIntegral i * 16)) name
-      in tell [ui] *> pure gs
+    True -> do
+      selectedShipUid <- use $ #ui . #selectedShipUid
+      ifor_ (gs ^.. #ships . folded) $ \i Ship{ Ship.uid, Ship.name } -> do
+        let rect = Rect.fromMinSize (V2 64 (64 + fromIntegral i * 16)) (V2 256 16)
+        selected <- Widget.selectable (elem uid selectedShipUid) rect name
+        when selected $ #ui . #selectedShipUid .= Just uid
+      let selectedShip = selectedShipUid >>= (\uid -> gs ^. #ships . at uid)
+      for_ selectedShip $ \Ship{ Ship.name, Ship.speed } ->
+        Updating.renderUI $ do
+          Rendering.text (V2 (64 + 256 + 16) 64) name
+          Rendering.text (V2 (64 + 256 + 16) (64 + 16)) . fromString $ printf "Speed: %.0f km/s" (speed * 149597000)
+      pure gs
     False -> pure gs

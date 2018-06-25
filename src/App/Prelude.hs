@@ -45,7 +45,7 @@ import Data.IntMap.Strict as X
 import Data.List.NonEmpty as X
   (NonEmpty((:|)))
 import Data.Semigroup as X
-  (Semigroup, Monoid, (<>))
+  (Semigroup, Monoid, (<>), Endo(Endo), appEndo)
 import Data.StateVar as X
   (($=))
 import Data.Text as X
@@ -60,3 +60,5 @@ import GHC.Generics as X
   (Generic)
 import Linear as X
   (V2(..), V4(..), (*^), (^/), _x, _y)
+import Text.Printf as X
+  (printf)

@@ -4,14 +4,15 @@ import App.Prelude
 
 import qualified App.Update.UpdateState as UpdateState
 import qualified Data.List as List
+import qualified Data.Semigroup as Semigroup
 import qualified SDL
 
 import App.Render.Rendering (Rendering)
 import App.Update.UpdateState (UpdateState)
 import Control.Monad.State.Strict (runStateT)
-import Control.Monad.Writer.CPS (runWriterT)
+import Control.Monad.Writer.CPS (runWriterT, tell)
 
-type Updating a = StateT UpdateState (WriterT [Rendering ()] Identity) a
+type Updating a = StateT UpdateState (WriterT (Endo [Rendering ()]) Identity) a
 
 runFrame :: Double -> [SDL.Event] -> UpdateState -> Updating a -> (a, UpdateState, Rendering ())
 runFrame dtime events st u =
@@ -19,7 +20,10 @@ runFrame dtime events st u =
         & #totalRealTime +~ dtime
         & UpdateState.applyEvents events
       Identity ((a, st''), rs) = runWriterT (runStateT u st')
-  in (a, st'', sequence_ rs)
+  in (a, st'', sequence_ (appEndo rs []))
+
+renderUI :: Rendering () -> Updating ()
+renderUI ui = tell $ Semigroup.diff [ui]
 
 consumeEvents :: (SDL.Event -> Bool) -> Updating [SDL.Event]
 consumeEvents p = do

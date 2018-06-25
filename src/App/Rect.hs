@@ -34,5 +34,5 @@ intersects (Rect axy@(V2 ax ay) awh) (Rect bxy@(V2 bx by) bwh) =
       V2 bx' by' = bxy + bwh
   in ax < bx' && bx < ax' && ay < by' && by < ay'
 
-toSdl :: RealFrac a => Rect a -> SDL.Rectangle CInt
-toSdl (Rect xy wh) = SDL.Rectangle (Lin.P $ floor <$> xy) (floor <$> wh)
+toSdl :: Integral a => Rect a -> SDL.Rectangle CInt
+toSdl (Rect xy wh) = SDL.Rectangle (Lin.P $ fromIntegral <$> xy) (fromIntegral <$> wh)

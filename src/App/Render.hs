@@ -21,7 +21,6 @@ import App.Render.Rendering (Rendering)
 import App.Ship (Ship(..))
 import Data.String (fromString)
 import Data.Vector.Storable (Vector)
-import Text.Printf (printf)
 import SDL (($=))
 
 render :: GameState -> Rendering ()

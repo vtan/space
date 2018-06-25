@@ -11,7 +11,6 @@ import qualified SDL.Raw
 
 import Data.String (fromString)
 import Data.Word (Word64)
-import Text.Printf (printf)
 
 sampledFrameCount :: Num a => a
 sampledFrameCount = 60
