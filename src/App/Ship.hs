@@ -2,6 +2,7 @@ module App.Ship where
 
 import App.Prelude
 
+import App.Body (Body)
 import App.Dims (AU)
 import App.PlottedPath (PlottedPath)
 import App.Uid (Uid)
@@ -11,9 +12,16 @@ data Ship = Ship
   , name :: Text
   , position :: V2 (AU Double)
   , speed :: AU Double
-  , path :: Maybe PlottedPath
+  , order :: Maybe Order
   }
   deriving (Show, Generic)
 
 drawnRadius :: Num a => a
 drawnRadius = 6
+
+data Order
+  = MoveToBody 
+    { bodyUid :: Uid Body
+    , path :: PlottedPath
+    }
+  deriving (Show, Generic)
