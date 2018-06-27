@@ -7,10 +7,7 @@ import App.Prelude
 import qualified App.Body as Body
 import qualified App.Camera as Camera
 import qualified App.PlottedPath as PlottedPath
-import qualified App.Rect as Rect
-import qualified App.Render.Rendering as Rendering
 import qualified App.Ship as Ship
-import qualified App.Update.Slot as Slot
 import qualified App.Update.Widget as Widget
 import qualified App.Update.Updating as Updating
 import qualified Linear as Lin
@@ -18,6 +15,7 @@ import qualified SDL as SDL
 
 import App.Body (Body(..))
 import App.GameState (GameState(..))
+import App.Rect (Rect(..))
 import App.Ship (Ship(..))
 import App.Uid (Uid(..))
 import App.Update.Events
@@ -128,31 +126,27 @@ handleUI :: GameState -> Updating GameState
 handleUI gs =
   use (#ui . #shipWindowOpen) >>= \case
     True -> do
-      selectedShipUid <- Slot.use $ #ui . #selectedShipUid
-      ifor_ (gs ^.. #ships . folded) $ \i Ship{ Ship.uid, Ship.name } -> do
-        let rect = Rect.fromMinSize (V2 64 (64 + fromIntegral i * 16)) (V2 256 16)
-        selected <- Widget.selectable (elem uid selectedShipUid) rect name
-        when selected $ Slot.assign (#ui . #selectedShipUid) (Just uid)
-      let selectedShip = selectedShipUid >>= (\uid -> gs ^. #ships . at uid)
-      for_ selectedShip $ \Ship{ Ship.name, Ship.speed, Ship.order } ->
-        Updating.renderUI $ do
-          Rendering.text (V2 (64 + 256 + 16) 64) name
-          Rendering.text (V2 (64 + 256 + 16) (64 + 16)) . fromString $
-            printf "Speed: %.0f km/s" (speed * 149597000) -- TODO magic number
-          case order of
-            Just o ->
-              let (orderStr, etaStr) = case o of
-                    Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
-                      let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
-                          etaDate = showDate (path ^. #endTime)
-                          etaDuration = showDuration (path ^. #endTime - gs ^. #time)
-                      in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
-              in do
-                Rendering.text (V2 (64 + 256 + 16) (64 + 32)) . fromString $
-                  "Current order: " ++ orderStr
-                Rendering.text (V2 (64 + 256 + 16) (64 + 48)) . fromString $
-                  "ETA: " ++ etaStr
-            Nothing ->
-              Rendering.text (V2 (64 + 256 + 16) (64 + 32)) $ "No current order"
+      selectedShipUid <- use $ #ui . #selectedShipUid
+      selectedShip' <- Widget.listBox
+        (Rect (V2 64 64) (V2 256 256))
+        16
+        (view #uid)
+        (view #name)
+        selectedShipUid 
+        (gs ^.. #ships . folded)
+      #ui . #selectedShipUid .= selectedShip' ^? _Just . #uid
+      for_ selectedShip' $ \Ship{ Ship.name, Ship.speed, Ship.order } ->
+        let commonLabels = [name, fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
+            orderLabels = case order of
+              Just o ->
+                let (orderStr, etaStr) = case o of
+                      Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
+                        let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
+                            etaDate = showDate (path ^. #endTime)
+                            etaDuration = showDuration (path ^. #endTime - gs ^. #time)
+                        in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
+                in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
+              Nothing -> ["No current order"]
+        in Widget.labels (V2 (64 + 256 + 16) 64) 16 (commonLabels ++ orderLabels)
       pure gs
     False -> pure gs
