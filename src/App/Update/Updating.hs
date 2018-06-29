@@ -3,7 +3,6 @@ module App.Update.Updating where
 import App.Prelude
 
 import qualified App.Update.UpdateState as UpdateState
-import qualified Data.List as List
 import qualified Data.Semigroup as Semigroup
 import qualified SDL
 
@@ -26,9 +25,12 @@ runFrame dtime events st u =
 renderUI :: Rendering () -> Updating ()
 renderUI ui = tell $ Semigroup.diff [ui]
 
-consumeEvents :: (SDL.Event -> Bool) -> Updating [SDL.Event]
+consumeEvents :: (SDL.Event -> Maybe a) -> Updating [a]
 consumeEvents p = do
   allEvents <- use #events
-  let (consumedEvents, remainingEvents) = List.partition p allEvents
+  let (remainingEvents, consumedEvents) =
+        allEvents
+          & map (\e -> p e & maybe (Left e) Right)
+          & partitionEithers
   #events .= remainingEvents
   pure consumedEvents

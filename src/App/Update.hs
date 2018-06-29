@@ -24,7 +24,7 @@ import Data.String (fromString)
 
 update :: GameState -> Updating GameState
 update gs = do
-  toggleShips <- Updating.consumeEvents (\case KeyPressEvent SDL.ScancodeS -> True; _ -> False)
+  toggleShips <- Updating.consumeEvents (\case KeyPressEvent SDL.ScancodeS -> Just (); _ -> Nothing)
     <&> (not . null)
   when toggleShips $ #ui . #shipWindowOpen %= not
   gs' <- handleUI gs

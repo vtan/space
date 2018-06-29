@@ -18,6 +18,7 @@ import Control.Lens.Setter as X
 import Control.Lens.Tuple as X
 import Control.Lens.Traversal as X
 import Control.Lens.Zoom as X
+import Data.Either as X
 import Data.Foldable as X
 import Data.Function as X
 import Data.Maybe as X

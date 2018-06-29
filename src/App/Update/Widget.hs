@@ -21,8 +21,8 @@ labels firstPos verticalSpacing texts =
 button :: Rect Int -> Text -> Updating Bool
 button bounds text = do
   clicked <- Updating.consumeEvents (\case
-      MousePressEvent SDL.ButtonLeft pos -> Rect.contains bounds (fromIntegral <$> pos)
-      _ -> False
+      MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
+      _ -> Nothing
     ) <&> (not . null)
   Updating.renderUI $ do
     r <- view #renderer
@@ -35,11 +35,10 @@ button bounds text = do
 listBox :: Eq i => Rect Int -> Int -> (a -> i) -> (a -> Text) -> [a] -> Maybe i -> Updating (Maybe a)
 listBox bounds verticalSpacing toIx toText items selectedIx = do
   clickedPos <- Updating.consumeEvents (\case
-      MousePressEvent SDL.ButtonLeft pos -> Rect.contains bounds (fromIntegral <$> pos)
-      _ -> False
-    ) <&> \case -- TODO ugly
-      MousePressEvent SDL.ButtonLeft pos : _ -> Just (fromIntegral <$> pos)
+      MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) ->
+        Just (fromIntegral <$> pos)
       _ -> Nothing
+    ) <&> listToMaybe
   let clickedRow = clickedPos <&> \pos ->
         quot ((pos - (bounds ^. #xy)) ^. _y) verticalSpacing
       clickedItem = clickedRow >>= \i -> items ^? ix i
