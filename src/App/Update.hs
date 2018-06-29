@@ -10,7 +10,6 @@ import qualified App.PlottedPath as PlottedPath
 import qualified App.Ship as Ship
 import qualified App.Update.Widget as Widget
 import qualified App.Update.Updating as Updating
-import qualified Linear as Lin
 import qualified SDL as SDL
 
 import App.Body (Body(..))
@@ -34,9 +33,7 @@ update gs = do
 handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case
   MousePressEvent SDL.ButtonLeft _ ->
-    gs
-      & #movingViewport .~ True
-      & #draggedViewport .~ False
+    gs & #movingViewport .~ True
   MousePressEvent SDL.ButtonRight (fmap fromIntegral -> posPx) ->
     let pos = posPx & Camera.screenToPoint (gs ^. #camera)
         shipNo = length (gs ^. #ships)
@@ -49,17 +46,13 @@ handleEvent gs = \case
           , Ship.order = Nothing
           }
     in gs & #ships . at shipUid .~ Just ship
-  MouseReleaseEvent (fmap fromIntegral -> pos) ->
-    gs
-      & #movingViewport .~ False
-      & (if gs ^. #draggedViewport then id else handleClick pos)
+  MouseReleaseEvent _ ->
+    gs & #movingViewport .~ False
   MouseMotionEvent (fmap fromIntegral -> motionPx) ->
     if gs ^. #movingViewport
     then 
       let motionAu = Camera.screenToVector (gs ^. #camera) motionPx
-      in gs
-        & #camera . #eyeFrom -~ motionAu
-        & #draggedViewport .~ True
+      in gs & #camera . #eyeFrom -~ motionAu
     else gs
   MouseWheelEvent (fromIntegral -> amount) ->
     if gs ^. #movingViewport
@@ -76,37 +69,7 @@ handleEvent gs = \case
   KeyPressEvent SDL.Scancode4 -> gs & stepTime 3600
   KeyPressEvent SDL.Scancode5 -> gs & stepTime (3 * 3600)
   KeyPressEvent SDL.Scancode6 -> gs & stepTime (24 * 3600)
-  KeyPressEvent SDL.ScancodeP ->
-    let bodyMay = gs ^. #selectedBodyUid >>= \uid -> gs ^. #bodies . at uid
-        shipMay = gs ^. #selectedShipUid >>= \uid -> gs ^. #ships . at uid
-    in case (bodyMay, shipMay) of
-      (Just body, Just Ship{ Ship.uid, Ship.position, speed }) ->
-        let pathMay = PlottedPath.plot (gs ^. #time) position speed body
-            orderMay = Ship.MoveToBody <$> pure (body ^. #uid) <*> pathMay
-        in gs & #ships . at uid . _Just . #order .~ orderMay
-      _ -> gs
   _ -> gs
-
-handleClick :: V2 Int -> GameState -> GameState
-handleClick clickPosPx gs =
-  let camera = gs ^. #camera
-      clickPos = clickPosPx & fmap fromIntegral & Camera.screenToPoint camera
-      radius = Body.drawnRadius & Camera.unscale camera
-      rsq = radius * radius
-      clickedBody = gs ^. #bodies & find (\Body{ Body.position } ->
-          Lin.qd position clickPos <= rsq
-        )
-      clickedShip = gs ^. #ships & find (\Ship{ Ship.position } ->
-          Lin.qd position clickPos <= rsq
-        )
-  in case clickedBody of
-    Just Body{ Body.uid } -> gs & #selectedBodyUid .~ Just uid
-    Nothing -> 
-      case clickedShip of
-        Just Ship{ Ship.uid } -> gs & #selectedShipUid .~ Just uid
-        Nothing -> gs
-          & #selectedBodyUid .~ Nothing
-          & #selectedShipUid .~ Nothing
 
 stepTime :: Int -> GameState -> GameState
 stepTime dt gs =
@@ -126,16 +89,16 @@ handleUI :: GameState -> Updating GameState
 handleUI gs =
   use (#ui . #shipWindowOpen) >>= \case
     True -> do
-      selectedShipUid <- use $ #ui . #selectedShipUid
-      selectedShip' <- Widget.listBox
-        (Rect (V2 64 64) (V2 256 256))
-        16
-        (view #uid)
-        (view #name)
-        selectedShipUid 
+      Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Ships"
+      let p = V2 36 52
+
+      selectedShip <- use (#ui . #selectedShipUid) >>= Widget.listBox
+        (Rect p (V2 128 256)) 16
+        (view #uid) (view #name)
         (gs ^.. #ships . folded)
-      #ui . #selectedShipUid .= selectedShip' ^? _Just . #uid
-      for_ selectedShip' $ \Ship{ Ship.name, Ship.speed, Ship.order } ->
+      #ui . #selectedShipUid .= selectedShip ^? _Just . #uid
+
+      gsMay' <- for selectedShip $ \Ship{ Ship.name, Ship.speed, Ship.order } -> do
         let commonLabels = [name, fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
             orderLabels = case order of
               Just o ->
@@ -147,6 +110,28 @@ handleUI gs =
                         in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
                 in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
               Nothing -> ["No current order"]
-        in Widget.labels (V2 (64 + 256 + 16) 64) 16 (commonLabels ++ orderLabels)
-      pure gs
+        Widget.labels (p + V2 (128 + 4) 0) 16 (commonLabels ++ orderLabels)
+
+        moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 64 12)) "Move to..."
+
+        selectedBody <- use (#ui . #selectedBodyUid) >>= Widget.listBox
+          (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
+          (view #uid) (view #name)
+          (gs ^.. #bodies . folded)
+        #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
+        
+        pure $ if
+          | moveTo ->
+              moveShipToBody <$> selectedShip <*> selectedBody <*> pure gs
+              & fromMaybe gs
+          | otherwise -> gs
+
+      let gs' = gsMay' & fromMaybe gs
+      pure gs'
     False -> pure gs
+
+moveShipToBody :: Ship -> Body -> GameState -> GameState
+moveShipToBody Ship{ Ship.uid, Ship.position, speed } body gs =
+  let pathMay = PlottedPath.plot (gs ^. #time) position speed body
+      orderMay = Ship.MoveToBody <$> pure (body ^. #uid) <*> pathMay
+  in gs & #ships . at uid . _Just . #order .~ orderMay

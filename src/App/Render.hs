@@ -25,17 +25,13 @@ import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render GameState{ bodies, ships, selectedBodyUid, selectedShipUid, time, camera } = do
+render GameState{ bodies, ships, time, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   for_ bodies $ renderOrbit camera
   for_ ships $ renderShip camera
   Rendering.text (V2 8 8) (fromString $ showDate time)
-  for_ (selectedBodyUid >>= \uid -> bodies ^. at uid) $ \Body{ Body.name } ->
-    Rendering.text (V2 8 24) name
-  for_ (selectedShipUid >>= \uid -> ships ^. at uid) $ \Ship{ Ship.name } ->
-    Rendering.text (V2 8 40) name
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
 renderOrbit camera Body{ Body.position, orbitRadius } =

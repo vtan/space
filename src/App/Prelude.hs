@@ -21,6 +21,7 @@ import Control.Lens.Zoom as X
 import Data.Foldable as X
 import Data.Function as X
 import Data.Maybe as X
+import Data.Traversable as X
 
 import Control.Monad as X
   (when)

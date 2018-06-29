@@ -18,8 +18,22 @@ labels firstPos verticalSpacing texts =
       let pos = firstPos & _y +~ i * verticalSpacing
       in Rendering.text pos text
 
-listBox :: Eq i => Rect Int -> Int -> (a -> i) -> (a -> Text) -> Maybe i -> [a] -> Updating (Maybe a)
-listBox bounds verticalSpacing toIx toText selectedIx items = do
+button :: Rect Int -> Text -> Updating Bool
+button bounds text = do
+  clicked <- Updating.consumeEvents (\case
+      MousePressEvent SDL.ButtonLeft pos -> Rect.contains bounds (fromIntegral <$> pos)
+      _ -> False
+    ) <&> (not . null)
+  Updating.renderUI $ do
+    r <- view #renderer
+    let color = if clicked then V4 31 171 171 255 else V4 31 31 31 255
+    SDL.rendererDrawColor r $= color
+    SDL.fillRect r (Just $ Rect.toSdl bounds)
+    Rendering.text (bounds ^. #xy) text
+  pure clicked
+
+listBox :: Eq i => Rect Int -> Int -> (a -> i) -> (a -> Text) -> [a] -> Maybe i -> Updating (Maybe a)
+listBox bounds verticalSpacing toIx toText items selectedIx = do
   clickedPos <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos -> Rect.contains bounds (fromIntegral <$> pos)
       _ -> False
@@ -50,17 +64,16 @@ listBox bounds verticalSpacing toIx toText selectedIx items = do
       in Rendering.text pos text
   pure selectedItem
 
-selectable :: Bool -> Rect Int -> Text -> Updating Bool
-selectable selected rect text = do
-  clicked <- Updating.consumeEvents (\case
-      MousePressEvent SDL.ButtonLeft pos -> Rect.contains rect (fromIntegral <$> pos)
-      _ -> False
-    ) <&> (not . null)
-  let selected' = selected || clicked
+window :: Rect Int -> Int -> Text -> Updating ()
+window bounds titleHeight title =
   Updating.renderUI $ do
-    let bg = if selected' then V4 31 171 171 255 else V4 31 31 31 255
+    let titleBounds = bounds & #wh . _y .~ titleHeight
+        restBounds = bounds 
+          & #xy . _y +~ titleHeight
+          & #wh . _y -~ titleHeight
     r <- view #renderer
-    SDL.rendererDrawColor r $= bg
-    SDL.fillRect r (Just $ Rect.toSdl rect)
-    Rendering.text (rect ^. #xy) text
-  pure clicked
+    SDL.rendererDrawColor r $= V4 63 63 63 255
+    SDL.fillRect r (Just $ Rect.toSdl titleBounds)
+    SDL.rendererDrawColor r $= V4 23 23 23 255
+    SDL.fillRect r (Just $ Rect.toSdl restBounds)
+    Rendering.text (bounds ^. #xy) title

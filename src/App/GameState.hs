@@ -15,11 +15,8 @@ import App.UidMap (UidMap)
 data GameState = GameState
   { bodies :: UidMap Body
   , ships :: UidMap Ship
-  , selectedBodyUid :: Maybe (Uid Body)
-  , selectedShipUid :: Maybe (Uid Ship)
   , time :: Int
   , movingViewport :: Bool
-  , draggedViewport :: Bool
   , camera :: Camera (AU Double) Double
   }
   deriving (Show, Generic)
@@ -37,11 +34,8 @@ initial = GameState
     , Body.new (Uid 7) "Neptune" 30.06 (2 * pi / (164.79 * 365 * 24 * 60 * 60))
     ]
   , ships = mempty
-  , selectedBodyUid = Nothing
-  , selectedShipUid = Nothing
   , time = 0
   , movingViewport = False
-  , draggedViewport = False
   , camera = Camera 
     { conversion = _AU
     , eyeFrom = V2 0 0
