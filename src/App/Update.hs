@@ -112,7 +112,8 @@ handleUI gs =
               Nothing -> ["No current order"]
         Widget.labels (p + V2 (128 + 4) 0) 16 (commonLabels ++ orderLabels)
 
-        moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 64 12)) "Move to..."
+        moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 56 12)) "Move to..."
+        cancel <- Widget.button (Rect (p + V2 (128 + 4 + 56 + 4) 64) (V2 56 12)) "Cancel"
 
         selectedBody <- use (#ui . #selectedBodyUid) >>= Widget.listBox
           (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
@@ -120,11 +121,11 @@ handleUI gs =
           (gs ^.. #bodies . folded)
         #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
         
-        pure $ if
-          | moveTo ->
-              moveShipToBody <$> selectedShip <*> selectedBody <*> pure gs
-              & fromMaybe gs
-          | otherwise -> gs
+        let gs' 
+              | moveTo = moveShipToBody <$> selectedShip <*> selectedBody <*> pure gs
+              | cancel = cancelShipOrder <$> selectedShip <*> pure gs
+              | otherwise = Nothing
+        pure $ gs' & fromMaybe gs
 
       let gs' = gsMay' & fromMaybe gs
       pure gs'
@@ -135,3 +136,7 @@ moveShipToBody Ship{ Ship.uid, Ship.position, speed } body gs =
   let pathMay = PlottedPath.plot (gs ^. #time) position speed body
       orderMay = Ship.MoveToBody <$> pure (body ^. #uid) <*> pathMay
   in gs & #ships . at uid . _Just . #order .~ orderMay
+
+cancelShipOrder :: Ship -> GameState -> GameState
+cancelShipOrder Ship{ Ship.uid } gs =
+  gs & #ships . at uid . _Just . #order .~ Nothing
