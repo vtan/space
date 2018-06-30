@@ -2,6 +2,10 @@ module App.Util where
 
 import App.Prelude
 
+import qualified Data.HashMap.Strict as HashMap
+
+import Data.Hashable (Hashable)
+
 clamp :: Ord a => a -> a -> a -> a
 clamp mi x ma
   | x < mi = mi
@@ -22,3 +26,7 @@ showDuration t
   | t < 3600 = printf "%.2f minutes" (fromIntegral t / 60 :: Double)
   | t < 24 * 3600 = printf "%.2f hours" (fromIntegral t / 3600 :: Double)
   | otherwise = printf "%.2f days" (fromIntegral t / 24 / 3600 :: Double)
+
+toMap :: (Foldable t, Hashable k, Eq k, Semigroup a) => t (k, a) -> HashMap k a
+toMap = flip foldl' HashMap.empty $ \accMap (k, v) -> 
+  HashMap.insertWith (\new old -> old <> new) k v accMap

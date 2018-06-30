@@ -19,18 +19,22 @@ import App.GameState (GameState(..))
 import App.PlottedPath (PlottedPath(..))
 import App.Render.Rendering (Rendering)
 import App.Ship (Ship(..))
-import App.Util (showDate)
+import App.Util (showDate, toMap)
 import Data.String (fromString)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render GameState{ bodies, ships, time, camera } = do
+render gs@GameState{ bodies, ships, time, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
   for_ bodies $ renderOrbit camera
   for_ ships $ renderShip camera
+  ifor_ (collectLabels camera gs & toMap) $ \anchor labels ->
+    ifor_ labels $ \row label ->
+      let pos = anchor & _y +~ 8 + row * 16
+      in Rendering.text pos label
   Rendering.text (V2 8 8) (fromString $ showDate time)
 
 renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
@@ -62,6 +66,18 @@ renderShip camera Ship{ Ship.position, order } =
         let pathPoints = waypoints & Vector.map (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
         SDL.drawLines renderer pathPoints
       Nothing -> pure ()
+
+collectLabels :: Camera (AU Double) Double -> GameState -> [(V2 Int, [Text])]
+collectLabels camera GameState{ bodies, ships } = bodyLabels ++ shipLabels
+  where
+    bodyLabels = bodies & foldMap (\Body{ Body.position, Body.name } ->
+        let pos = position & Camera.pointToScreen camera & fmap round
+        in [(pos, [name])]
+      )
+    shipLabels = ships & foldMap (\Ship{ Ship.position, Ship.name } ->
+        let pos = position & Camera.pointToScreen camera & fmap round
+        in [(pos, [name])]
+      )
 
 circlePoints :: (Floating a, Vector.Storable a) => Vector (V2 a)
 circlePoints = 
