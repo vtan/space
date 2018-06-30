@@ -19,13 +19,23 @@ stepTime dt gs =
   in gs
     & #time .~ time
     & #bodies . traversed %~ Body.atTime time
-    & #ships . traversed %~ (\ship ->
-        case ship ^. #order of
-          Just Ship.MoveToBody{ Ship.path } -> ship
-            & #position .~ (path & PlottedPath.atTime time)
-            & (if time >= path ^. #endTime then #order .~ Nothing else id)
-          Nothing -> ship
-      )
+    & (\gs' -> gs' & #ships . traversed %~ updateShip gs')
+
+updateShip :: GameState -> Ship -> Ship
+updateShip gs ship = 
+  case ship ^. #order of
+    Just Ship.MoveToBody{ Ship.path, Ship.bodyUid } -> 
+      let now = gs ^. #time
+          arrived = now >= path ^. #endTime
+      in ship
+        & #position .~ (path & PlottedPath.atTime now)
+        & (if arrived then #order .~ Nothing else id)
+        & #attachedToBody .~ (if arrived then Just bodyUid else Nothing)
+    Nothing -> 
+      case ship ^. #attachedToBody >>= (\b -> gs ^. #bodies . at b) of
+        Just Body{ Body.position } ->
+          ship & #position .~ position
+        Nothing -> ship
 
 addShip :: V2 (AU Double) -> GameState -> GameState
 addShip pos gs =
@@ -37,6 +47,7 @@ addShip pos gs =
         , Ship.position = pos
         , Ship.speed = 1 / 1495970 -- 100 km/s
         , Ship.order = Nothing
+        , Ship.attachedToBody = Nothing
         }
   in gs & #ships . at shipUid .~ Just ship
 

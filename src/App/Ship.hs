@@ -13,6 +13,7 @@ data Ship = Ship
   , position :: V2 (AU Double)
   , speed :: AU Double
   , order :: Maybe Order
+  , attachedToBody :: Maybe (Uid Body)
   }
   deriving (Show, Generic)
 
