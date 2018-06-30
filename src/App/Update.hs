@@ -4,19 +4,16 @@ where
 
 import App.Prelude
 
-import qualified App.Body as Body
 import qualified App.Camera as Camera
-import qualified App.PlottedPath as PlottedPath
 import qualified App.Ship as Ship
+import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
 import qualified App.Update.Updating as Updating
 import qualified SDL as SDL
 
-import App.Body (Body(..))
 import App.GameState (GameState(..))
 import App.Rect (Rect(..))
 import App.Ship (Ship(..))
-import App.Uid (Uid(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
 import App.Util (clamp, showDate, showDuration)
@@ -28,7 +25,10 @@ update gs = do
     <&> (not . null)
   when toggleShips $ #ui . #shipWindowOpen %= not
   gs' <- handleUI gs
-  use #events <&> foldl' handleEvent gs'
+  gs'' <- use #events <&> foldl' handleEvent gs'
+  pure $ case gs ^. #timeStepPerFrame of
+    Just step -> gs'' & Logic.stepTime step
+    Nothing -> gs''
 
 handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case
@@ -36,16 +36,7 @@ handleEvent gs = \case
     gs & #movingViewport .~ True
   MousePressEvent SDL.ButtonRight (fmap fromIntegral -> posPx) ->
     let pos = posPx & Camera.screenToPoint (gs ^. #camera)
-        shipNo = length (gs ^. #ships)
-        shipUid = Uid shipNo
-        ship = Ship
-          { Ship.uid = shipUid
-          , Ship.name = fromString $ "Ship " ++ show shipNo
-          , Ship.position = pos
-          , Ship.speed = 1 / 1495970 -- 100 km/s
-          , Ship.order = Nothing
-          }
-    in gs & #ships . at shipUid .~ Just ship
+    in gs & Logic.addShip pos
   MouseReleaseEvent _ ->
     gs & #movingViewport .~ False
   MouseMotionEvent (fmap fromIntegral -> motionPx) ->
@@ -63,27 +54,17 @@ handleEvent gs = \case
           auInPixels' = zoomLevel' * zoomLevel'
           scale' = V2 auInPixels' (- auInPixels')
       in gs & #camera . #scale .~ scale'
-  KeyPressEvent SDL.Scancode1 -> gs & stepTime 1
-  KeyPressEvent SDL.Scancode2 -> gs & stepTime 60
-  KeyPressEvent SDL.Scancode3 -> gs & stepTime 600
-  KeyPressEvent SDL.Scancode4 -> gs & stepTime 3600
-  KeyPressEvent SDL.Scancode5 -> gs & stepTime (3 * 3600)
-  KeyPressEvent SDL.Scancode6 -> gs & stepTime (24 * 3600)
+  KeyPressEvent SDL.ScancodePeriod | gs ^. #timeStepPerFrame & has _Nothing -> 
+    let now = gs ^. #time
+        nextMidnight = (quot (gs ^. #time) 86400 + 1) * 86400
+    in gs & Logic.stepTime (nextMidnight - now)
+  KeyPressEvent SDL.ScancodeGrave -> gs & #timeStepPerFrame .~ Nothing
+  KeyPressEvent SDL.Scancode1 -> gs & #timeStepPerFrame .~ Just 1
+  KeyPressEvent SDL.Scancode2 -> gs & #timeStepPerFrame .~ Just 10
+  KeyPressEvent SDL.Scancode3 -> gs & #timeStepPerFrame .~ Just 100
+  KeyPressEvent SDL.Scancode4 -> gs & #timeStepPerFrame .~ Just 1200
+  KeyPressEvent SDL.Scancode5 -> gs & #timeStepPerFrame .~ Just (3 * 3600)
   _ -> gs
-
-stepTime :: Int -> GameState -> GameState
-stepTime dt gs =
-  let time = dt + gs ^. #time
-  in gs
-    & #time .~ time
-    & #bodies . traversed %~ Body.atTime time
-    & #ships . traversed %~ (\ship ->
-        case ship ^. #order of
-          Just Ship.MoveToBody{ Ship.path } -> ship
-            & #position .~ (path & PlottedPath.atTime time)
-            & (if time >= path ^. #endTime then #order .~ Nothing else id)
-          Nothing -> ship
-      )
 
 handleUI :: GameState -> Updating GameState
 handleUI gs =
@@ -122,21 +103,11 @@ handleUI gs =
         #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
         
         let gs' 
-              | moveTo = moveShipToBody <$> selectedShip <*> selectedBody <*> pure gs
-              | cancel = cancelShipOrder <$> selectedShip <*> pure gs
+              | moveTo = Logic.moveShipToBody <$> selectedShip <*> selectedBody <*> pure gs
+              | cancel = Logic.cancelShipOrder <$> selectedShip <*> pure gs
               | otherwise = Nothing
         pure $ gs' & fromMaybe gs
 
       let gs' = gsMay' & fromMaybe gs
       pure gs'
     False -> pure gs
-
-moveShipToBody :: Ship -> Body -> GameState -> GameState
-moveShipToBody Ship{ Ship.uid, Ship.position, speed } body gs =
-  let pathMay = PlottedPath.plot (gs ^. #time) position speed body
-      orderMay = Ship.MoveToBody <$> pure (body ^. #uid) <*> pathMay
-  in gs & #ships . at uid . _Just . #order .~ orderMay
-
-cancelShipOrder :: Ship -> GameState -> GameState
-cancelShipOrder Ship{ Ship.uid } gs =
-  gs & #ships . at uid . _Just . #order .~ Nothing

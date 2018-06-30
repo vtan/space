@@ -16,6 +16,7 @@ data GameState = GameState
   { bodies :: UidMap Body
   , ships :: UidMap Ship
   , time :: Int
+  , timeStepPerFrame :: Maybe Int
   , movingViewport :: Bool
   , camera :: Camera (AU Double) Double
   }
@@ -35,6 +36,7 @@ initial = GameState
     ]
   , ships = mempty
   , time = 0
+  , timeStepPerFrame = Nothing
   , movingViewport = False
   , camera = Camera 
     { conversion = _AU
