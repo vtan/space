@@ -28,7 +28,7 @@ data Counter = Counter
   deriving (Show, Generic)
 
 data RTSStats = RTSStats
-  { gcMsPerFrame :: Double
+  { gcSec :: Double
   , allocPerFrame :: Double
   , usedMemory :: Word64
   }
@@ -78,7 +78,7 @@ updateRTS counter@Counter{ gcAtLastUpdate, allocatedBytesAtLastUpdate } = do
     , GHC.gc = GHC.GCDetails{ GHC.gcdetails_mem_in_use_bytes }
     } <- GHC.getRTSStats
   let rtsStats = RTSStats
-        { gcMsPerFrame = fromIntegral (gc_elapsed_ns - gcAtLastUpdate) / 1000000 / sampledFrameCount
+        { gcSec = fromIntegral (gc_elapsed_ns - gcAtLastUpdate) / 1000000000
         , allocPerFrame = fromIntegral (allocated_bytes - allocatedBytesAtLastUpdate) / sampledFrameCount
         , usedMemory = gcdetails_mem_in_use_bytes
         }
@@ -89,12 +89,14 @@ updateRTS counter@Counter{ gcAtLastUpdate, allocatedBytesAtLastUpdate } = do
 
 printStats :: Counter -> Maybe RTSStats -> Text
 printStats Counter{ totalFrameTime, frameCount, counterFrequency } rtsStats =
-  let fps :: Double = 1 / (fromIntegral totalFrameTime / fromIntegral frameCount / fromIntegral counterFrequency)
+  let totalFrameSec :: Double = fromIntegral totalFrameTime / fromIntegral counterFrequency
+      fps = 1 / (totalFrameSec / fromIntegral frameCount)
       fps' :: Int = round fps
   in case rtsStats of
-    Just RTSStats{ gcMsPerFrame, allocPerFrame, usedMemory } ->
-      fromString $ printf "FPS: %d | GC: %.2f ms | alloc: %s | in use: %d MB" 
-        fps' gcMsPerFrame (memToString allocPerFrame) (quot usedMemory (1024 * 1024))
+    Just RTSStats{ gcSec, allocPerFrame, usedMemory } ->
+      let gcPerc = gcSec / totalFrameSec * 100
+      in fromString $ printf "FPS: %d | GC: %.2f%% | alloc: %s | in use: %d MB" 
+        fps' gcPerc (memToString allocPerFrame) (quot usedMemory (1024 * 1024))
     Nothing ->
       fromString $ printf "FPS: %.2f" fps
 
