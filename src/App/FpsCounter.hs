@@ -84,11 +84,12 @@ updateRTS counter@Counter{ gcAtLastUpdate, allocatedBytesAtLastUpdate } = do
 printStats :: Counter -> Maybe RTSStats -> Text
 printStats Counter{ totalFrameTime, frameCount, counterFrequency } rtsStats =
   let fps :: Double = 1 / (fromIntegral totalFrameTime / fromIntegral frameCount / fromIntegral counterFrequency)
+      fps' :: Int = round fps
   in case rtsStats of
     Just RTSStats{ gcMsPerFrame, allocPerFrame } ->
       let alloc :: String
             | allocPerFrame < 1024 * 1024 = printf "%.2f kB" (allocPerFrame / 1024)
             | otherwise = printf "%.2f MB" (allocPerFrame / 1024 / 1024)
-      in fromString $ printf "FPS: %.2f | GC: %.2f ms | alloc: %s" fps gcMsPerFrame alloc
+      in fromString $ printf "FPS: %d | GC: %.2f ms | alloc: %s" fps' gcMsPerFrame alloc
     Nothing ->
       fromString $ printf "FPS: %.2f" fps

@@ -30,8 +30,8 @@ main = do
 
   fcInitial <- FpsCounter.new
   usInitial <- UpdateState.initial
-  flip fix (fcInitial, GameState.initial, usInitial, RenderState.initial) $ \cont (fc, gs, us, rs) -> do
-    start <- SDL.Raw.getPerformanceCounter
+  now <- SDL.Raw.getPerformanceCounter
+  flip fix (now, fcInitial, GameState.initial, usInitial, RenderState.initial) $ \cont (lastFrameEnd, fc, gs, us, rs) -> do
     case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
@@ -42,11 +42,11 @@ main = do
     ((), rs') <- (Render.render gs' *> uiRendering)
       & Rendering.runFrame renderContext rs 
 
-    end <- SDL.Raw.getPerformanceCounter
     if us' ^. #quit
     then pure ()
     else do
-      fc' <- FpsCounter.record fc (end - start)
-      cont (fc', gs', us', rs')
+      frameEnd <- SDL.Raw.getPerformanceCounter
+      fc' <- FpsCounter.record fc (frameEnd - lastFrameEnd)
+      cont (frameEnd, fc', gs', us', rs')
   SDL.TTF.quit
   SDL.quit
