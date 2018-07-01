@@ -18,6 +18,7 @@ sampledFrameCount = 60
 data Counter = Counter
   { counterFrequency :: Word64
   , rtsStatsEnabled :: Bool
+  , lastFrameEnd :: Word64
   , frameCount :: Int
   , totalFrameTime :: Word64
   , gcAtLastUpdate :: GHC.RtsTime
@@ -37,10 +38,12 @@ data RTSStats = RTSStats
 new :: IO Counter
 new = do
   freq <- SDL.Raw.getPerformanceFrequency
+  now <- SDL.Raw.getPerformanceCounter
   rtsStatsEnabled <- GHC.getRTSStatsEnabled
   pure $ Counter
     { counterFrequency = freq
     , rtsStatsEnabled = rtsStatsEnabled
+    , lastFrameEnd = now
     , frameCount = 0
     , totalFrameTime = 0
     , gcAtLastUpdate = 0
@@ -49,10 +52,13 @@ new = do
     , lastFrameTime = 0
     }
 
-record :: Counter -> Word64 -> IO Counter
-record counter@Counter{ counterFrequency } frameTime =
+record :: Counter -> IO Counter
+record counter@Counter{ counterFrequency, lastFrameEnd } = do
+  now <- SDL.Raw.getPerformanceCounter
+  let frameTime = now - lastFrameEnd
   updateIfNeeded $ counter
     & #updatedText .~ Nothing
+    & #lastFrameEnd .~ now
     & #frameCount +~ 1
     & #totalFrameTime +~ frameTime
     & #lastFrameTime .~ fromIntegral frameTime / fromIntegral counterFrequency

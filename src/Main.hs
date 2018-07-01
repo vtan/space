@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import App.Prelude
 
@@ -12,10 +12,7 @@ import qualified App.Update as Update
 import qualified App.Update.UpdateState as UpdateState
 import qualified App.Update.Updating as Updating
 import qualified SDL
-import qualified SDL.Raw
 import qualified SDL.Font as SDL.TTF
-
-import SDL (($=))
 
 main :: IO ()
 main = do
@@ -30,8 +27,7 @@ main = do
 
   fcInitial <- FpsCounter.new
   usInitial <- UpdateState.initial
-  now <- SDL.Raw.getPerformanceCounter
-  flip fix (now, fcInitial, GameState.initial, usInitial, RenderState.initial) $ \cont (lastFrameEnd, fc, gs, us, rs) -> do
+  flip fix (fcInitial, GameState.initial, usInitial, RenderState.initial) $ \cont (fc, gs, us, rs) -> do
     case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
@@ -45,8 +41,7 @@ main = do
     if us' ^. #quit
     then pure ()
     else do
-      frameEnd <- SDL.Raw.getPerformanceCounter
-      fc' <- FpsCounter.record fc (frameEnd - lastFrameEnd)
-      cont (frameEnd, fc', gs', us', rs')
+      fc' <- FpsCounter.record fc
+      cont (fc', gs', us', rs')
   SDL.TTF.quit
   SDL.quit
