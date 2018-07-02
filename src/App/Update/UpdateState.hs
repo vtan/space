@@ -16,15 +16,13 @@ data UpdateState = UpdateState
   }
   deriving (Generic)
 
-initial :: IO UpdateState
-initial = do
-  ui <- UIState.initial
-  pure $ UpdateState
-    { events = []
-    , totalRealTime = 0
-    , quit = False
-    , ui = ui
-    }
+initial :: UpdateState
+initial = UpdateState
+  { events = []
+  , totalRealTime = 0
+  , quit = False
+  , ui = UIState.initial
+  }
 
 applyEvents :: [SDL.Event] -> UpdateState -> UpdateState
 applyEvents events st =

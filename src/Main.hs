@@ -26,15 +26,14 @@ main = do
   let renderContext = RenderContext.new renderer font
 
   fcInitial <- FpsCounter.new
-  usInitial <- UpdateState.initial
-  flip fix (fcInitial, GameState.initial, usInitial, RenderState.initial) $ \cont (fc, gs, us, rs) -> do
+  flip fix (fcInitial, GameState.initial, UpdateState.initial, RenderState.initial) $ \cont (fc, gs, us, rs) -> do
     case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
     events <- SDL.pollEvents
-    (gs', us', uiRendering) <- Update.update gs
-      & Updating.runFrame (fc ^. #lastFrameTime) events us
+    let (!gs', !us', !uiRendering) = Update.update gs
+          & Updating.runFrame (fc ^. #lastFrameTime) events us
     ((), rs') <- (Render.render gs' *> uiRendering)
       & Rendering.runFrame renderContext rs 
 

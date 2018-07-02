@@ -13,10 +13,9 @@ data UIState = UIState
   }
   deriving (Generic)
 
-initial :: IO UIState
-initial =
-  pure $ UIState
-    { shipWindowOpen = False 
-    , selectedShipUid = Nothing
-    , selectedBodyUid = Nothing
-    }
+initial :: UIState
+initial = UIState
+  { shipWindowOpen = False 
+  , selectedShipUid = Nothing
+  , selectedBodyUid = Nothing
+  }
