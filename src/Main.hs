@@ -13,6 +13,7 @@ import qualified App.Update.UpdateState as UpdateState
 import qualified App.Update.Updating as Updating
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
+import qualified SDL.Raw as SDL.Raw
 
 main :: IO ()
 main = do
@@ -24,6 +25,7 @@ main = do
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
   font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 12
   let renderContext = RenderContext.new renderer font
+  SDL.Raw.startTextInput
 
   fcInitial <- FpsCounter.new
   flip fix (fcInitial, GameState.initial, UpdateState.initial, RenderState.initial) $ \cont (fc, gs, us, rs) -> do

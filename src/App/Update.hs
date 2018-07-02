@@ -16,6 +16,7 @@ import App.Rect (Rect(..))
 import App.Ship (Ship(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
+import App.Update.WidgetState (SlotId(..), TextBoxState(..))
 import App.Util (clamp, showDate, showDuration)
 import Data.String (fromString)
 
@@ -73,14 +74,24 @@ handleUI gs =
       Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Ships"
       let p = V2 36 52
 
-      selectedShip <- use (#ui . #selectedShipUid) >>= Widget.listBox
+      oldSelectedShipUid <- use (#ui . #selectedShipUid)
+      selectedShip <- Widget.listBox
         (Rect p (V2 128 256)) 16
         (view #uid) (view #name)
         (gs ^.. #ships . folded)
-      #ui . #selectedShipUid .= selectedShip ^? _Just . #uid
+        oldSelectedShipUid
+      let selectedShipUid = selectedShip ^? _Just . #uid
+      when (oldSelectedShipUid /= selectedShipUid) $ do
+        #ui . #selectedShipUid .= selectedShip ^? _Just . #uid
+        #ui . #selectedShipName .= Just TextBoxState{ slotId = SlotId "shipName", text = selectedShip ^. _Just . #name } -- TODO this shouldn't be constructed here
 
-      gsMay' <- for selectedShip $ \Ship{ Ship.name, Ship.speed, Ship.order } -> do
-        let commonLabels = [name, fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
+      gsMay' <- for selectedShip $ \ship@Ship{ Ship.speed, Ship.order } -> do
+        name <- use (#ui . #selectedShipName)
+        for_ name $ \n -> do  -- TODO actually update the ship name
+          n' <- Widget.textBox (Rect (p + V2 (128 + 4) 0) (V2 128 12)) n
+          #ui . #selectedShipName .= Just n'
+        
+        let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
             orderLabels = case order of
               Just o ->
                 let (orderStr, etaStr) = case o of
@@ -91,7 +102,7 @@ handleUI gs =
                         in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
                 in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
               Nothing -> ["No current order"]
-        Widget.labels (p + V2 (128 + 4) 0) 16 (commonLabels ++ orderLabels)
+        Widget.labels (p + V2 (128 + 4) 16) 16 (commonLabels ++ orderLabels)
 
         moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 56 12)) "Move to..."
         cancel <- Widget.button (Rect (p + V2 (128 + 4 + 56 + 4) 64) (V2 56 12)) "Cancel"
@@ -103,8 +114,8 @@ handleUI gs =
         #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
         
         let gs' 
-              | moveTo = Logic.moveShipToBody <$> selectedShip <*> selectedBody <*> pure gs
-              | cancel = Logic.cancelShipOrder <$> selectedShip <*> pure gs
+              | moveTo = Logic.moveShipToBody <$> pure ship <*> selectedBody <*> pure gs
+              | cancel = Just $ Logic.cancelShipOrder ship gs
               | otherwise = Nothing
         pure $ gs' & fromMaybe gs
 

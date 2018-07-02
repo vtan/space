@@ -7,11 +7,13 @@ import qualified SDL
 
 import App.Update.Events
 import App.Update.UIState (UIState)
+import App.Update.WidgetState (SlotId)
 
 data UpdateState = UpdateState
   { events :: [SDL.Event]
   , totalRealTime :: Double
   , quit :: Bool
+  , focusedWidget :: Maybe SlotId
   , ui :: UIState
   }
   deriving (Generic)
@@ -21,6 +23,7 @@ initial = UpdateState
   { events = []
   , totalRealTime = 0
   , quit = False
+  , focusedWidget = Nothing
   , ui = UIState.initial
   }
 
@@ -32,9 +35,4 @@ applyEvents events st =
 applyEvent :: UpdateState -> SDL.Event -> UpdateState
 applyEvent st = \case
   QuitEvent -> st & #quit .~ True
-  e@MousePressEvent{} -> st & #events %~ (e :)
-  e@MouseReleaseEvent{} -> st & #events %~ (e :)
-  e@MouseMotionEvent{} -> st & #events %~ (e :)
-  e@MouseWheelEvent{} -> st & #events %~ (e :)
-  e@KeyPressEvent{} -> st & #events %~ (e :)
-  _ -> st
+  event -> st & #events %~ (event :)

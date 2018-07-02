@@ -18,12 +18,15 @@ runFrame :: RenderContext -> RenderState -> Rendering a -> IO (a, RenderState)
 runFrame ctx st r = runStateT (runReaderT (r <* endFrame) ctx) st
 
 text :: V2 Int -> Text -> Rendering ()
-text pos str = do
-  renderer <- view #renderer
-  texture <- zoom #textRenderer $ TextRenderer.render str
-  SDL.TextureInfo{ SDL.textureWidth, SDL.textureHeight } <- SDL.queryTexture texture
-  let rect = SDL.Rectangle (SDL.P $ fmap fromIntegral pos) (V2 textureWidth textureHeight)
-  SDL.copy renderer texture Nothing (Just rect)
+text pos str = 
+  case str of
+    Empty -> pure ()
+    _ -> do
+      renderer <- view #renderer
+      texture <- zoom #textRenderer $ TextRenderer.render str
+      SDL.TextureInfo{ SDL.textureWidth, SDL.textureHeight } <- SDL.queryTexture texture
+      let rect = SDL.Rectangle (SDL.P $ fmap fromIntegral pos) (V2 textureWidth textureHeight)
+      SDL.copy renderer texture Nothing (Just rect)
 
 endFrame :: Rendering ()
 endFrame = do

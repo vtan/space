@@ -5,11 +5,13 @@ import App.Prelude
 import qualified App.Rect as Rect
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update.Updating as Updating
+import qualified Data.Text as Text
 import qualified SDL
 
 import App.Rect (Rect)
 import App.Update.Events
 import App.Update.Updating (Updating)
+import App.Update.WidgetState (TextBoxState(..))
 
 labels :: V2 Int -> Int -> [Text] -> Updating ()
 labels firstPos verticalSpacing texts =
@@ -76,3 +78,30 @@ window bounds titleHeight title =
     SDL.rendererDrawColor r $= V4 23 23 23 255
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
     Rendering.text (bounds ^. #xy) title
+
+textBox :: Rect Int -> TextBoxState -> Updating TextBoxState
+textBox bounds st@TextBoxState{ slotId, text } = do
+  focused <- do
+    clicked <- Updating.consumeEvents (\case
+        MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
+        _ -> Nothing
+      ) <&> (not . null)
+    if clicked
+    then True <$ (#focusedWidget .= Just slotId)
+    else elem slotId <$> use #focusedWidget
+  text' <- if focused
+    then do
+      textMods <- Updating.consumeEvents $ \case
+        TextInputEvent newText -> Just (<> newText)
+        KeyPressEvent SDL.ScancodeBackspace -> Just (Text.dropEnd 1)
+        _ -> Nothing
+      pure $ foldl' (&) text textMods
+    else pure text
+  Updating.renderUI $ do
+    r <- view #renderer
+    SDL.rendererDrawColor r $= V4 63 63 63 255
+    SDL.fillRect r (Just $ Rect.toSdl bounds)
+    Rendering.text (bounds ^. #xy) text'
+    SDL.rendererDrawColor r $= if focused then V4 31 171 171 255 else V4 31 31 31 255
+    SDL.drawRect r (Just $ Rect.toSdl bounds)
+  pure st{ text = text' }
