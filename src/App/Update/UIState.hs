@@ -5,12 +5,11 @@ import App.Prelude
 import App.Body (Body)
 import App.Ship (Ship)
 import App.Uid (Uid)
-import App.Update.WidgetState (TextBoxState)
 
 data UIState = UIState
   { shipWindowOpen :: Bool 
   , selectedShipUid :: Maybe (Uid Ship)
-  , selectedShipName :: Maybe TextBoxState
+  , selectedShipName :: Maybe Text
   , selectedBodyUid :: Maybe (Uid Body)
   }
   deriving (Generic)

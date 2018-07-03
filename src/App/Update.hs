@@ -16,7 +16,7 @@ import App.Rect (Rect(..))
 import App.Ship (Ship(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.Update.WidgetState (SlotId(..), TextBoxState(..))
+import App.Update.SlotId (SlotId(..))
 import App.Util (clamp, showDate, showDuration)
 import Data.String (fromString)
 
@@ -83,12 +83,12 @@ handleUI gs =
       let selectedShipUid = selectedShip ^? _Just . #uid
       when (oldSelectedShipUid /= selectedShipUid) $ do
         #ui . #selectedShipUid .= selectedShip ^? _Just . #uid
-        #ui . #selectedShipName .= Just TextBoxState{ slotId = SlotId "shipName", text = selectedShip ^. _Just . #name } -- TODO this shouldn't be constructed here
+        #ui . #selectedShipName .= selectedShip ^? _Just . #name
 
       gsMay' <- for selectedShip $ \ship@Ship{ Ship.speed, Ship.order } -> do
         name <- use (#ui . #selectedShipName)
         for_ name $ \n -> do  -- TODO actually update the ship name
-          n' <- Widget.textBox (Rect (p + V2 (128 + 4) 0) (V2 128 12)) n
+          n' <- Widget.textBox slotShipName (Rect (p + V2 (128 + 4) 0) (V2 128 12)) n
           #ui . #selectedShipName .= Just n'
         
         let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
@@ -122,3 +122,6 @@ handleUI gs =
       let gs' = gsMay' & fromMaybe gs
       pure gs'
     False -> pure gs
+
+slotShipName :: SlotId
+slotShipName = SlotId "shipName"

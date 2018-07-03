@@ -7,7 +7,7 @@ import qualified SDL
 
 import App.Update.Events
 import App.Update.UIState (UIState)
-import App.Update.WidgetState (SlotId)
+import App.Update.SlotId (SlotId)
 
 data UpdateState = UpdateState
   { events :: [SDL.Event]
