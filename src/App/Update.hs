@@ -83,13 +83,13 @@ handleUI gs =
       let selectedShipUid = selectedShip ^? _Just . #uid
       when (oldSelectedShipUid /= selectedShipUid) $ do
         #ui . #selectedShipUid .= selectedShip ^? _Just . #uid
-        #ui . #selectedShipName .= selectedShip ^? _Just . #name
+        #ui . #editedShipName .= selectedShip ^? _Just . #name
 
-      gsMay' <- for selectedShip $ \ship@Ship{ Ship.speed, Ship.order } -> do
-        name <- use (#ui . #selectedShipName)
-        for_ name $ \n -> do  -- TODO actually update the ship name
-          n' <- Widget.textBox slotShipName (Rect (p + V2 (128 + 4) 0) (V2 128 12)) n
-          #ui . #selectedShipName .= Just n'
+      gsMay' <- for selectedShip $ \ship@Ship{ Ship.uid, Ship.speed, Ship.order } -> do
+        ename <- use (#ui . #editedShipName) <&> fromMaybe "???"
+        ename' <- Widget.textBox slotShipName (Rect (p + V2 (128 + 4) 0) (V2 128 12)) ename
+        #ui . #editedShipName .= Just ename'
+        rename <- Widget.button (Rect (p + V2 (128 + 4 + 128 + 4) 0) (V2 128 12)) "Rename"
         
         let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
             orderLabels = case order of
@@ -115,7 +115,8 @@ handleUI gs =
         
         let gs' 
               | moveTo = Logic.moveShipToBody <$> pure ship <*> selectedBody <*> pure gs
-              | cancel = Just $ Logic.cancelShipOrder ship gs
+              | cancel = Just (Logic.cancelShipOrder ship gs)
+              | rename = Just (gs & #ships . at uid . _Just . #name .~ ename')
               | otherwise = Nothing
         pure $ gs' & fromMaybe gs
 

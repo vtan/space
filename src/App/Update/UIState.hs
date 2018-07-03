@@ -9,8 +9,8 @@ import App.Uid (Uid)
 data UIState = UIState
   { shipWindowOpen :: Bool 
   , selectedShipUid :: Maybe (Uid Ship)
-  , selectedShipName :: Maybe Text
   , selectedBodyUid :: Maybe (Uid Body)
+  , editedShipName :: Maybe Text
   }
   deriving (Generic)
 
@@ -18,6 +18,6 @@ initial :: UIState
 initial = UIState
   { shipWindowOpen = False 
   , selectedShipUid = Nothing
-  , selectedShipName = Nothing
   , selectedBodyUid = Nothing
+  , editedShipName = Nothing
   }
