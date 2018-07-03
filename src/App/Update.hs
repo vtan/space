@@ -21,8 +21,11 @@ import Data.String (fromString)
 
 update :: GameState -> Updating GameState
 update gs = do
-  toggleShips <- Updating.consumeEvents (\case KeyPressEvent SDL.ScancodeS -> Just (); _ -> Nothing)
-    <&> (not . null)
+  hasFocusedWidget <- use #focusedWidget <&> has _Just
+  toggleShips <- Updating.consumeEvents (\case 
+      KeyPressEvent SDL.ScancodeS | not hasFocusedWidget -> Just () -- TODO hacky
+      _ -> Nothing
+    ) <&> (not . null)
   when toggleShips $ #ui . #shipWindowOpen %= not
   gs' <- handleUI gs
   gs'' <- use #events <&> foldl' handleEvent gs'

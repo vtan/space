@@ -3,7 +3,9 @@ module App.Update.Events where
 import App.Prelude
 
 import qualified SDL
+import qualified SDL.Internal.Numbered
 
+import Data.Bits ((.&.))
 import Data.Int (Int32)
 
 pattern QuitEvent :: SDL.Event
@@ -59,3 +61,14 @@ pattern TextInputEvent text <-
     { SDL.eventPayload = SDL.TextInputEvent SDL.TextInputEventData 
       { SDL.textInputEventText = text }
     }
+
+isUnicodeKeyEvent :: SDL.Event -> Bool
+isUnicodeKeyEvent = \case
+  SDL.Event 
+    { SDL.eventPayload = SDL.KeyboardEvent SDL.KeyboardEventData
+      { SDL.keyboardEventKeysym = SDL.Keysym { SDL.keysymKeycode = keycode } -- TODO check for modifier keys
+      }
+    } -> SDL.Internal.Numbered.toNumber keycode .&. unicodeMask == 0
+  _ -> False
+  where
+    unicodeMask = 0x40000000

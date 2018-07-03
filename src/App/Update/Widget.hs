@@ -94,6 +94,7 @@ textBox slotId bounds text = do
       textMods <- Updating.consumeEvents $ \case
         TextInputEvent newText -> Just (<> newText)
         KeyPressEvent SDL.ScancodeBackspace -> Just (Text.dropEnd 1)
+        e | isUnicodeKeyEvent e -> Just id -- consume key events for which we also had a text input event
         _ -> Nothing
       pure $ foldl' (&) text textMods
     else pure text
