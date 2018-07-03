@@ -16,7 +16,6 @@ import App.Rect (Rect(..))
 import App.Ship (Ship(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.Update.SlotId (SlotId(..))
 import App.Util (clamp, showDate, showDuration)
 import Data.String (fromString)
 
@@ -74,20 +73,19 @@ handleUI gs =
       Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Ships"
       let p = V2 36 52
 
-      oldSelectedShipUid <- use (#ui . #selectedShipUid)
-      selectedShip <- Widget.listBox
+      (selectedShip, clickedShip) <- use (#ui . #selectedShipUid) >>= Widget.listBox
         (Rect p (V2 128 256)) 16
         (view #uid) (view #name)
         (gs ^.. #ships . folded)
-        oldSelectedShipUid
-      let selectedShipUid = selectedShip ^? _Just . #uid
-      when (oldSelectedShipUid /= selectedShipUid) $ do
-        #ui . #selectedShipUid .= selectedShip ^? _Just . #uid
-        #ui . #editedShipName .= selectedShip ^? _Just . #name
+      case clickedShip of
+        Just Ship{ Ship.uid, Ship.name } -> do
+          #ui . #selectedShipUid .= Just uid
+          #ui . #editedShipName .= Just name
+        Nothing -> pure ()
 
       gsMay' <- for selectedShip $ \ship@Ship{ Ship.uid, Ship.speed, Ship.order } -> do
         ename <- use (#ui . #editedShipName) <&> fromMaybe "???"
-        ename' <- Widget.textBox slotShipName (Rect (p + V2 (128 + 4) 0) (V2 128 12)) ename
+        ename' <- Widget.textBox "shipName" (Rect (p + V2 (128 + 4) 0) (V2 128 12)) ename
         #ui . #editedShipName .= Just ename'
         rename <- Widget.button (Rect (p + V2 (128 + 4 + 128 + 4) 0) (V2 128 12)) "Rename"
         
@@ -107,11 +105,12 @@ handleUI gs =
         moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 56 12)) "Move to..."
         cancel <- Widget.button (Rect (p + V2 (128 + 4 + 56 + 4) 64) (V2 56 12)) "Cancel"
 
-        selectedBody <- use (#ui . #selectedBodyUid) >>= Widget.listBox
+        (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
           (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
           (view #uid) (view #name)
           (gs ^.. #bodies . folded)
-        #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
+        when (clickedBody & has _Just) $ do
+          #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
         
         let gs' 
               | moveTo = Logic.moveShipToBody <$> pure ship <*> selectedBody <*> pure gs
@@ -123,6 +122,3 @@ handleUI gs =
       let gs' = gsMay' & fromMaybe gs
       pure gs'
     False -> pure gs
-
-slotShipName :: SlotId
-slotShipName = SlotId "shipName"

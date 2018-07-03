@@ -34,7 +34,7 @@ button bounds text = do
     Rendering.text (bounds ^. #xy) text
   pure clicked
 
-listBox :: Eq i => Rect Int -> Int -> (a -> i) -> (a -> Text) -> [a] -> Maybe i -> Updating (Maybe a)
+listBox :: Eq i => Rect Int -> Int -> (a -> i) -> (a -> Text) -> [a] -> Maybe i -> Updating (Maybe a, Maybe a)
 listBox bounds verticalSpacing toIx toText items selectedIx = do
   clickedPos <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) ->
@@ -63,7 +63,7 @@ listBox bounds verticalSpacing toIx toText items selectedIx = do
     ifor_ texts $ \row text ->
       let pos = (bounds ^. #xy) & _y +~ row * verticalSpacing
       in Rendering.text pos text
-  pure selectedItem
+  pure (selectedItem, clickedItem)
 
 window :: Rect Int -> Int -> Text -> Updating ()
 window bounds titleHeight title =
