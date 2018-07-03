@@ -23,12 +23,18 @@ update :: GameState -> Updating GameState
 update gs = do
   hasFocusedWidget <- use #focusedWidget <&> has _Just
   toggleShips <- Updating.consumeEvents (\case 
-      KeyPressEvent SDL.ScancodeS | not hasFocusedWidget -> Just () -- TODO hacky
+      KeyPressEvent SDL.ScancodeS | not hasFocusedWidget -> Just ()
       _ -> Nothing
     ) <&> (not . null)
   when toggleShips $ #ui . #shipWindowOpen %= not
+
+  clickedAnywhere <- Updating.filterEvents (\case MousePressEvent _ _ -> Just (); _ -> Nothing) 
+    <&> (not . null)
+  when clickedAnywhere $ #focusedWidget .= Nothing -- if clicked on a focusable widget, it will consume the click and set the focus
+
   gs' <- handleUI gs
   gs'' <- use #events <&> foldl' handleEvent gs'
+
   pure $ case gs ^. #timeStepPerFrame of
     Just step -> gs'' & Logic.stepTime step
     Nothing -> gs''

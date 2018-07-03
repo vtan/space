@@ -24,6 +24,10 @@ runFrame dtime events st u =
 renderUI :: Rendering () -> Updating ()
 renderUI ui = tell $ Semigroup.diff [ui]
 
+filterEvents :: (SDL.Event -> Maybe a) -> Updating [a]
+filterEvents p =
+  use #events <&> mapMaybe p
+
 consumeEvents :: (SDL.Event -> Maybe a) -> Updating [a]
 consumeEvents p = do
   allEvents <- use #events
