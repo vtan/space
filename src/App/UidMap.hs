@@ -5,6 +5,7 @@ import App.Prelude
 import qualified Data.IntMap as IntMap
 
 import App.Uid (Uid(..), getInt)
+import Control.Lens (Lens', Traversal')
 
 newtype UidMap a = UidMap { getIntMap :: IntMap a }
   deriving (Show, Semigroup, Monoid, Foldable, Functor, Traversable)

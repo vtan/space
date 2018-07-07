@@ -6,8 +6,7 @@ import qualified Data.HashSet as HashSet
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
 
-import App.Render.RenderContext (RenderContext)
-import Control.Monad.State.Strict (get)
+import Control.Monad.State.Class (get)
 
 data TextRenderer = TextRenderer
   { cache :: HashMap Text SDL.Texture
@@ -21,14 +20,12 @@ new = TextRenderer
   , usedSinceLastClean = mempty
   }
 
-render :: (MonadState TextRenderer m, MonadReader RenderContext m, MonadIO m) => Text -> m SDL.Texture
-render text = do
+render :: (MonadState TextRenderer m, MonadIO m) => SDL.Renderer -> SDL.TTF.Font -> Text -> m SDL.Texture
+render renderer font text = do
   TextRenderer{ cache } <- get
   texture <- case cache ^. at text of
     Just t -> pure t
     Nothing -> do
-      renderer <- view #renderer
-      font <- view #font
       let color = 255
       surface <- SDL.TTF.blended font color text
       texture <- SDL.createTextureFromSurface renderer surface
