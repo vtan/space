@@ -1,10 +1,10 @@
-module App.Ship where
+module App.Model.Ship where
 
 import App.Prelude
 
-import App.Body (Body)
-import App.Dims (AU)
-import App.PlottedPath (PlottedPath)
+import App.Model.Body (Body)
+import App.Model.Dims (AU)
+import App.Model.PlottedPath (PlottedPath)
 import App.Uid (Uid)
 
 data Ship = Ship

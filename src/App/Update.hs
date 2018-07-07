@@ -5,15 +5,15 @@ where
 import App.Prelude
 
 import qualified App.Camera as Camera
-import qualified App.Ship as Ship
+import qualified App.Model.Ship as Ship
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
 import qualified App.Update.Updating as Updating
 import qualified SDL as SDL
 
-import App.GameState (GameState(..))
+import App.Model.GameState (GameState(..))
+import App.Model.Ship (Ship(..))
 import App.Rect (Rect(..))
-import App.Ship (Ship(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
 import App.Util (clamp, showDate, showDuration)

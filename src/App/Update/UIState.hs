@@ -2,8 +2,8 @@ module App.Update.UIState where
 
 import App.Prelude
 
-import App.Body (Body)
-import App.Ship (Ship)
+import App.Model.Body (Body)
+import App.Model.Ship (Ship)
 import App.Uid (Uid)
 
 data UIState = UIState

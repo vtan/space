@@ -4,21 +4,21 @@ where
 
 import App.Prelude
 
-import qualified App.Body as Body
 import qualified App.Camera as Camera
+import qualified App.Model.Body as Body
+import qualified App.Model.Ship as Ship
 import qualified App.Render.Rendering as Rendering
-import qualified App.Ship as Ship
 import qualified Data.Vector.Storable as Vector
 import qualified Linear.Affine as Lin
 import qualified SDL as SDL
 
-import App.Body (Body(..))
 import App.Camera (Camera)
-import App.Dims
-import App.GameState (GameState(..))
-import App.PlottedPath (PlottedPath(..))
+import App.Model.Body (Body(..))
+import App.Model.Dims
+import App.Model.GameState (GameState(..))
+import App.Model.PlottedPath (PlottedPath(..))
+import App.Model.Ship (Ship(..))
 import App.Render.Rendering (Rendering)
-import App.Ship (Ship(..))
 import App.Util (showDate, toMap)
 import Data.String (fromString)
 import Data.Vector.Storable (Vector)

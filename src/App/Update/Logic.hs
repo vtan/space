@@ -2,14 +2,14 @@ module App.Update.Logic where
 
 import App.Prelude
 
-import qualified App.Body as Body
-import qualified App.PlottedPath as PlottedPath
-import qualified App.Ship as Ship
+import qualified App.Model.Body as Body
+import qualified App.Model.PlottedPath as PlottedPath
+import qualified App.Model.Ship as Ship
 
-import App.Body (Body(..))
-import App.Dims (AU)
-import App.GameState (GameState)
-import App.Ship (Ship(..))
+import App.Model.Body (Body(..))
+import App.Model.Dims (AU)
+import App.Model.GameState (GameState)
+import App.Model.Ship (Ship(..))
 import App.Uid (Uid(..))
 import Data.String (fromString)
 

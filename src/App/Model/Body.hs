@@ -1,10 +1,10 @@
-module App.Body where
+module App.Model.Body where
 
 import App.Prelude
 
 import qualified Linear as Lin
 
-import App.Dims
+import App.Model.Dims
 import App.Uid (Uid)
 import Numeric.Extras (fmod)
 

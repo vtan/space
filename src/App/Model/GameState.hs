@@ -1,14 +1,14 @@
-module App.GameState where
+module App.Model.GameState where
 
 import App.Prelude
 
-import qualified App.Body as Body
+import qualified App.Model.Body as Body
 import qualified App.UidMap as UidMap
 
-import App.Body (Body(..))
 import App.Camera (Camera(..))
-import App.Dims (AU(..), _AU)
-import App.Ship (Ship)
+import App.Model.Body (Body(..))
+import App.Model.Dims (AU(..), _AU)
+import App.Model.Ship (Ship)
 import App.Uid (Uid(..))
 import App.UidMap (UidMap)
 

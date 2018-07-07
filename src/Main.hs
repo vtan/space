@@ -3,7 +3,7 @@ module Main (main) where
 import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
-import qualified App.GameState as GameState
+import qualified App.Model.GameState as GameState
 import qualified App.Render as Render
 import qualified App.Render.RenderContext as RenderContext
 import qualified App.Render.Rendering as Rendering

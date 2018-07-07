@@ -1,4 +1,4 @@
-module App.PlottedPath 
+module App.Model.PlottedPath 
   ( PlottedPath(..)
   , plot, atTime
   )
@@ -6,13 +6,13 @@ where
 
 import App.Prelude
 
-import qualified App.Body as Body
+import qualified App.Model.Body as Body
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Vector.Storable as Vector
 import qualified Linear as Lin
 
-import App.Body (Body)
-import App.Dims (AU)
+import App.Model.Body (Body)
+import App.Model.Dims (AU)
 import Data.Vector.Storable (Vector)
 
 data PlottedPath = PlottedPath

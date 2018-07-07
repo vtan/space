@@ -1,4 +1,4 @@
-module App.Dims where
+module App.Model.Dims where
 
 import App.Prelude
 
