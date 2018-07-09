@@ -10,7 +10,7 @@ import qualified App.Model.Ship as Ship
 import qualified App.Render.Rendering as Rendering
 import qualified Data.Vector.Storable as Vector
 import qualified Linear.Affine as Lin
-import qualified SDL as SDL
+import qualified SDL
 
 import App.Camera (Camera)
 import App.Model.Body (Body(..))

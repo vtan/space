@@ -10,7 +10,7 @@ import qualified App.Update as Update
 import qualified App.Update.Updating as Updating
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
-import qualified SDL.Raw as SDL.Raw
+import qualified SDL.Raw
 
 main :: IO ()
 main = do

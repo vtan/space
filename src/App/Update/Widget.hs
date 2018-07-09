@@ -15,7 +15,7 @@ import App.Update.SlotId (SlotId)
 
 labels :: V2 Int -> Int -> [Text] -> Updating ()
 labels firstPos verticalSpacing texts =
-  Updating.renderUI $ do
+  Updating.renderUI $
     ifor_ texts $ \i text ->
       let pos = firstPos & _y +~ i * verticalSpacing
       in Rendering.text pos text

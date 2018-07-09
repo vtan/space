@@ -9,7 +9,7 @@ import qualified App.Model.Ship as Ship
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
 import qualified App.Update.Updating as Updating
-import qualified SDL as SDL
+import qualified SDL
 
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
@@ -118,7 +118,7 @@ handleUI gs =
           (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
           (view #uid) (view #name)
           (gs ^.. #bodies . folded)
-        when (clickedBody & has _Just) $ do
+        when (clickedBody & has _Just) $
           #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
         
         let gs' 

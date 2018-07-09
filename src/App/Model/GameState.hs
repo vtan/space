@@ -24,7 +24,7 @@ data GameState = GameState
 
 initial :: GameState
 initial = GameState
-  { bodies = UidMap.fromEntities (view #uid) $
+  { bodies = UidMap.fromEntities (view #uid)
     [ Body.new (Uid 0) "Mercury" 0.38 (2 * pi / (0.24 * 365 * 24 * 60 * 60))
     , Body.new (Uid 1) "Venus" 0.72 (2 * pi / (0.61 * 365 * 24 * 60 * 60))
     , Body.new (Uid 2) "Earth" 1.00 (2 * pi / (365 * 24 * 60 * 60))
