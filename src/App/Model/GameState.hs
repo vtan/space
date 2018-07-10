@@ -7,14 +7,16 @@ import qualified App.UidMap as UidMap
 
 import App.Camera (Camera(..))
 import App.Model.Body (Body(..))
+import App.Model.BodyMinerals (BodyMinerals, MineralData(..))
 import App.Model.Dims (AU(..), _AU)
 import App.Model.Ship (Ship)
 import App.Uid (Uid(..))
 import App.UidMap (UidMap)
 
 data GameState = GameState
-  { bodies :: UidMap Body
-  , ships :: UidMap Ship
+  { bodies :: UidMap Body Body
+  , bodyMinerals :: UidMap Body BodyMinerals
+  , ships :: UidMap Ship Ship
   , time :: Int
   , timeStepPerFrame :: Maybe Int
   , movingViewport :: Bool
@@ -33,6 +35,10 @@ initial = GameState
     , Body.new (Uid 5) "Saturn" 9.53 (2 * pi / (29.44 * 365 * 24 * 60 * 60))
     , Body.new (Uid 6) "Uranus" 19.19 (2 * pi / (84.01 * 365 * 24 * 60 * 60))
     , Body.new (Uid 7) "Neptune" 30.06 (2 * pi / (164.79 * 365 * 24 * 60 * 60))
+    ]
+  , bodyMinerals = UidMap.fromList
+    [ (Uid @Body 2, [(0, MineralData{ available = 10, accessibility = 0.6 })])
+    , (Uid @Body 3, [(0, MineralData{ available = 5, accessibility = 0.85 })])
     ]
   , ships = mempty
   , time = 0

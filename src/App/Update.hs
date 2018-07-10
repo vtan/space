@@ -15,6 +15,7 @@ import qualified SDL
 
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
+import App.Model.BodyMinerals (MineralData(..))
 import App.Model.Ship (Ship(..))
 import App.Rect (Rect(..))
 import App.Update.Events
@@ -103,6 +104,18 @@ handleColonyWindow gs = do
     (gs ^.. #bodies . folded)
   for_ clickedBody $ \Body{ Body.uid } ->
     #ui . #selectedBodyUid .= Just uid
+
+  for_ selectedBody $ \Body{ Body.uid } -> do
+    let minerals = gs ^@.. #bodyMinerals . at uid . _Just . ifolded
+        (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
+          minerals <&> \(mineral, MineralData{ available, accessibility }) -> 
+            ( fromString $ printf "Mineral #%d" mineral
+            , fromString $ printf "%.2f t" available
+            , fromString $ printf "%.0f%%" (100 * accessibility)
+            ) -- TODO table widget?
+    Widget.labels (p + V2 (128 + 4) 0) 16 mineralLabels
+    Widget.labels (p + V2 (128 + 4 + 64) 0) 16 availableLabels
+    Widget.labels (p + V2 (128 + 4 + 128) 0) 16 accessibilityLabels
 
   pure gs
 
