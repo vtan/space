@@ -7,16 +7,21 @@ import App.Model.Ship (Ship)
 import App.Uid (Uid)
 
 data UIState = UIState
-  { shipWindowOpen :: Bool 
+  { activeWindow :: Maybe Window
   , selectedShipUid :: Maybe (Uid Ship)
   , selectedBodyUid :: Maybe (Uid Body)
   , editedShipName :: Maybe Text
   }
   deriving (Generic)
 
+data Window
+  = ColonyWindow
+  | ShipWindow
+  deriving (Show, Generic, Eq)
+
 initial :: UIState
 initial = UIState
-  { shipWindowOpen = False 
+  { activeWindow = Nothing
   , selectedShipUid = Nothing
   , selectedBodyUid = Nothing
   , editedShipName = Nothing

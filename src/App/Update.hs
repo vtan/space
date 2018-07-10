@@ -5,12 +5,15 @@ where
 import App.Prelude
 
 import qualified App.Camera as Camera
+import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
+import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
 import qualified SDL
 
+import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
 import App.Rect (Rect(..))
@@ -22,11 +25,18 @@ import Data.String (fromString)
 update :: GameState -> Updating GameState
 update gs = do
   hasFocusedWidget <- use #focusedWidget <&> has _Just
-  toggleShips <- Updating.consumeEvents (\case 
-      KeyPressEvent SDL.ScancodeS | not hasFocusedWidget -> Just ()
+  toggleWindow <- Updating.consumeEvents (\case 
+      KeyPressEvent SDL.ScancodeC | not hasFocusedWidget -> Just UIState.ColonyWindow
+      KeyPressEvent SDL.ScancodeS | not hasFocusedWidget -> Just UIState.ShipWindow
       _ -> Nothing
-    ) <&> (not . null)
-  when toggleShips $ #ui . #shipWindowOpen %= not
+    ) <&> listToMaybe
+  case toggleWindow of
+    Just window -> do
+      activeWindow <- use (#ui . #activeWindow)
+      if elem window activeWindow
+      then #ui . #activeWindow .= Nothing
+      else #ui . #activeWindow .= Just window
+    Nothing -> pure ()
 
   clickedAnywhere <- Updating.filterEvents (\case MousePressEvent _ _ -> Just (); _ -> Nothing) 
     <&> (not . null)
@@ -77,57 +87,73 @@ handleEvent gs = \case
 
 handleUI :: GameState -> Updating GameState
 handleUI gs =
-  use (#ui . #shipWindowOpen) >>= \case
-    True -> do
-      Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Ships"
-      let p = V2 36 52
+  use (#ui . #activeWindow) >>= \case
+    Just UIState.ColonyWindow -> handleColonyWindow gs
+    Just UIState.ShipWindow -> handleShipWindow gs
+    Nothing -> pure gs
 
-      (selectedShip, clickedShip) <- use (#ui . #selectedShipUid) >>= Widget.listBox
-        (Rect p (V2 128 256)) 16
-        (view #uid) (view #name)
-        (gs ^.. #ships . folded)
-      case clickedShip of
-        Just Ship{ Ship.uid, Ship.name } -> do
-          #ui . #selectedShipUid .= Just uid
-          #ui . #editedShipName .= Just name
-        Nothing -> pure ()
+handleColonyWindow :: GameState -> Updating GameState
+handleColonyWindow gs = do
+  Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Colonies"
+  let p = V2 36 52
 
-      gsMay' <- for selectedShip $ \ship@Ship{ Ship.uid, Ship.speed, Ship.order } -> do
-        ename <- use (#ui . #editedShipName) <&> fromMaybe "???"
-        ename' <- Widget.textBox "shipName" (Rect (p + V2 (128 + 4) 0) (V2 128 12)) ename
-        #ui . #editedShipName .= Just ename'
-        rename <- Widget.button (Rect (p + V2 (128 + 4 + 128 + 4) 0) (V2 128 12)) "Rename"
-        
-        let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
-            orderLabels = case order of
-              Just o ->
-                let (orderStr, etaStr) = case o of
-                      Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
-                        let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
-                            etaDate = showDate (path ^. #endTime)
-                            etaDuration = showDuration (path ^. #endTime - gs ^. #time)
-                        in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
-                in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
-              Nothing -> ["No current order"]
-        Widget.labels (p + V2 (128 + 4) 16) 16 (commonLabels ++ orderLabels)
+  (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
+    (Rect p (V2 128 256)) 16
+    (view #uid) (view #name)
+    (gs ^.. #bodies . folded)
+  for_ clickedBody $ \Body{ Body.uid } ->
+    #ui . #selectedBodyUid .= Just uid
 
-        moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 56 12)) "Move to..."
-        cancel <- Widget.button (Rect (p + V2 (128 + 4 + 56 + 4) 64) (V2 56 12)) "Cancel"
+  pure gs
 
-        (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
-          (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
-          (view #uid) (view #name)
-          (gs ^.. #bodies . folded)
-        when (clickedBody & has _Just) $
-          #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
-        
-        let gs' 
-              | moveTo = Logic.moveShipToBody <$> pure ship <*> selectedBody <*> pure gs
-              | cancel = Just (Logic.cancelShipOrder ship gs)
-              | rename = Just (gs & #ships . at uid . _Just . #name .~ ename')
-              | otherwise = Nothing
-        pure $ gs' & fromMaybe gs
+handleShipWindow :: GameState -> Updating GameState
+handleShipWindow gs = do
+  Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Ships"
+  let p = V2 36 52
 
-      let gs' = gsMay' & fromMaybe gs
-      pure gs'
-    False -> pure gs
+  (selectedShip, clickedShip) <- use (#ui . #selectedShipUid) >>= Widget.listBox
+    (Rect p (V2 128 256)) 16
+    (view #uid) (view #name)
+    (gs ^.. #ships . folded)
+  for_ clickedShip $ \Ship{ Ship.uid, Ship.name } -> do
+      #ui . #selectedShipUid .= Just uid
+      #ui . #editedShipName .= Just name
+
+  gsMay' <- for selectedShip $ \ship@Ship{ Ship.uid, Ship.speed, Ship.order } -> do
+    ename <- use (#ui . #editedShipName) <&> fromMaybe "???"
+    ename' <- Widget.textBox "shipName" (Rect (p + V2 (128 + 4) 0) (V2 128 12)) ename
+    #ui . #editedShipName .= Just ename'
+    rename <- Widget.button (Rect (p + V2 (128 + 4 + 128 + 4) 0) (V2 128 12)) "Rename"
+    
+    let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
+        orderLabels = case order of
+          Just o ->
+            let (orderStr, etaStr) = case o of
+                  Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
+                    let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
+                        etaDate = showDate (path ^. #endTime)
+                        etaDuration = showDuration (path ^. #endTime - gs ^. #time)
+                    in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
+            in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
+          Nothing -> ["No current order"]
+    Widget.labels (p + V2 (128 + 4) 16) 16 (commonLabels ++ orderLabels)
+
+    moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 56 12)) "Move to..."
+    cancel <- Widget.button (Rect (p + V2 (128 + 4 + 56 + 4) 64) (V2 56 12)) "Cancel"
+
+    (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
+      (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
+      (view #uid) (view #name)
+      (gs ^.. #bodies . folded)
+    when (clickedBody & has _Just) $
+      #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
+    
+    let gs' 
+          | moveTo = Logic.moveShipToBody <$> pure ship <*> selectedBody <*> pure gs
+          | cancel = Just (Logic.cancelShipOrder ship gs)
+          | rename = Just (gs & #ships . at uid . _Just . #name .~ ename')
+          | otherwise = Nothing
+    pure $ gs' & fromMaybe gs
+
+  let gs' = gsMay' & fromMaybe gs
+  pure gs'
