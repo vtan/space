@@ -43,7 +43,7 @@ initial = GameState
     , (Uid @Body 3, [(0, MineralData{ available = 5, accessibility = 0.85 })])
     ]
   , colonies = UidMap.fromList 
-    [(Uid @Body 2, Colony{ stockpile = [(0, 2.5)] })]
+    [(Uid @Body 2, Colony{ stockpile = [(0, 2.5)], mines = [(0, 1)] })]
   , ships = mempty
   , time = 0
   , timeStepPerFrame = Nothing

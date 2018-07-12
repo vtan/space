@@ -77,8 +77,7 @@ handleEvent gs = \case
       in gs & #camera . #scale .~ scale'
   KeyPressEvent SDL.ScancodePeriod | gs ^. #timeStepPerFrame & has _Nothing -> 
     let now = gs ^. #time
-        nextMidnight = (quot (gs ^. #time) 86400 + 1) * 86400
-    in gs & Logic.stepTime (nextMidnight - now)
+    in gs & Logic.stepTime (Logic.timeUntilNextMidnight now)
   KeyPressEvent SDL.ScancodeGrave -> gs & #timeStepPerFrame .~ Nothing
   KeyPressEvent SDL.Scancode1 -> gs & #timeStepPerFrame .~ Just 1
   KeyPressEvent SDL.Scancode2 -> gs & #timeStepPerFrame .~ Just 10
@@ -120,7 +119,7 @@ handleColonyWindow gs = do
 
     let q = p + V2 (128 + 4) (length minerals * 16 + 8)
     case gs ^. #colonies . at uid of
-      Just Colony{ stockpile } -> do
+      Just Colony{ stockpile, mines } -> do
         Widget.label q "Colony stockpile"
         let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
               ( fromString $ printf "Mineral #%d" mineral
@@ -128,6 +127,16 @@ handleColonyWindow gs = do
               )
         Widget.labels (q + V2 0 16) 16 itemLabels
         Widget.labels (q + V2 64 16) 16 qtyLabels
+
+        let (mineLabels, mineQtyLabels) = unzip $ itoList mines <&> \(mineral, mineQty) ->
+              ( fromString $ printf "Mineral #%d" mineral
+              , fromString $ printf "%d mines" mineQty
+              )
+            r = q + V2 0 (length stockpile * 16 + 24)
+        Widget.label r "Colony industry"
+        Widget.labels (r + V2 0 16) 16 mineLabels
+        Widget.labels (r + V2 64 16) 16 mineQtyLabels
+
         pure gs
       Nothing -> do
         found <- Widget.button (Rect q (V2 128 16)) "Found colony"

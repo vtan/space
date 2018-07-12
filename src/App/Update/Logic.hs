@@ -5,22 +5,58 @@ import App.Prelude
 import qualified App.Model.Body as Body
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
+import qualified Data.HashMap.Strict as HashMap
 
 import App.Model.Body (Body(..))
+import App.Model.BodyMinerals (BodyMinerals, MineralData(..))
 import App.Model.Colony (Colony(..))
 import App.Model.Dims (AU)
-import App.Model.GameState (GameState)
+import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
 import App.Uid (Uid(..))
+import App.Util (reduce)
 import Data.String (fromString)
 
 stepTime :: Int -> GameState -> GameState
 stepTime dt gs =
-  let time = dt + gs ^. #time
-  in gs
+  let now = gs ^. #time
+      untilTick = timeUntilNextMidnight now
+  in if
+    | dt == 0 -> gs
+    | dt < untilTick -> gs & jumpTimeTo (now + dt)
+    | otherwise -> gs
+        & jumpTimeTo (now + untilTick)
+        & productionTick
+        & stepTime (dt - untilTick)
+
+jumpTimeTo :: Int -> GameState -> GameState
+jumpTimeTo time gs =
+  gs
     & #time .~ time
     & #bodies . traversed %~ Body.atTime time
     & (\gs' -> gs' & #ships . traversed %~ updateShip gs')
+
+timeUntilNextMidnight :: Int -> Int
+timeUntilNextMidnight now = (quot now 86400 + 1) * 86400 - now
+
+productionTick :: GameState -> GameState
+productionTick gs@GameState{ bodies } =
+  gs & reduce bodies (\gs' Body{ Body.uid } ->
+      let colony = gs' ^. #colonies . at uid
+          minerals = gs' ^. #bodyMinerals . at uid
+      in (mineColonies uid <$> colony <*> minerals <*> pure gs')
+        & fromMaybe gs'
+    )
+
+mineColonies :: Uid Body -> Colony -> BodyMinerals -> GameState -> GameState
+mineColonies bodyUid Colony{ mines } minerals gs =
+  let mineralsReservesMines = itoList $ HashMap.intersectionWith (,) minerals mines
+  in gs & reduce mineralsReservesMines (\gs' (mineral, (MineralData{ available, accessibility }, mineQty)) ->
+      let minedQty = min (fromIntegral mineQty * 0.01 * accessibility) available
+      in gs'
+        & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
+        & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
+    )
 
 updateShip :: GameState -> Ship -> Ship
 updateShip gs ship = 
@@ -64,4 +100,4 @@ cancelShipOrder Ship{ Ship.uid } gs =
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
-  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty }
+  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty }
