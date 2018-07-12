@@ -13,6 +13,9 @@ import App.Update.Events
 import App.Update.Updating (Updating)
 import App.Update.SlotId (SlotId)
 
+label :: V2 Int -> Text -> Updating ()
+label pos text = Updating.renderUI $ Rendering.text pos text
+
 labels :: V2 Int -> Int -> [Text] -> Updating ()
 labels firstPos verticalSpacing texts =
   Updating.renderUI $

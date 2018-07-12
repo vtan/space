@@ -14,6 +14,7 @@ import qualified App.Update.Updating as Updating
 import qualified SDL
 
 import App.Model.Body (Body(..))
+import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.BodyMinerals (MineralData(..))
 import App.Model.Ship (Ship(..))
@@ -105,7 +106,7 @@ handleColonyWindow gs = do
   for_ clickedBody $ \Body{ Body.uid } ->
     #ui . #selectedBodyUid .= Just uid
 
-  for_ selectedBody $ \Body{ Body.uid } -> do
+  gsMay' <- for selectedBody $ \Body{ Body.uid } -> do
     let minerals = gs ^@.. #bodyMinerals . at uid . _Just . ifolded
         (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
           minerals <&> \(mineral, MineralData{ available, accessibility }) -> 
@@ -117,7 +118,23 @@ handleColonyWindow gs = do
     Widget.labels (p + V2 (128 + 4 + 64) 0) 16 availableLabels
     Widget.labels (p + V2 (128 + 4 + 128) 0) 16 accessibilityLabels
 
-  pure gs
+    let q = p + V2 (128 + 4) (length minerals * 16 + 8)
+    case gs ^. #colonies . at uid of
+      Just Colony{ stockpile } -> do
+        Widget.label q "Colony stockpile"
+        let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
+              ( fromString $ printf "Mineral #%d" mineral
+              , fromString $ printf "%.2f t" qty
+              )
+        Widget.labels (q + V2 0 16) 16 itemLabels
+        Widget.labels (q + V2 64 16) 16 qtyLabels
+        pure gs
+      Nothing -> do
+        found <- Widget.button (Rect q (V2 128 16)) "Found colony"
+        pure $ if found
+          then Logic.foundColony uid gs
+          else gs
+  pure $ fromMaybe gs gsMay'
 
 handleShipWindow :: GameState -> Updating GameState
 handleShipWindow gs = do

@@ -8,6 +8,7 @@ import qualified App.UidMap as UidMap
 import App.Camera (Camera(..))
 import App.Model.Body (Body(..))
 import App.Model.BodyMinerals (BodyMinerals, MineralData(..))
+import App.Model.Colony (Colony(..))
 import App.Model.Dims (AU(..), _AU)
 import App.Model.Ship (Ship)
 import App.Uid (Uid(..))
@@ -16,6 +17,7 @@ import App.UidMap (UidMap)
 data GameState = GameState
   { bodies :: UidMap Body Body
   , bodyMinerals :: UidMap Body BodyMinerals
+  , colonies :: UidMap Body Colony
   , ships :: UidMap Ship Ship
   , time :: Int
   , timeStepPerFrame :: Maybe Int
@@ -40,6 +42,8 @@ initial = GameState
     [ (Uid @Body 2, [(0, MineralData{ available = 10, accessibility = 0.6 })])
     , (Uid @Body 3, [(0, MineralData{ available = 5, accessibility = 0.85 })])
     ]
+  , colonies = UidMap.fromList 
+    [(Uid @Body 2, Colony{ stockpile = [(0, 2.5)] })]
   , ships = mempty
   , time = 0
   , timeStepPerFrame = Nothing

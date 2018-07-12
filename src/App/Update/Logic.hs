@@ -7,6 +7,7 @@ import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 
 import App.Model.Body (Body(..))
+import App.Model.Colony (Colony(..))
 import App.Model.Dims (AU)
 import App.Model.GameState (GameState)
 import App.Model.Ship (Ship(..))
@@ -60,3 +61,7 @@ moveShipToBody Ship{ Ship.uid, Ship.position, speed } body gs =
 cancelShipOrder :: Ship -> GameState -> GameState
 cancelShipOrder Ship{ Ship.uid } gs =
   gs & #ships . at uid . _Just . #order .~ Nothing
+
+foundColony :: Uid Body -> GameState -> GameState
+foundColony bodyUid gs =
+  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty }
