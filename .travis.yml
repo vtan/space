@@ -1,0 +1,33 @@
+language: generic
+
+env:
+  - LD_LIBRARY_PATH=/usr/local/lib
+
+cache:
+  directories:
+    - $HOME/.stack
+
+addons:
+  apt:
+    packages:
+      - libgmp-dev
+
+before_install:
+  - wget -q http://libsdl.org/release/SDL2-2.0.4.tar.gz -O - | tar xz
+  - wget -q http://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.12.tar.gz -O - | tar xz
+  - cd SDL2-2.0.4 && ./configure && make -j && sudo make install && cd ..
+  - cd SDL2_ttf-2.0.12 && ./configure && make -j && sudo make install && cd ..
+  - mkdir -p ~/.local/bin
+  - export PATH=$HOME/.local/bin:$PATH
+  - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
+install:
+  - stack --no-terminal --install-ghc build --only-dependencies
+
+script:
+  - stack --no-terminal build
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
