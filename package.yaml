@@ -6,7 +6,7 @@ author:              "Viktor Tanyi"
 maintainer:          "Viktor Tanyi <tanyi.viktor@gmail.com>"
 copyright:           "2018 Viktor Tanyi"
 
-extra-source-files:
+#extra-source-files:
 #- README.md
 #- ChangeLog.md
 
