@@ -5,11 +5,16 @@ os:
   - osx
 
 env:
-  - LD_LIBRARY_PATH=/usr/local/lib
+  global:
+    - LD_LIBRARY_PATH=/usr/local/lib
+    - SDL2=SDL2-2.0.4
+    - SDL2_TTF=SDL2_ttf-2.0.12
 
 cache:
   directories:
     - $HOME/.stack
+    - $HOME/$SDL2
+    - $HOME/$SDL2_TTF
 
 addons:
   apt:
@@ -19,10 +24,16 @@ addons:
 before_install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      wget -q http://libsdl.org/release/SDL2-2.0.4.tar.gz -O - | tar xz
-      wget -q http://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.12.tar.gz -O - | tar xz
-      cd SDL2-2.0.4 && ./configure && make -j && sudo make install && cd ..
-      cd SDL2_ttf-2.0.12 && ./configure && make -j && sudo make install && cd ..
+      if [[ ! -d "$SDL2" ]]; then
+        wget http://libsdl.org/release/"$SDL2".tar.gz -O - | tar xz
+        (cd "$SDL2" && ./configure && make -j)
+      fi
+      (cd "$SDL2" && sudo make install)
+      if [[ ! -d "$SDL2_TTF" ]]; then
+        wget http://libsdl.org/projects/SDL_ttf/release/"$SDL2_TTF".tar.gz -O - | tar xz
+        (cd "$SDL2_TTF" && ./configure && make -j)
+      fi
+      (cd "$SDL2_TTF" && sudo make install)
     fi
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
