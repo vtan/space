@@ -53,3 +53,20 @@ install:
 
 script:
   - stack --no-terminal build
+
+before_deploy:
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      bash bundle/osx.sh
+      export DEPLOY_FILE=space-osx.zip
+    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: JAx1hyjJu3Pn1AyRDQbaVpg6BQ08dPIonbUJP96Og+XSKhu2hIfkqSlke0yfXqpj+rcNrtpEakffaHcWbsHrebhR7B9Scihr0NCnhCe4z7aozih+OUvgpLeBvD640jahkKkEthQikI4OHB6ZGnGQmDNP8BK8ZwQw5+18JFGTrbUMk0SmxO/fKUown9WFsFiLyUZ03Zy9Mj+bMGJDCzYViJebrnCvBaTDMG03j4rJMir6kDbbCWPCE9/+ki4Jv3hb5RFo+FazSek/3+/+MZXnnwZH/ZPDpIoxlfe46s9Vd2rJlHRG3nrNBuAEeqxHchWV51yk1MyegNnkeXwf1ik6c6sz5Xx0Hhx86XioE+U4kgVllOaFD9mKoJGQwcIqNWnF+ulEB31zmYvs00OnEheCyBMURPxDryo7/KkwVb1VGCD98vJ7zjg+lEj04jJuM9wscerVpRw3EmO5f+0xJj8hLp5BkoAgYubZ4YHRaNiAFzqTWi7C0DMxsPaqlu3VQHKYPSilkAVSFW7s7S98plc9t8llXdqPAktceYxG59wVkcv/J89HD104Qmw1SpmVrnHncmnN6ezFd8j/cxlWop3NnGmccvzbkUkIwHJ9kEeL3eJYJA9j7z0np9dBFzqPV+7d00bUZ+2pgZMRC3aq84T7Obt4CW1MHTGi8DiR09AlhZs=
+  file: $DEPLOY_FILE
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = osx
