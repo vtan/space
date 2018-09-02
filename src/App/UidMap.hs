@@ -14,8 +14,10 @@ fromList :: [(Uid i, a)] -> UidMap i a
 fromList = UidMap . IntMap.fromList . over (mapped . _1) getInt
 
 fromEntities :: (a -> Uid i) -> [a] -> UidMap i a
-fromEntities f xs = UidMap . IntMap.fromList $ zip (map (getInt . f) xs) xs
+fromEntities f xs = UidMap . IntMap.fromList $ App.Prelude.zip (map (getInt . f) xs) xs
 
+zip :: UidMap i a -> UidMap i b -> UidMap i (a, b)
+zip (UidMap xs) (UidMap ys) = UidMap $ IntMap.intersectionWith (,) xs ys
 
 type instance Index (UidMap i a) = Uid i
 type instance IxValue (UidMap i a) = a

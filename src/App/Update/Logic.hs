@@ -3,6 +3,7 @@ module App.Update.Logic where
 import App.Prelude
 
 import qualified App.Model.Body as Body
+import qualified App.Model.OrbitSystem as OrbitSystem
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 import qualified Data.HashMap.Strict as HashMap
@@ -33,7 +34,7 @@ jumpTimeTo :: Int -> GameState -> GameState
 jumpTimeTo time gs =
   gs
     & #time .~ time
-    & #bodies . traversed %~ Body.atTime time
+    & #bodyOrbitalStates .~ OrbitSystem.statesAtTime time (gs ^. #orbitSystem)
     & (\gs' -> gs' & #ships . traversed %~ updateShip gs')
 
 timeUntilNextMidnight :: Int -> Int
@@ -69,8 +70,8 @@ updateShip gs ship =
         & (if arrived then #order .~ Nothing else id)
         & #attachedToBody .~ (if arrived then Just bodyUid else Nothing)
     Nothing -> 
-      case ship ^. #attachedToBody >>= (\b -> gs ^. #bodies . at b) of
-        Just Body{ Body.position } ->
+      case ship ^. #attachedToBody >>= (\b -> gs ^? #bodyOrbitalStates . at b . _Just . #position) of
+        Just position ->
           ship & #position .~ position
         Nothing -> ship
 
@@ -88,10 +89,10 @@ addShip pos gs =
         }
   in gs & #ships . at shipUid .~ Just ship
 
-moveShipToBody :: Ship -> Body -> GameState -> GameState
-moveShipToBody Ship{ Ship.uid, Ship.position, speed } body gs =
-  let pathMay = PlottedPath.plot (gs ^. #time) position speed body
-      orderMay = Ship.MoveToBody <$> pure (body ^. #uid) <*> pathMay
+moveShipToBody :: Ship -> Uid Body -> GameState -> GameState
+moveShipToBody Ship{ Ship.uid, Ship.position, speed } bodyUid gs =
+  let pathMay = PlottedPath.plot (gs ^. #time) position speed bodyUid (gs ^. #orbitSystem)
+      orderMay = Ship.MoveToBody <$> pure bodyUid <*> pathMay
   in gs & #ships . at uid . _Just . #order .~ orderMay
 
 cancelShipOrder :: Ship -> GameState -> GameState

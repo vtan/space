@@ -6,8 +6,11 @@ import App.Prelude
 
 import qualified App.Camera as Camera
 import qualified App.Model.Body as Body
+import qualified App.Model.OrbitSystem as OrbitSystem
+import qualified App.Model.OrbitalState as OrbitalState
 import qualified App.Model.Ship as Ship
 import qualified App.Render.Rendering as Rendering
+import qualified App.UidMap as UidMap
 import qualified Data.Vector.Storable as Vector
 import qualified Linear.Affine as Lin
 import qualified SDL
@@ -16,6 +19,8 @@ import App.Camera (Camera)
 import App.Model.Body (Body(..))
 import App.Model.Dims
 import App.Model.GameState (GameState(..))
+import App.Model.OrbitSystem (OrbitSystem(..))
+import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.PlottedPath (PlottedPath(..))
 import App.Model.Ship (Ship(..))
 import App.Render.Rendering (Rendering)
@@ -25,11 +30,13 @@ import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render gs@GameState{ bodies, ships, time, camera } = do
+render gs@GameState{ orbitSystem, bodyOrbitalStates, ships, time, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
-  for_ bodies $ renderOrbit camera
+  for_ (OrbitSystem.subsystems orbitSystem) $ \os ->
+    for_ (bodyOrbitalStates ^. at (os ^. #body)) $ \st ->
+      renderOrbit camera os st
   for_ ships $ renderShip camera
   ifor_ (collectLabels camera gs & toMap) $ \anchor labels ->
     ifor_ labels $ \row label ->
@@ -37,10 +44,10 @@ render gs@GameState{ bodies, ships, time, camera } = do
       in Rendering.text pos label
   Rendering.text (V2 8 8) (fromString $ showDate time)
 
-renderOrbit :: Camera (AU Double) Double -> Body -> Rendering ()
-renderOrbit camera Body{ Body.position, orbitRadius } =
+renderOrbit :: Camera (AU Double) Double -> OrbitSystem -> OrbitalState -> Rendering ()
+renderOrbit camera OrbitSystem{ orbitRadius } OrbitalState{ OrbitalState.position, orbitCenter } =
   let orbitPoints = circlePoints
-        & Vector.map (fmap AU >>> (orbitRadius *^) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
+        & Vector.map (fmap AU >>> (orbitRadius *^) >>> (orbitCenter +) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
       bodyCenter = Camera.pointToScreen camera position
       bodyPoints = circlePoints
         & Vector.map ((Body.drawnRadius *^) >>> (bodyCenter +) >>> fmap round >>> Lin.P)
@@ -68,9 +75,9 @@ renderShip camera Ship{ Ship.position, order } =
       Nothing -> pure ()
 
 collectLabels :: Camera (AU Double) Double -> GameState -> [(V2 Int, [Text])]
-collectLabels camera GameState{ bodies, ships } = bodyLabels ++ shipLabels
+collectLabels camera GameState{ bodies, bodyOrbitalStates, ships } = bodyLabels ++ shipLabels
   where
-    bodyLabels = bodies & foldMap (\Body{ Body.position, Body.name } ->
+    bodyLabels = (UidMap.zip bodies bodyOrbitalStates) & foldMap (\(Body{ Body.name }, OrbitalState{ OrbitalState.position }) ->
         let pos = position & Camera.pointToScreen camera & fmap round
         in [(pos, [name])]
       )

@@ -6,13 +6,15 @@ where
 
 import App.Prelude
 
-import qualified App.Model.Body as Body
+import qualified App.Model.OrbitSystem as OrbitSystem
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Vector.Storable as Vector
 import qualified Linear as Lin
 
 import App.Model.Body (Body)
 import App.Model.Dims (AU)
+import App.Model.OrbitSystem (OrbitSystem)
+import App.Uid (Uid)
 import Data.Vector.Storable (Vector)
 
 data PlottedPath = PlottedPath
@@ -24,10 +26,10 @@ data PlottedPath = PlottedPath
   }
   deriving (Generic, Show)
 
-plot :: Int -> V2 (AU Double) -> AU Double -> Body -> Maybe PlottedPath
-plot time position speed body =
+plot :: Int -> V2 (AU Double) -> AU Double -> Uid Body -> OrbitSystem -> Maybe PlottedPath
+plot time position speed bodyUid orbitSystem =
   let waypointDistance = speed * waypointTime
-  in plotWaypoints body waypointDistance (time + maxSearchTime) time position
+  in plotWaypoints bodyUid orbitSystem waypointDistance (time + maxSearchTime) time position
     <&> \(furtherWaypoints, endTime) ->
       let waypoints = position :| furtherWaypoints
       in PlottedPath
@@ -38,23 +40,22 @@ plot time position speed body =
         , waypoints = waypoints & toList & Vector.fromList
         }
 
-plotWaypoints :: Body -> AU Double -> Int -> Int -> V2 (AU Double) -> Maybe ([V2 (AU Double)], Int)
-plotWaypoints !bodyAtStart !waypointDistance !maxTime !time !pos =
+plotWaypoints :: Uid Body -> OrbitSystem -> AU Double -> Int -> Int -> V2 (AU Double) -> Maybe ([V2 (AU Double)], Int)
+plotWaypoints !bodyUid !orbitSystem !waypointDistance !maxTime !time !pos =
   let waypointDistSq = waypointDistance * waypointDistance
-      body = Body.atTime time bodyAtStart
-      bodyPos = body ^. #position
+      bodyPos = OrbitSystem.statesAtTime time orbitSystem ^?! at bodyUid . _Just . #position
       distSq = Lin.qd pos bodyPos
   in if 
     | time >= maxTime -> Nothing
     | distSq <= waypointDistSq ->
       let ratio = sqrt $ distSq / waypointDistSq
           finalTime = round $ fromIntegral time + ratio * waypointTime
-          finalPos = Body.atTime finalTime body ^. #position
+          finalPos = OrbitSystem.statesAtTime finalTime orbitSystem ^?! at bodyUid . _Just . #position
       in Just ([finalPos], finalTime)
     | otherwise ->
       let time' = time + waypointTime
           pos' = pos + waypointDistance *^ Lin.normalize (bodyPos - pos)
-      in plotWaypoints bodyAtStart waypointDistance maxTime time' pos'
+      in plotWaypoints bodyUid orbitSystem waypointDistance maxTime time' pos'
         <&> \(nextPositions, finalTime) -> (pos' : nextPositions, finalTime)
 
 atTime :: Int -> PlottedPath -> V2 (AU Double)

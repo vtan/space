@@ -188,7 +188,7 @@ handleShipWindow gs = do
       #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
     
     let gs' 
-          | moveTo = Logic.moveShipToBody <$> pure ship <*> selectedBody <*> pure gs
+          | moveTo = Logic.moveShipToBody <$> pure ship <*> (selectedBody ^? _Just . #uid) <*> pure gs
           | cancel = Just (Logic.cancelShipOrder ship gs)
           | rename = Just (gs & #ships . at uid . _Just . #name .~ ename')
           | otherwise = Nothing
