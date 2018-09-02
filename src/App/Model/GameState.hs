@@ -65,6 +65,8 @@ theBodies = UidMap.fromEntities (view #uid)
   , Body (Uid 7) "Neptune"
   , Body (Uid 8) "Sol"
   , Body (Uid 9) "Luna"
+  , Body (Uid 10) "Phobos"
+  , Body (Uid 11) "Deimos"
   ]
 
 theOrbitSystem :: OrbitSystem
@@ -78,7 +80,11 @@ theOrbitSystem = OrbitSystem
     , OrbitSystem{ body = Uid 2, orbitRadius = 1.00, angularVelocity =  2 * pi / (365 * 24 * 60 * 60), children = 
         [ OrbitSystem{ body = Uid 9, orbitRadius = 0.0026, angularVelocity =  2 * pi / (27.32 * 24 * 60 * 60), children = [] } ]
       }
-    , OrbitSystem{ body = Uid 3, orbitRadius = 1.52, angularVelocity =  2 * pi / (1.88 * 365 * 24 * 60 * 60), children = [] }
+    , OrbitSystem{ body = Uid 3, orbitRadius = 1.52, angularVelocity =  2 * pi / (1.88 * 365 * 24 * 60 * 60), children = 
+        [ OrbitSystem{ body = Uid 10, orbitRadius = 6.2e-5, angularVelocity =  2 * pi / (0.318 * 24 * 60 * 60), children = [] }
+        , OrbitSystem{ body = Uid 11, orbitRadius = 0.00015, angularVelocity =  2 * pi / (1.263 * 24 * 60 * 60), children = [] }
+        ]
+      }
     , OrbitSystem{ body = Uid 4, orbitRadius = 5.20, angularVelocity =  2 * pi / (11.86 * 365 * 24 * 60 * 60), children = [] }
     , OrbitSystem{ body = Uid 5, orbitRadius = 9.53, angularVelocity =  2 * pi / (29.44 * 365 * 24 * 60 * 60), children = [] }
     , OrbitSystem{ body = Uid 6, orbitRadius = 19.19, angularVelocity =  2 * pi / (84.01 * 365 * 24 * 60 * 60), children = [] }

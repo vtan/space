@@ -23,6 +23,7 @@ import App.Update.Events
 import App.Update.Updating (Updating)
 import App.Util (clamp, showDate, showDuration)
 import Data.String (fromString)
+import Numeric.Extras (cbrt)
 
 update :: GameState -> Updating GameState
 update gs = do
@@ -70,9 +71,9 @@ handleEvent gs = \case
     if gs ^. #movingViewport
     then gs
     else
-      let zoomLevel = sqrt $ gs ^. #camera . #scale . _x
-          zoomLevel' = clamp 1.5 (zoomLevel + 0.5 * amount) 30
-          auInPixels' = zoomLevel' * zoomLevel'
+      let zoomLevel = cbrt $ gs ^. #camera . #scale . _x
+          zoomLevel' = clamp 1.5 (zoomLevel + 0.5 * amount) 70
+          auInPixels' = zoomLevel' * zoomLevel' * zoomLevel'
           scale' = V2 auInPixels' (- auInPixels')
       in gs & #camera . #scale .~ scale'
   KeyPressEvent SDL.ScancodePeriod | gs ^. #timeStepPerFrame & has _Nothing -> 
