@@ -11,6 +11,7 @@ import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
+import qualified Linear as Lin
 import qualified SDL
 
 import App.Model.Body (Body(..))
@@ -173,7 +174,8 @@ handleShipWindow gs = do
                     let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
                         etaDate = showDate (path ^. #endTime)
                         etaDuration = showDuration (path ^. #endTime - gs ^. #time)
-                    in (printf "move to %s" bodyName, printf "%s, %s" etaDate etaDuration)
+                        actualSpeed = Lin.distance (path ^. #endPos) (path ^. #startPos) / fromIntegral (path ^. #endTime - path ^. #startTime) * 149597000
+                    in (printf "move to %s (act. spd. %.2f)" bodyName actualSpeed, printf "%s, %s" etaDate etaDuration)
             in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
           Nothing -> ["No current order"]
     Widget.labels (p + V2 (128 + 4) 16) 16 (commonLabels ++ orderLabels)

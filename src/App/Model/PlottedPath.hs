@@ -7,75 +7,58 @@ where
 import App.Prelude
 
 import qualified App.Model.OrbitSystem as OrbitSystem
-import qualified Data.List.NonEmpty as NonEmpty
-import qualified Data.Vector.Storable as Vector
 import qualified Linear as Lin
 
 import App.Model.Body (Body)
 import App.Model.Dims (AU)
 import App.Model.OrbitSystem (OrbitSystem)
 import App.Uid (Uid)
-import Data.Vector.Storable (Vector)
 
 data PlottedPath = PlottedPath
   { startTime :: Int 
   , startPos :: V2 (AU Double) 
   , endTime :: Int
   , endPos :: V2 (AU Double)
-  , waypoints :: Vector (V2 (AU Double))
   }
   deriving (Generic, Show)
 
 plot :: Int -> V2 (AU Double) -> AU Double -> Uid Body -> OrbitSystem -> Maybe PlottedPath
-plot time position speed bodyUid orbitSystem =
-  let waypointDistance = speed * waypointTime
-  in plotWaypoints bodyUid orbitSystem waypointDistance (time + maxSearchTime) time position
-    <&> \(furtherWaypoints, endTime) ->
-      let waypoints = position :| furtherWaypoints
-      in PlottedPath
-        { startTime = time
-        , startPos = NonEmpty.head waypoints
-        , endTime = endTime
-        , endPos = NonEmpty.last waypoints
-        , waypoints = waypoints & toList & Vector.fromList
-        }
-
-plotWaypoints :: Uid Body -> OrbitSystem -> AU Double -> Int -> Int -> V2 (AU Double) -> Maybe ([V2 (AU Double)], Int)
-plotWaypoints !bodyUid !orbitSystem !waypointDistance !maxTime !time !pos =
-  let waypointDistSq = waypointDistance * waypointDistance
-      bodyPos = OrbitSystem.statesAtTime time orbitSystem ^?! at bodyUid . _Just . #position
-      distSq = Lin.qd pos bodyPos
-  in if 
-    | time >= maxTime -> Nothing
-    | distSq <= waypointDistSq ->
-      let ratio = sqrt $ distSq / waypointDistSq
-          finalTime = round $ fromIntegral time + ratio * waypointTime
-          finalPos = OrbitSystem.statesAtTime finalTime orbitSystem ^?! at bodyUid . _Just . #position
-      in Just ([finalPos], finalTime)
-    | otherwise ->
-      let time' = time + waypointTime
-          pos' = pos + waypointDistance *^ Lin.normalize (bodyPos - pos)
-      in plotWaypoints bodyUid orbitSystem waypointDistance maxTime time' pos'
-        <&> \(nextPositions, finalTime) -> (pos' : nextPositions, finalTime)
+plot startTime startPos speed bodyUid orbitSystem = do
+  (beforeCrudeApprox, _) <- approxArrival (16 * 3600) 0
+  (beforeFinerApprox, _) <- approxArrival 1800 beforeCrudeApprox
+  (_, endDtime) <- approxArrival 1 beforeFinerApprox
+  let 
+    endTime = startTime + endDtime
+    endPos = OrbitSystem.statesAtTime endTime orbitSystem ^?! at bodyUid . _Just . #position
+  pure PlottedPath{ startTime, startPos, endTime, endPos }
+  where
+    approxArrival :: Int -> Int -> Maybe (Int, Int)
+    approxArrival !timeStep !dtime =
+      let !reachSq = 
+            let reach = speed * fromIntegral dtime
+            in reach * reach
+          !distSq =
+            let time = startTime + dtime
+                pos = OrbitSystem.statesAtTime time orbitSystem ^?! at bodyUid . _Just . #position
+            in Lin.qd startPos pos
+          !dtime' = dtime + timeStep
+          approxTime = 
+            let lastReach = speed * fromIntegral (dtime - timeStep)
+                lastReachSq = lastReach * lastReach
+                ratio = sqrt $ (distSq - lastReachSq) / (reachSq - lastReachSq)
+            in dtime - timeStep + round (ratio * fromIntegral timeStep)
+      in if 
+        | reachSq >= distSq -> Just (dtime - timeStep, approxTime)
+        | dtime' <= maxSearchTime -> approxArrival timeStep dtime'
+        | otherwise -> Nothing
 
 atTime :: Int -> PlottedPath -> V2 (AU Double)
-atTime time PlottedPath{ startTime, startPos, endTime, endPos, waypoints }
+atTime time PlottedPath{ startTime, startPos, endTime, endPos }
   | time <= startTime = startPos
   | time >= endTime = endPos
   | otherwise =
-    let i = quot (time - startTime) waypointTime
-        timeOfLastWaypoint = startTime + i * waypointTime
-        timeSinceLastWaypoint = time - timeOfLastWaypoint
-        currentSectionTime
-          | (i + 2 == Vector.length waypoints) = endTime - timeOfLastWaypoint
-          | otherwise = waypointTime
-        ratio = fromIntegral timeSinceLastWaypoint / fromIntegral currentSectionTime
-    in case (,) <$> waypoints ^? ix i <*> waypoints ^? ix (i + 1) of
-      Just (prevPos, nextPos) -> Lin.lerp ratio nextPos prevPos
-      Nothing -> error "Invariant broken in PlottedPath"
-
-waypointTime :: Num a => a
-waypointTime = 24 * 3600
+    let ratio = fromIntegral (time - startTime) / fromIntegral (endTime - startTime)
+    in Lin.lerp ratio endPos startPos
 
 maxSearchTime :: Num a => a
-maxSearchTime = 1024 * 24 * 3600
+maxSearchTime = 2048 * 24 * 3600

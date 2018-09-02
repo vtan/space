@@ -68,10 +68,11 @@ renderShip camera Ship{ Ship.position, order } =
     SDL.rendererDrawColor renderer $= V4 255 255 0 255
     SDL.drawLines renderer points
     case order of
-      Just Ship.MoveToBody{ Ship.path = PlottedPath{ waypoints } } -> do
+      Just Ship.MoveToBody{ Ship.path = PlottedPath{ startPos, endPos } } -> do
         SDL.rendererDrawColor renderer $= V4 255 255 255 255
-        let pathPoints = waypoints & Vector.map (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
-        SDL.drawLines renderer pathPoints
+        let startPos' = startPos & (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
+            endPos' = endPos & (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
+        SDL.drawLine renderer startPos' endPos'
       Nothing -> pure ()
 
 collectLabels :: Camera (AU Double) Double -> GameState -> [(V2 Int, [Text])]
