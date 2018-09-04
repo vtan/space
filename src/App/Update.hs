@@ -15,6 +15,7 @@ import qualified Linear as Lin
 import qualified SDL
 
 import App.Model.Body (Body(..))
+import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.BodyMinerals (MineralData(..))
@@ -115,14 +116,15 @@ handleColonyWindow gs = do
             , fromString $ printf "%.2f t" available
             , fromString $ printf "%.0f%%" (100 * accessibility)
             ) -- TODO table widget?
-    Widget.labels (p + V2 (128 + 4) 0) 16 mineralLabels
-    Widget.labels (p + V2 (128 + 4 + 64) 0) 16 availableLabels
-    Widget.labels (p + V2 (128 + 4 + 128) 0) 16 accessibilityLabels
+    Widget.label (p + V2 (128 + 4) 0) "Mineable resources"
+    Widget.labels (p + V2 (128 + 4) 16) 16 mineralLabels
+    Widget.labels (p + V2 (128 + 4 + 64) 16) 16 availableLabels
+    Widget.labels (p + V2 (128 + 4 + 128) 16) 16 accessibilityLabels
 
-    let q = p + V2 (128 + 4) (length minerals * 16 + 8)
+    let q = p + V2 (128 + 4) (length minerals * 16 + 24)
     case gs ^. #colonies . at uid of
-      Just Colony{ stockpile, mines } -> do
-        Widget.label q "Colony stockpile"
+      Just Colony{ stockpile, mines, buildingTask } -> do
+        Widget.label q "Resource stockpile"
         let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
               ( fromString $ printf "Mineral #%d" mineral
               , fromString $ printf "%.2f t" qty
@@ -135,11 +137,21 @@ handleColonyWindow gs = do
               , fromString $ printf "%d mines" mineQty
               )
             r = q + V2 0 (length stockpile * 16 + 24)
-        Widget.label r "Colony industry"
+        Widget.label r "Mining"
         Widget.labels (r + V2 0 16) 16 mineLabels
         Widget.labels (r + V2 64 16) 16 mineQtyLabels
 
-        pure gs
+        let s = r + V2 0 (length mines * 16 + 8)
+        case buildingTask of
+          Just BuildingTask{ minedMineral } ->
+            Widget.label (s + V2 0 16) (fromString $ printf "Building: Mine for Mineral #%d" minedMineral)
+          Nothing ->
+            Widget.label (s + V2 0 16) "Building: nothing"
+        buildNewMine <- Widget.button (Rect (s + V2 0 32) (V2 128 16)) "Build mine for Mineral #0"
+
+        pure $ if buildNewMine
+          then Logic.buildMineOnColony uid 0 gs
+          else gs
       Nothing -> do
         found <- Widget.button (Rect q (V2 128 16)) "Found colony"
         pure $ if found

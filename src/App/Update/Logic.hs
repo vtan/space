@@ -9,7 +9,8 @@ import qualified App.Model.Ship as Ship
 import qualified Data.HashMap.Strict as HashMap
 
 import App.Model.Body (Body(..))
-import App.Model.BodyMinerals (BodyMinerals, MineralData(..))
+import App.Model.BodyMinerals (BodyMinerals, Mineral, MineralData(..))
+import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.Dims (AU)
 import App.Model.GameState (GameState(..))
@@ -45,12 +46,23 @@ productionTick gs@GameState{ bodies } =
   gs & reduce bodies (\gs' Body{ Body.uid } ->
       let colony = gs' ^. #colonies . at uid
           minerals = gs' ^. #bodyMinerals . at uid
-      in (mineColonies uid <$> colony <*> minerals <*> pure gs')
-        & fromMaybe gs'
+          build = (buildOnColony uid <$> colony) & fromMaybe id
+          mine = (mineOnColony uid <$> colony <*> minerals) & fromMaybe id
+      in gs' & (build >>> mine)
     )
 
-mineColonies :: Uid Body -> Colony -> BodyMinerals -> GameState -> GameState
-mineColonies bodyUid Colony{ mines } minerals gs =
+buildOnColony :: Uid Body -> Colony -> GameState -> GameState
+buildOnColony bodyUid col@Colony{ buildingTask } gs@GameState{ time } =
+  case buildingTask of
+    Just BuildingTask{ minedMineral, finishTime } | finishTime <= time ->
+      let col' = col
+            & #mines . at minedMineral . non 0 +~ 1
+            & #buildingTask .~ Nothing
+      in gs & #colonies . at bodyUid . _Just .~ col'
+    _ -> gs
+
+mineOnColony :: Uid Body -> Colony -> BodyMinerals -> GameState -> GameState
+mineOnColony bodyUid Colony{ mines } minerals gs =
   let mineralsReservesMines = itoList $ HashMap.intersectionWith (,) minerals mines
   in gs & reduce mineralsReservesMines (\gs' (mineral, (MineralData{ available, accessibility }, mineQty)) ->
       let minedQty = min (fromIntegral mineQty * 0.01 * accessibility) available
@@ -101,4 +113,18 @@ cancelShipOrder Ship{ Ship.uid } gs =
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
-  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty }
+  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty, buildingTask = Nothing }
+
+buildMineOnColony :: Uid Body -> Mineral -> GameState -> GameState
+buildMineOnColony bodyUid minedMineral gs =
+  gs & #colonies . at bodyUid . _Just %~ \colony ->
+    let buildingMaterials = colony ^. #stockpile . at 0 . non 0
+        cost = 1
+        finishTime = (gs ^. #time) + 30 * 24 * 3600
+        newTask = BuildingTask{ minedMineral, finishTime }
+    in case colony ^. #buildingTask of
+      Nothing | buildingMaterials >= cost ->
+        colony
+          & #stockpile . at 0 . non 0 -~ cost
+          & #buildingTask .~ Just newTask
+      _ -> colony
