@@ -16,6 +16,13 @@ fromList = UidMap . IntMap.fromList . over (mapped . _1) getInt
 fromEntities :: (a -> Uid i) -> [a] -> UidMap i a
 fromEntities f xs = UidMap . IntMap.fromList $ App.Prelude.zip (map (getInt . f) xs) xs
 
+nextUid :: UidMap i a -> Uid i
+nextUid (UidMap xs) =
+  IntMap.maxViewWithKey xs
+    & fmap (fst . fst)
+    & fromMaybe 0
+    & Uid
+
 zip :: UidMap i a -> UidMap i b -> UidMap i (a, b)
 zip (UidMap xs) (UidMap ys) = UidMap $ IntMap.intersectionWith (,) xs ys
 

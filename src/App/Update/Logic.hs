@@ -3,9 +3,12 @@ module App.Update.Logic where
 import App.Prelude
 
 import qualified App.Model.Body as Body
+import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.OrbitSystem as OrbitSystem
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
+import qualified App.Model.ShipBuildingTask as ShipBuildingTask
+import qualified App.UidMap as UidMap
 import qualified Data.HashMap.Strict as HashMap
 
 import App.Model.Body (Body(..))
@@ -15,6 +18,7 @@ import App.Model.Colony (Colony(..))
 import App.Model.Dims (AU)
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
+import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Uid (Uid(..))
 import App.Util (reduce)
 import Data.String (fromString)
@@ -47,18 +51,39 @@ productionTick gs@GameState{ bodies } =
       let colony = gs' ^. #colonies . at uid
           minerals = gs' ^. #bodyMinerals . at uid
           build = (buildOnColony uid <$> colony) & fromMaybe id
+          buildShip = (buildShipOnColony uid <$> colony) & fromMaybe id
           mine = (mineOnColony uid <$> colony <*> minerals) & fromMaybe id
-      in gs' & (build >>> mine)
+      in gs' & (build >>> buildShip >>> mine)
     )
 
 buildOnColony :: Uid Body -> Colony -> GameState -> GameState
 buildOnColony bodyUid col@Colony{ buildingTask } gs@GameState{ time } =
   case buildingTask of
-    Just BuildingTask{ minedMineral, finishTime } | finishTime <= time ->
+    Just BuildingTask{ minedMineral, BuildingTask.finishTime } | finishTime <= time ->
       let col' = col
             & #mines . at minedMineral . non 0 +~ 1
             & #buildingTask .~ Nothing
       in gs & #colonies . at bodyUid . _Just .~ col'
+    _ -> gs
+
+buildShipOnColony :: Uid Body -> Colony -> GameState -> GameState
+buildShipOnColony bodyUid Colony{ shipBuildingTask } gs@GameState{ time } =
+  case shipBuildingTask of
+    Just ShipBuildingTask{ ShipBuildingTask.finishTime } | finishTime <= time ->
+      let shipUid@(Uid shipNo) = gs ^. #ships & UidMap.nextUid
+          ship = do
+            position <- gs ^? #bodyOrbitalStates . at bodyUid . _Just . #position
+            pure $ Ship
+              { Ship.uid = shipUid
+              , Ship.name = fromString $ "Ship " ++ show shipNo
+              , Ship.position
+              , Ship.speed = 1 / 1495970 -- 100 km/s
+              , Ship.order = Nothing
+              , Ship.attachedToBody = Just bodyUid
+              }
+      in gs
+        & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
+        & #ships . at shipUid .~ ship
     _ -> gs
 
 mineOnColony :: Uid Body -> Colony -> BodyMinerals -> GameState -> GameState
@@ -113,18 +138,32 @@ cancelShipOrder Ship{ Ship.uid } gs =
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
-  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty, buildingTask = Nothing }
+  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty, buildingTask = Nothing, shipBuildingTask = Nothing }
 
-buildMineOnColony :: Uid Body -> Mineral -> GameState -> GameState
-buildMineOnColony bodyUid minedMineral gs =
+startBuildingTask :: Uid Body -> Mineral -> GameState -> GameState
+startBuildingTask bodyUid minedMineral gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
     let buildingMaterials = colony ^. #stockpile . at 0 . non 0
         cost = 1
         finishTime = (gs ^. #time) + 30 * 24 * 3600
-        newTask = BuildingTask{ minedMineral, finishTime }
+        newTask = BuildingTask{ minedMineral, BuildingTask.finishTime }
     in case colony ^. #buildingTask of
       Nothing | buildingMaterials >= cost ->
         colony
           & #stockpile . at 0 . non 0 -~ cost
           & #buildingTask .~ Just newTask
+      _ -> colony
+
+startShipBuildingTask :: Uid Body -> GameState -> GameState
+startShipBuildingTask bodyUid gs =
+  gs & #colonies . at bodyUid . _Just %~ \colony ->
+    let buildingMaterials = colony ^. #stockpile . at 0 . non 0
+        cost = 2
+        finishTime = (gs ^. #time) + 60 * 24 * 3600
+        newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
+    in case colony ^. #shipBuildingTask of
+      Nothing | buildingMaterials >= cost ->
+        colony
+          & #stockpile . at 0 . non 0 -~ cost
+          & #shipBuildingTask .~ Just newTask
       _ -> colony

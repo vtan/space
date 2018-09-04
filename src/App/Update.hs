@@ -20,6 +20,7 @@ import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.BodyMinerals (MineralData(..))
 import App.Model.Ship (Ship(..))
+import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Rect (Rect(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
@@ -123,7 +124,7 @@ handleColonyWindow gs = do
 
     let q = p + V2 (128 + 4) (length minerals * 16 + 24)
     case gs ^. #colonies . at uid of
-      Just Colony{ stockpile, mines, buildingTask } -> do
+      Just Colony{ stockpile, mines, buildingTask, shipBuildingTask } -> do
         Widget.label q "Resource stockpile"
         let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
               ( fromString $ printf "Mineral #%d" mineral
@@ -149,9 +150,15 @@ handleColonyWindow gs = do
             Widget.label (s + V2 0 16) "Building: nothing"
         buildNewMine <- Widget.button (Rect (s + V2 0 32) (V2 128 16)) "Build mine for Mineral #0"
 
-        pure $ if buildNewMine
-          then Logic.buildMineOnColony uid 0 gs
-          else gs
+        case shipBuildingTask of
+          Just ShipBuildingTask{} -> Widget.label (s + V2 0 48) "Producing: Ship"
+          Nothing -> Widget.label (s + V2 0 48) "Producing: nothing"
+        buildNewShip <- Widget.button (Rect (s + V2 0 64) (V2 128 16)) "Produce ship"
+
+        pure $ if
+          | buildNewMine -> Logic.startBuildingTask uid 0 gs
+          | buildNewShip -> Logic.startShipBuildingTask uid gs
+          | otherwise -> gs
       Nothing -> do
         found <- Widget.button (Rect q (V2 128 16)) "Found colony"
         pure $ if found
