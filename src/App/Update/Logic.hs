@@ -15,7 +15,6 @@ import App.Model.Body (Body(..))
 import App.Model.BodyMinerals (BodyMinerals, Mineral, MineralData(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
-import App.Model.Dims (AU)
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
@@ -111,20 +110,6 @@ updateShip gs ship =
         Just position ->
           ship & #position .~ position
         Nothing -> ship
-
-addShip :: V2 (AU Double) -> GameState -> GameState
-addShip pos gs =
-  let shipNo = length (gs ^. #ships)
-      shipUid = Uid shipNo
-      ship = Ship
-        { Ship.uid = shipUid
-        , Ship.name = fromString $ "Ship " ++ show shipNo
-        , Ship.position = pos
-        , Ship.speed = 1 / 1495970 -- 100 km/s
-        , Ship.order = Nothing
-        , Ship.attachedToBody = Nothing
-        }
-  in gs & #ships . at shipUid .~ Just ship
 
 moveShipToBody :: Ship -> Uid Body -> GameState -> GameState
 moveShipToBody Ship{ Ship.uid, Ship.position, speed } bodyUid gs =

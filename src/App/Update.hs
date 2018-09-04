@@ -59,9 +59,6 @@ handleEvent :: GameState -> SDL.Event -> GameState
 handleEvent gs = \case
   MousePressEvent SDL.ButtonLeft _ ->
     gs & #movingViewport .~ True
-  MousePressEvent SDL.ButtonRight (fmap fromIntegral -> posPx) ->
-    let pos = posPx & Camera.screenToPoint (gs ^. #camera)
-    in gs & Logic.addShip pos
   MouseReleaseEvent _ ->
     gs & #movingViewport .~ False
   MouseMotionEvent (fmap fromIntegral -> motionPx) ->
