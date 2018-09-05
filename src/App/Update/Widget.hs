@@ -31,7 +31,7 @@ button bounds text = do
     ) <&> (not . null)
   Updating.renderUI $ do
     r <- view #renderer
-    let color = if clicked then V4 31 171 171 255 else V4 31 31 31 255
+    let color = if clicked then V4 31 171 171 255 else V4 71 71 71 255
     SDL.rendererDrawColor r $= color
     SDL.fillRect r (Just $ Rect.toSdl bounds)
     Rendering.text (bounds ^. #xy) text

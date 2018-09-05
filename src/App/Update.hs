@@ -96,11 +96,11 @@ handleUI gs =
 
 handleColonyWindow :: GameState -> Updating GameState
 handleColonyWindow gs = do
-  Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Colonies"
-  let p = V2 36 52
+  Widget.window (Rect (V2 32 32) (V2 (4 + 200 + 4 + 256 + 4) (500 + 24))) 20 "Colonies"
+  let p = V2 36 56
 
   (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
-    (Rect p (V2 128 256)) 16
+    (Rect p (V2 200 500)) 20
     (view #uid) (view #name)
     (gs ^.. #bodies . folded)
   for_ clickedBody $ \Body{ Body.uid } ->
@@ -114,12 +114,12 @@ handleColonyWindow gs = do
             , fromString $ printf "%.2f t" available
             , fromString $ printf "%.0f%%" (100 * accessibility)
             ) -- TODO table widget?
-    Widget.label (p + V2 (128 + 4) 0) "Mineable resources"
-    Widget.labels (p + V2 (128 + 4) 16) 16 mineralLabels
-    Widget.labels (p + V2 (128 + 4 + 64) 16) 16 availableLabels
-    Widget.labels (p + V2 (128 + 4 + 128) 16) 16 accessibilityLabels
+    Widget.label (p + V2 (200 + 4) 0) "Mineable resources"
+    Widget.labels (p + V2 (200 + 4) 20) 20 mineralLabels
+    Widget.labels (p + V2 (200 + 4 + 100) 20) 20 availableLabels
+    Widget.labels (p + V2 (200 + 4 + 180) 20) 20 accessibilityLabels
 
-    let q = p + V2 (128 + 4) (length minerals * 16 + 24)
+    let q = p + V2 (200 + 4) (length minerals * 20 + 28)
     case gs ^. #colonies . at uid of
       Just Colony{ stockpile, mines, buildingTask, shipBuildingTask } -> do
         Widget.label q "Resource stockpile"
@@ -127,37 +127,37 @@ handleColonyWindow gs = do
               ( fromString $ printf "Mineral #%d" mineral
               , fromString $ printf "%.2f t" qty
               )
-        Widget.labels (q + V2 0 16) 16 itemLabels
-        Widget.labels (q + V2 64 16) 16 qtyLabels
+        Widget.labels (q + V2 0 20) 20 itemLabels
+        Widget.labels (q + V2 100 20) 20 qtyLabels
 
         let (mineLabels, mineQtyLabels) = unzip $ itoList mines <&> \(mineral, mineQty) ->
               ( fromString $ printf "Mineral #%d" mineral
               , fromString $ printf "%d mines" mineQty
               )
-            r = q + V2 0 (length stockpile * 16 + 24)
+            r = q + V2 0 (length stockpile * 20 + 28)
         Widget.label r "Mining"
-        Widget.labels (r + V2 0 16) 16 mineLabels
-        Widget.labels (r + V2 64 16) 16 mineQtyLabels
+        Widget.labels (r + V2 0 20) 20 mineLabels
+        Widget.labels (r + V2 100 20) 20 mineQtyLabels
 
-        let s = r + V2 0 (length mines * 16 + 8)
+        let s = r + V2 0 (length mines * 20 + 8)
         case buildingTask of
           Just BuildingTask{ minedMineral } ->
-            Widget.label (s + V2 0 16) (fromString $ printf "Building: Mine for Mineral #%d" minedMineral)
+            Widget.label (s + V2 0 20) (fromString $ printf "Building: Mine for Mineral #%d" minedMineral)
           Nothing ->
-            Widget.label (s + V2 0 16) "Building: nothing"
-        buildNewMine <- Widget.button (Rect (s + V2 0 32) (V2 128 16)) "Build mine for Mineral #0"
+            Widget.label (s + V2 0 20) "Building: nothing"
+        buildNewMine <- Widget.button (Rect (s + V2 0 40) (V2 256 20)) "Build mine for Mineral #0"
 
         case shipBuildingTask of
-          Just ShipBuildingTask{} -> Widget.label (s + V2 0 48) "Producing: Ship"
-          Nothing -> Widget.label (s + V2 0 48) "Producing: nothing"
-        buildNewShip <- Widget.button (Rect (s + V2 0 64) (V2 128 16)) "Produce ship"
+          Just ShipBuildingTask{} -> Widget.label (s + V2 0 68) "Producing: Ship"
+          Nothing -> Widget.label (s + V2 0 68) "Producing: nothing"
+        buildNewShip <- Widget.button (Rect (s + V2 0 88) (V2 256 20)) "Produce ship"
 
         pure $ if
           | buildNewMine -> Logic.startBuildingTask uid 0 gs
           | buildNewShip -> Logic.startShipBuildingTask uid gs
           | otherwise -> gs
       Nothing -> do
-        found <- Widget.button (Rect q (V2 128 16)) "Found colony"
+        found <- Widget.button (Rect q (V2 128 20)) "Found colony"
         pure $ if found
           then Logic.foundColony uid gs
           else gs
@@ -165,11 +165,11 @@ handleColonyWindow gs = do
 
 handleShipWindow :: GameState -> Updating GameState
 handleShipWindow gs = do
-  Widget.window (Rect (V2 32 32) (V2 (128 + 256 + 16) (256 + 24))) 16 "Ships"
-  let p = V2 36 52
+  Widget.window (Rect (V2 32 32) (V2 (4 + 600 + 5) (500 + 24))) 20 "Ships"
+  let p = V2 36 56
 
   (selectedShip, clickedShip) <- use (#ui . #selectedShipUid) >>= Widget.listBox
-    (Rect p (V2 128 256)) 16
+    (Rect p (V2 200 500)) 20
     (view #uid) (view #name)
     (gs ^.. #ships . folded)
   for_ clickedShip $ \Ship{ Ship.uid, Ship.name } -> do
@@ -178,9 +178,9 @@ handleShipWindow gs = do
 
   gsMay' <- for selectedShip $ \ship@Ship{ Ship.uid, Ship.speed, Ship.order } -> do
     ename <- use (#ui . #editedShipName) <&> fromMaybe "???"
-    ename' <- Widget.textBox "shipName" (Rect (p + V2 (128 + 4) 0) (V2 128 12)) ename
+    ename' <- Widget.textBox "shipName" (Rect (p + V2 (200 + 4) 0) (V2 160 20)) ename
     #ui . #editedShipName .= Just ename'
-    rename <- Widget.button (Rect (p + V2 (128 + 4 + 128 + 4) 0) (V2 128 12)) "Rename"
+    rename <- Widget.button (Rect (p + V2 (200 + 4 + 160 + 4) 0) (V2 100 20)) "Rename"
     
     let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
         orderLabels = case order of
@@ -194,13 +194,13 @@ handleShipWindow gs = do
                     in (printf "move to %s (act. spd. %.2f)" bodyName actualSpeed, printf "%s, %s" etaDate etaDuration)
             in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
           Nothing -> ["No current order"]
-    Widget.labels (p + V2 (128 + 4) 16) 16 (commonLabels ++ orderLabels)
+    Widget.labels (p + V2 (200 + 4) 28) 20 (commonLabels ++ orderLabels)
 
-    moveTo <- Widget.button (Rect (p + V2 (128 + 4) 64) (V2 56 12)) "Move to..."
-    cancel <- Widget.button (Rect (p + V2 (128 + 4 + 56 + 4) 64) (V2 56 12)) "Cancel"
+    moveTo <- Widget.button (Rect (p + V2 (200 + 4) 72) (V2 80 20)) "Move to..."
+    cancel <- Widget.button (Rect (p + V2 (200 + 4 + 80 + 4) 72) (V2 80 20)) "Cancel"
 
     (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
-      (Rect (p + V2 (128 + 4) 80) (V2 128 176)) 16
+      (Rect (p + V2 (200 + 4) 100) (V2 200 400)) 20
       (view #uid) (view #name)
       (gs ^.. #bodies . folded)
     when (clickedBody & has _Just) $

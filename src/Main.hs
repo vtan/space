@@ -17,10 +17,10 @@ main = do
   SDL.initializeAll
   SDL.TTF.initialize
   window <- SDL.createWindow "" 
-    $ SDL.defaultWindow { SDL.windowInitialSize = V2 1280 720 }
+    $ SDL.defaultWindow { SDL.windowInitialSize = V2 1728 972 }
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
-  font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 12
+  font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
   let renderContext = Rendering.newContext renderer font
   SDL.Raw.startTextInput
 
