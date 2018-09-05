@@ -19,7 +19,7 @@ fromEntities f xs = UidMap . IntMap.fromList $ App.Prelude.zip (map (getInt . f)
 nextUid :: UidMap i a -> Uid i
 nextUid (UidMap xs) =
   IntMap.maxViewWithKey xs
-    & fmap (fst . fst)
+    & fmap (fst >>> fst >>> (+ 1))
     & fromMaybe 0
     & Uid
 
