@@ -1,13 +1,13 @@
-module App.Update 
+module App.Update
   ( update )
 where
 
 import App.Prelude
 
-import qualified App.Camera as Camera
 import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
 import qualified App.Update.Logic as Logic
+import qualified App.Update.SystemMap as SystemMap
 import qualified App.Update.Widget as Widget
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
@@ -24,14 +24,13 @@ import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Rect (Rect(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.Util (clamp, showDate, showDuration)
+import App.Util (showDate, showDuration)
 import Data.String (fromString)
-import Numeric.Extras (cbrt)
 
 update :: GameState -> Updating GameState
 update gs = do
   hasFocusedWidget <- use #focusedWidget <&> has _Just
-  toggleWindow <- Updating.consumeEvents (\case 
+  toggleWindow <- Updating.consumeEvents (\case
       KeyPressEvent SDL.ScancodeC | not hasFocusedWidget -> Just UIState.ColonyWindow
       KeyPressEvent SDL.ScancodeS | not hasFocusedWidget -> Just UIState.ShipWindow
       _ -> Nothing
@@ -44,48 +43,16 @@ update gs = do
       else #ui . #activeWindow .= Just window
     Nothing -> pure ()
 
-  clickedAnywhere <- Updating.filterEvents (\case MousePressEvent _ _ -> Just (); _ -> Nothing) 
+  clickedAnywhere <- Updating.filterEvents (\case MousePressEvent _ _ -> Just (); _ -> Nothing)
     <&> (not . null)
   when clickedAnywhere $ #focusedWidget .= Nothing -- if clicked on a focusable widget, it will consume the click and set the focus
 
   gs' <- handleUI gs
-  gs'' <- use #events <&> foldl' handleEvent gs'
+  gs'' <- SystemMap.update gs'
 
   pure $ case gs ^. #timeStepPerFrame of
     Just step -> gs'' & Logic.stepTime step
     Nothing -> gs''
-
-handleEvent :: GameState -> SDL.Event -> GameState
-handleEvent gs = \case
-  MousePressEvent SDL.ButtonLeft _ ->
-    gs & #movingViewport .~ True
-  MouseReleaseEvent _ ->
-    gs & #movingViewport .~ False
-  MouseMotionEvent (fmap fromIntegral -> motionPx) ->
-    if gs ^. #movingViewport
-    then 
-      let motionAu = Camera.screenToVector (gs ^. #camera) motionPx
-      in gs & #camera . #eyeFrom -~ motionAu
-    else gs
-  MouseWheelEvent (fromIntegral -> amount) ->
-    if gs ^. #movingViewport
-    then gs
-    else
-      let zoomLevel = cbrt $ gs ^. #camera . #scale . _x
-          zoomLevel' = clamp 1.5 (zoomLevel + 0.5 * amount) 70
-          auInPixels' = zoomLevel' * zoomLevel' * zoomLevel'
-          scale' = V2 auInPixels' (- auInPixels')
-      in gs & #camera . #scale .~ scale'
-  KeyPressEvent SDL.ScancodePeriod | gs ^. #timeStepPerFrame & has _Nothing -> 
-    let now = gs ^. #time
-    in gs & Logic.stepTime (Logic.timeUntilNextMidnight now)
-  KeyPressEvent SDL.ScancodeGrave -> gs & #timeStepPerFrame .~ Nothing
-  KeyPressEvent SDL.Scancode1 -> gs & #timeStepPerFrame .~ Just 1
-  KeyPressEvent SDL.Scancode2 -> gs & #timeStepPerFrame .~ Just 10
-  KeyPressEvent SDL.Scancode3 -> gs & #timeStepPerFrame .~ Just 100
-  KeyPressEvent SDL.Scancode4 -> gs & #timeStepPerFrame .~ Just 1200
-  KeyPressEvent SDL.Scancode5 -> gs & #timeStepPerFrame .~ Just (3 * 3600)
-  _ -> gs
 
 handleUI :: GameState -> Updating GameState
 handleUI gs =
@@ -109,7 +76,7 @@ handleColonyWindow gs = do
   gsMay' <- for selectedBody $ \Body{ Body.uid } -> do
     let minerals = gs ^@.. #bodyMinerals . at uid . _Just . ifolded
         (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
-          minerals <&> \(mineral, MineralData{ available, accessibility }) -> 
+          minerals <&> \(mineral, MineralData{ available, accessibility }) ->
             ( fromString $ printf "Mineral #%d" mineral
             , fromString $ printf "%.2f t" available
             , fromString $ printf "%.0f%%" (100 * accessibility)
@@ -181,7 +148,7 @@ handleShipWindow gs = do
     ename' <- Widget.textBox "shipName" (Rect (p + V2 (200 + 4) 0) (V2 160 20)) ename
     #ui . #editedShipName .= Just ename'
     rename <- Widget.button (Rect (p + V2 (200 + 4 + 160 + 4) 0) (V2 100 20)) "Rename"
-    
+
     let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
         orderLabels = case order of
           Just o ->
@@ -205,8 +172,8 @@ handleShipWindow gs = do
       (gs ^.. #bodies . folded)
     when (clickedBody & has _Just) $
       #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
-    
-    let gs' 
+
+    let gs'
           | moveTo = Logic.moveShipToBody <$> pure ship <*> (selectedBody ^? _Just . #uid) <*> pure gs
           | cancel = Just (Logic.cancelShipOrder ship gs)
           | rename = Just (gs & #ships . at uid . _Just . #name .~ ename')

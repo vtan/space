@@ -1,4 +1,4 @@
-module App.Render
+module App.Render.SystemMap
   ( render )
 where
 

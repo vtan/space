@@ -4,7 +4,6 @@ import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
 import qualified App.Model.GameState as GameState
-import qualified App.Render as Render
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update as Update
 import qualified App.Update.Updating as Updating
@@ -34,8 +33,7 @@ main = do
     let (!gs', !us') = Update.update gs
           & Updating.runFrame (fc ^. #lastFrameTime) events us
         Updating.State{ Updating.deferredRendering } = us'
-    ((), rs') <- (Render.render gs' *> deferredRendering)
-      & Rendering.runFrame renderContext rs 
+    ((), rs') <- deferredRendering & Rendering.runFrame renderContext rs 
 
     if us' ^. #quit
     then pure ()
