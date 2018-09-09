@@ -6,7 +6,6 @@ import App.Prelude
 
 import qualified App.Camera as Camera
 import qualified App.Model.Body as Body
-import qualified App.Model.OrbitSystem as OrbitSystem
 import qualified App.Model.OrbitalState as OrbitalState
 import qualified App.Model.Ship as Ship
 import qualified App.Render.Rendering as Rendering
@@ -19,7 +18,6 @@ import App.Camera (Camera)
 import App.Model.Body (Body(..))
 import App.Model.Dims
 import App.Model.GameState (GameState(..))
-import App.Model.OrbitSystem (OrbitSystem(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.PlottedPath (PlottedPath(..))
 import App.Model.Ship (Ship(..))
@@ -30,13 +28,13 @@ import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render gs@GameState{ orbitSystem, bodyOrbitalStates, ships, time, camera } = do
+render gs@GameState{ rootBody, bodyOrbitalStates, ships, time, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
-  for_ (OrbitSystem.subsystems orbitSystem) $ \os ->
-    for_ (bodyOrbitalStates ^. at (os ^. #body)) $ \st ->
-      renderOrbit camera os st
+  for_ (Body.allChildren rootBody) $ \body ->
+    for_ (bodyOrbitalStates ^. at (body ^. #uid)) $ \st ->
+      renderOrbit camera body st
   for_ ships $ renderShip camera
   ifor_ (collectLabels camera gs & toMap) $ \anchor labels ->
     ifor_ labels $ \row label ->
@@ -44,8 +42,8 @@ render gs@GameState{ orbitSystem, bodyOrbitalStates, ships, time, camera } = do
       in Rendering.text pos label
   Rendering.text (V2 8 8) (fromString $ showDate time)
 
-renderOrbit :: Camera (AU Double) Double -> OrbitSystem -> OrbitalState -> Rendering ()
-renderOrbit camera OrbitSystem{ orbitRadius } OrbitalState{ OrbitalState.position, orbitCenter } =
+renderOrbit :: Camera (AU Double) Double -> Body -> OrbitalState -> Rendering ()
+renderOrbit camera Body{ orbitRadius } OrbitalState{ OrbitalState.position, orbitCenter } =
   let orbitPoints = circlePoints
         & Vector.map (fmap AU >>> (orbitRadius *^) >>> (orbitCenter +) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
       bodyCenter = Camera.pointToScreen camera position
@@ -88,7 +86,7 @@ collectLabels camera GameState{ bodies, bodyOrbitalStates, ships } = bodyLabels 
       )
 
 circlePoints :: (Floating a, Vector.Storable a) => Vector (V2 a)
-circlePoints = 
+circlePoints =
   let size = 64
   in Vector.fromListN (size + 1) $ do
     n <- [0 .. size] :: [Int]

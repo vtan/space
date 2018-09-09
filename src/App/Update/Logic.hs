@@ -4,7 +4,6 @@ import App.Prelude
 
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
-import qualified App.Model.OrbitSystem as OrbitSystem
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
@@ -38,7 +37,7 @@ jumpTimeTo :: Int -> GameState -> GameState
 jumpTimeTo time gs =
   gs
     & #time .~ time
-    & #bodyOrbitalStates .~ OrbitSystem.statesAtTime time (gs ^. #orbitSystem)
+    & #bodyOrbitalStates .~ Body.statesAtTime time (gs ^. #rootBody)
     & (\gs' -> gs' & #ships . traversed %~ updateShip gs')
 
 timeUntilNextMidnight :: Int -> Int
@@ -96,16 +95,16 @@ mineOnColony bodyUid Colony{ mines } minerals gs =
     )
 
 updateShip :: GameState -> Ship -> Ship
-updateShip gs ship = 
+updateShip gs ship =
   case ship ^. #order of
-    Just Ship.MoveToBody{ Ship.path, Ship.bodyUid } -> 
+    Just Ship.MoveToBody{ Ship.path, Ship.bodyUid } ->
       let now = gs ^. #time
           arrived = now >= path ^. #endTime
       in ship
         & #position .~ (path & PlottedPath.atTime now)
         & (if arrived then #order .~ Nothing else id)
         & #attachedToBody .~ (if arrived then Just bodyUid else Nothing)
-    Nothing -> 
+    Nothing ->
       case ship ^. #attachedToBody >>= (\b -> gs ^? #bodyOrbitalStates . at b . _Just . #position) of
         Just position ->
           ship & #position .~ position
@@ -113,7 +112,7 @@ updateShip gs ship =
 
 moveShipToBody :: Ship -> Uid Body -> GameState -> GameState
 moveShipToBody Ship{ Ship.uid, Ship.position, speed } bodyUid gs =
-  let pathMay = PlottedPath.plot (gs ^. #time) position speed bodyUid (gs ^. #orbitSystem)
+  let pathMay = PlottedPath.plot (gs ^. #time) position speed bodyUid (gs ^. #rootBody)
       orderMay = Ship.MoveToBody <$> pure bodyUid <*> pathMay
   in gs & #ships . at uid . _Just . #order .~ orderMay
 
