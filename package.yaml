@@ -34,7 +34,6 @@ dependencies:
   - text
   - unordered-containers
   - vector
-  - writer-cps-mtl
 
 default-extensions:
   - BangPatterns

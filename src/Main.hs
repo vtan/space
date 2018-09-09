@@ -31,9 +31,10 @@ main = do
       Nothing -> pure ()
 
     events <- SDL.pollEvents
-    let (!gs', !us', !uiRendering) = Update.update gs
+    let (!gs', !us') = Update.update gs
           & Updating.runFrame (fc ^. #lastFrameTime) events us
-    ((), rs') <- (Render.render gs' *> uiRendering)
+        Updating.State{ Updating.deferredRendering } = us'
+    ((), rs') <- (Render.render gs' *> deferredRendering)
       & Rendering.runFrame renderContext rs 
 
     if us' ^. #quit

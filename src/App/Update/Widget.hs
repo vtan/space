@@ -14,11 +14,11 @@ import App.Update.Updating (Updating)
 import App.Update.SlotId (SlotId)
 
 label :: V2 Int -> Text -> Updating ()
-label pos text = Updating.renderUI $ Rendering.text pos text
+label pos text = Updating.render $ Rendering.text pos text
 
 labels :: V2 Int -> Int -> [Text] -> Updating ()
 labels firstPos verticalSpacing texts =
-  Updating.renderUI $
+  Updating.render $
     ifor_ texts $ \i text ->
       let pos = firstPos & _y +~ i * verticalSpacing
       in Rendering.text pos text
@@ -29,7 +29,7 @@ button bounds text = do
       MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
       _ -> Nothing
     ) <&> (not . null)
-  Updating.renderUI $ do
+  Updating.render $ do
     r <- view #renderer
     let color = if clicked then V4 31 171 171 255 else V4 71 71 71 255
     SDL.rendererDrawColor r $= color
@@ -53,7 +53,7 @@ listBox bounds verticalSpacing toIx toText items selectedIx = do
         if elem (toIx item) selectedIx'
         then (Just item, Just row, toText item : accTexts)
         else (accItem, accRow, toText item : accTexts)
-  Updating.renderUI $ do
+  Updating.render $ do
     r <- view #renderer
     SDL.rendererDrawColor r $= V4 31 31 31 255
     SDL.fillRect r (Just $ Rect.toSdl bounds)
@@ -70,7 +70,7 @@ listBox bounds verticalSpacing toIx toText items selectedIx = do
 
 window :: Rect Int -> Int -> Text -> Updating ()
 window bounds titleHeight title =
-  Updating.renderUI $ do
+  Updating.render $ do
     let titleBounds = bounds & #wh . _y .~ titleHeight
         restBounds = bounds 
           & #xy . _y +~ titleHeight
@@ -101,7 +101,7 @@ textBox slotId bounds text = do
         _ -> Nothing
       pure $ foldl' (&) text textMods
     else pure text
-  Updating.renderUI $ do
+  Updating.render $ do
     r <- view #renderer
     SDL.rendererDrawColor r $= V4 63 63 63 255
     SDL.fillRect r (Just $ Rect.toSdl bounds)

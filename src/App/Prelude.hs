@@ -31,8 +31,6 @@ import Control.Monad.Reader as X
   (MonadReader, ReaderT)
 import Control.Monad.State.Strict as X
   (MonadState, StateT)
-import Control.Monad.Writer.CPS as X
-  (WriterT)
 import Data.Generics.Product as X
   (field)
 import Data.Generics.Sum as X
@@ -46,7 +44,7 @@ import Data.IntMap.Strict as X
 import Data.List.NonEmpty as X
   (NonEmpty((:|)))
 import Data.Semigroup as X
-  (Semigroup, Monoid, (<>), Endo(Endo), appEndo)
+  (Semigroup, Monoid, (<>))
 import Data.StateVar as X
   (($=))
 import Data.Text as X
