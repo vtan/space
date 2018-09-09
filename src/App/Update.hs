@@ -163,11 +163,11 @@ handleShipWindow gs = do
           Nothing -> ["No current order"]
     Widget.labels (p + V2 (200 + 4) 28) 20 (commonLabels ++ orderLabels)
 
-    moveTo <- Widget.button (Rect (p + V2 (200 + 4) 72) (V2 80 20)) "Move to..."
-    cancel <- Widget.button (Rect (p + V2 (200 + 4 + 80 + 4) 72) (V2 80 20)) "Cancel"
+    moveTo <- Widget.button (Rect (p + V2 (200 + 4) 92) (V2 80 20)) "Move to..."
+    cancel <- Widget.button (Rect (p + V2 (200 + 4 + 80 + 4) 92) (V2 80 20)) "Cancel"
 
     (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
-      (Rect (p + V2 (200 + 4) 100) (V2 200 400)) 20
+      (Rect (p + V2 (200 + 4) 120) (V2 200 380)) 20
       (view #uid) (view #name)
       (gs ^.. #bodies . folded)
     when (clickedBody & has _Just) $
