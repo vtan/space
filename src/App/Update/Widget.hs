@@ -49,10 +49,13 @@ listBox
   -> Lens' UIState (Maybe i) -> Lens' UIState Int
   -> [a] -> Updating (Maybe a, Maybe a)
 listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
-  scrollDiff <- Updating.consumeEvents (\case
-      MouseWheelEvent diff -> Just (fromIntegral diff * (-2) * verticalSpacing)
-      _ -> Nothing
-    ) <&> sum
+  mouseInside <- use #mousePosition <&> Rect.contains bounds
+  scrollDiff <- if
+    | mouseInside -> Updating.consumeEvents (\case
+          MouseWheelEvent diff -> Just (fromIntegral diff * (-2) * verticalSpacing)
+          _ -> Nothing
+        ) <&> sum
+    | otherwise -> pure 0
   clickedPos <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) ->
         Just (fromIntegral <$> pos)

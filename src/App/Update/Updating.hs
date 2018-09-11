@@ -15,6 +15,7 @@ type Updating a = StateT State Identity a
 
 data State = State
   { events :: [SDL.Event]
+  , mousePosition :: V2 Int
   , totalRealTime :: Double
   , quit :: Bool
   , focusedWidget :: Maybe SlotId
@@ -26,6 +27,7 @@ data State = State
 initialState :: State
 initialState = State
   { events = []
+  , mousePosition = 0
   , totalRealTime = 0
   , quit = False
   , focusedWidget = Nothing
@@ -33,11 +35,12 @@ initialState = State
   , deferredRendering = pure ()
   }
 
-runFrame :: Double -> [SDL.Event] -> State -> Updating a -> (a, State)
-runFrame dtime events st u =
+runFrame :: Double -> V2 Int -> [SDL.Event] -> State -> Updating a -> (a, State)
+runFrame dtime mousePos events st u =
   let st' = st
         & #totalRealTime +~ dtime
         & #events .~ []
+        & #mousePosition .~ mousePos
         & #deferredRendering .~ pure ()
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
       Identity (a, st'') = runStateT u st'

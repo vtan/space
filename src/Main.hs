@@ -15,7 +15,7 @@ main :: IO ()
 main = do
   SDL.initializeAll
   SDL.TTF.initialize
-  window <- SDL.createWindow "" 
+  window <- SDL.createWindow ""
     $ SDL.defaultWindow { SDL.windowInitialSize = V2 1728 972 }
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
@@ -30,10 +30,11 @@ main = do
       Nothing -> pure ()
 
     events <- SDL.pollEvents
+    SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
     let (!gs', !us') = Update.update gs
-          & Updating.runFrame (fc ^. #lastFrameTime) events us
+          & Updating.runFrame (fc ^. #lastFrameTime) mousePos events us
         Updating.State{ Updating.deferredRendering } = us'
-    ((), rs') <- deferredRendering & Rendering.runFrame renderContext rs 
+    ((), rs') <- deferredRendering & Rendering.runFrame renderContext rs
 
     if us' ^. #quit
     then pure ()
