@@ -8,9 +8,11 @@ import App.Uid (Uid)
 
 data UIState = UIState
   { activeWindow :: Maybe Window
+  -- TODO put these into window-specific substates?
   , selectedShipUid :: Maybe (Uid Ship)
   , selectedShipScrollOffset :: Int
   , selectedBodyUid :: Maybe (Uid Body)
+  -- TODO the body lists on the colony and ship screen are both tied to this
   , selectedBodyScrollOffset :: Int
   , editedShipName :: Maybe Text
   }

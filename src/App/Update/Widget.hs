@@ -49,6 +49,7 @@ listBox
   -> Lens' UIState (Maybe i) -> Lens' UIState Int
   -> [a] -> Updating (Maybe a, Maybe a)
 listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
+  let hiddenHeight = length items * verticalSpacing - bounds ^. #wh . _y
   mouseInside <- use #mousePosition <&> Rect.contains bounds
   scrollDiff <- if
     | mouseInside -> Updating.consumeEvents (\case
@@ -62,11 +63,11 @@ listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
       _ -> Nothing
     ) <&> listToMaybe
   scrollOffset <- case scrollDiff of
-    _ | length items * verticalSpacing < bounds ^. #wh . _y -> pure 0
+    _ | hiddenHeight < 0 -> pure 0
     0 -> use (#ui . scrollLens)
     _ -> do
       current <- use (#ui . scrollLens)
-      let new = clamp 0 (current + scrollDiff) (length items * verticalSpacing - bounds ^. #wh . _y)
+      let new = clamp 0 (current + scrollDiff) hiddenHeight
       #ui . scrollLens .= new
       pure new
   -- TODO this works as long as `verticalSpacing` and `scrollOffset` are divisors of the box height
@@ -86,8 +87,8 @@ listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
         & mfilter (\pos -> pos >= 0 && pos < shownItemNo)
       texts = map toText shownItems
       scrollRatio :: Maybe Double
-        | length items * verticalSpacing <= bounds ^. #wh . _y = Nothing
-        | otherwise = Just $ (fromIntegral scrollOffset / fromIntegral (length items * verticalSpacing - bounds ^. #wh . _y))
+        | hiddenHeight <= 0 = Nothing
+        | otherwise = Just $ (fromIntegral scrollOffset / fromIntegral hiddenHeight)
   Updating.render $ do
     r <- view #renderer
     SDL.rendererDrawColor r $= V4 31 31 31 255
@@ -123,6 +124,7 @@ window bounds titleHeight title =
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
     Rendering.text (bounds ^. #xy) title
 
+-- TODO modify the text here via a lens
 textBox :: SlotId -> Rect Int -> Text -> Updating Text
 textBox slotId bounds text = do
   focused <- do
