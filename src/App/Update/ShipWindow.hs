@@ -28,7 +28,12 @@ update gs = do
   Widget.window (Rect (V2 32 32) (V2 (4 + 600 + 5) (500 + 24))) 20 "Ships"
   let p = V2 36 56
 
-  selectedShip <- shipList p gs
+  (selectedShip, clickedShip) <- Widget.listBox
+    (Rect p (V2 200 500)) 20
+    (view #uid) (view #name)
+    #selectedShipUid #selectedShipScrollOffset
+    (gs ^.. #ships . folded)
+  for_ clickedShip $ \ship -> #ui . #editedShipName .= Just (ship ^. #name)
 
   gs' <- for selectedShip $ \ship@Ship{ uid } -> do
     rename <- renamePanel (p + V2 (200 + 4) 0)
@@ -39,7 +44,11 @@ update gs = do
     cancel <- Widget.button (Rect (p + V2 (200 + 4 + 80 + 4) 92) (V2 80 20)) "Cancel"
       <&> whenAlt CancelOrder
 
-    selectedBody <- bodyList (p + V2 (200 + 4) 120) gs
+    (selectedBody, _) <- Widget.listBox
+      (Rect (p + V2 (200 + 4) 120) (V2 200 380)) 20
+      (view #uid) (view #name)
+      #selectedBodyUid #selectedBodyScrollOffset
+      (gs ^.. #bodies . folded)
 
     let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
         action = rename <|> moveToSelected <|> cancel
@@ -50,17 +59,6 @@ update gs = do
       Nothing -> gs
 
   pure (gs' & fromMaybe gs)
-
-shipList :: V2 Int -> GameState -> Updating (Maybe Ship)
-shipList p gs = do
-  (selectedShip, clickedShip) <- use (#ui . #selectedShipUid) >>= Widget.listBox
-    (Rect p (V2 200 500)) 20
-    (view #uid) (view #name)
-    (gs ^.. #ships . folded)
-  for_ clickedShip $ \Ship{ Ship.uid, Ship.name } -> do
-      #ui . #selectedShipUid .= Just uid
-      #ui . #editedShipName .= Just name
-  pure selectedShip
 
 renamePanel :: V2 Int -> Updating (Maybe Action)
 renamePanel p = do
@@ -85,13 +83,3 @@ infoLabels p Ship{ speed, order } gs =
           in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
         Nothing -> ["No current order"]
   in Widget.labels p 20 (commonLabels ++ orderLabels)
-
-bodyList :: V2 Int -> GameState -> Updating (Maybe Body)
-bodyList p gs = do
-  (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
-    (Rect p (V2 200 380)) 20
-    (view #uid) (view #name)
-    (gs ^.. #bodies . folded)
-  when (clickedBody & has _Just) $
-    #ui . #selectedBodyUid .= selectedBody ^? _Just . #uid
-  pure selectedBody

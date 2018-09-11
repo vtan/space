@@ -9,7 +9,9 @@ import App.Uid (Uid)
 data UIState = UIState
   { activeWindow :: Maybe Window
   , selectedShipUid :: Maybe (Uid Ship)
+  , selectedShipScrollOffset :: Int
   , selectedBodyUid :: Maybe (Uid Body)
+  , selectedBodyScrollOffset :: Int
   , editedShipName :: Maybe Text
   }
   deriving (Generic)
@@ -23,6 +25,8 @@ initial :: UIState
 initial = UIState
   { activeWindow = Nothing
   , selectedShipUid = Nothing
+  , selectedShipScrollOffset = 0
   , selectedBodyUid = Nothing
+  , selectedBodyScrollOffset = 0
   , editedShipName = Nothing
   }

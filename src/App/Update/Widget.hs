@@ -10,8 +10,13 @@ import qualified SDL
 
 import App.Rect (Rect)
 import App.Update.Events
-import App.Update.Updating (Updating)
 import App.Update.SlotId (SlotId)
+import App.Update.UIState (UIState)
+import App.Update.Updating (Updating)
+import App.Util (clamp)
+import Control.Lens (Lens')
+import Control.Monad (mfilter)
+import Control.Monad.Zip (munzip)
 
 label :: V2 Int -> Text -> Updating ()
 label pos text = Updating.render $ Rendering.text pos text
@@ -37,22 +42,49 @@ button bounds text = do
     Rendering.text (bounds ^. #xy) text
   pure clicked
 
-listBox :: Eq i => Rect Int -> Int -> (a -> i) -> (a -> Text) -> [a] -> Maybe i -> Updating (Maybe a, Maybe a)
-listBox bounds verticalSpacing toIx toText items selectedIx = do
+listBox
+  :: Eq i
+  => Rect Int -> Int
+  -> (a -> i) -> (a -> Text)
+  -> Lens' UIState (Maybe i) -> Lens' UIState Int
+  -> [a] -> Updating (Maybe a, Maybe a)
+listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
+  scrollDiff <- Updating.consumeEvents (\case
+      MouseWheelEvent diff -> Just (fromIntegral diff * (-2) * verticalSpacing)
+      _ -> Nothing
+    ) <&> sum
   clickedPos <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) ->
         Just (fromIntegral <$> pos)
       _ -> Nothing
     ) <&> listToMaybe
-  let clickedRow = clickedPos <&> \pos ->
-        quot ((pos - (bounds ^. #xy)) ^. _y) verticalSpacing
+  scrollOffset <- case scrollDiff of
+    _ | length items * verticalSpacing < bounds ^. #wh . _y -> pure 0
+    0 -> use (#ui . scrollLens)
+    _ -> do
+      current <- use (#ui . scrollLens)
+      let new = clamp 0 (current + scrollDiff) (length items * verticalSpacing - bounds ^. #wh . _y)
+      #ui . scrollLens .= new
+      pure new
+  -- TODO this works as long as `verticalSpacing` and `scrollOffset` are divisors of the box height
+  let scrolledPastItemNo = scrollOffset `div` verticalSpacing
+      shownItemNo = (bounds ^. #wh . _y) `div` verticalSpacing
+      shownItems = items & drop scrolledPastItemNo & take shownItemNo
+      clickedRow = clickedPos <&> \pos ->
+        ((pos - (bounds ^. #xy)) ^. _y) `div` verticalSpacing + scrolledPastItemNo
       clickedItem = clickedRow >>= \i -> items ^? ix i
-      selectedIx' = fmap toIx clickedItem <|> selectedIx
-      (selectedItem, selectedRow, texts) = (\b as f -> ifoldr f b as) (Nothing, Nothing, []) items $ \row item (accItem, accRow, accTexts) ->
-        -- TODO ^ ugly
-        if elem (toIx item) selectedIx'
-        then (Just item, Just row, toText item : accTexts)
-        else (accItem, accRow, toText item : accTexts)
+      clickedIx = toIx <$> clickedItem
+  selectedIx <- #ui . selectedLens <<%= (clickedIx <|>)
+  let (selectedPos, selectedItem) = munzip $ selectedIx >>= \i ->
+        items & ifind (\_ item -> toIx item == i)
+      -- TODO ^ could be better?
+      selectedRow = selectedPos
+        & fmap (subtract scrolledPastItemNo)
+        & mfilter (\pos -> pos >= 0 && pos < shownItemNo)
+      texts = map toText shownItems
+      scrollRatio :: Maybe Double
+        | length items * verticalSpacing <= bounds ^. #wh . _y = Nothing
+        | otherwise = Just $ (fromIntegral scrollOffset / fromIntegral (length items * verticalSpacing - bounds ^. #wh . _y))
   Updating.render $ do
     r <- view #renderer
     SDL.rendererDrawColor r $= V4 31 31 31 255
@@ -66,13 +98,19 @@ listBox bounds verticalSpacing toIx toText items selectedIx = do
     ifor_ texts $ \row text ->
       let pos = (bounds ^. #xy) & _y +~ row * verticalSpacing
       in Rendering.text pos text
+    for_ scrollRatio $ \ ratio -> do
+      let x = bounds ^. #xy . _x + bounds ^. #wh . _x - 4
+          y = bounds ^. #xy . _y + floor (ratio * fromIntegral (bounds ^. #wh . _y - 8))
+          rect = Rect.fromMinSize (V2 x y) (V2 4 8)
+      SDL.rendererDrawColor r $= V4 91 91 91 255
+      SDL.fillRect r (Just $ Rect.toSdl rect)
   pure (selectedItem, clickedItem)
 
 window :: Rect Int -> Int -> Text -> Updating ()
 window bounds titleHeight title =
   Updating.render $ do
     let titleBounds = bounds & #wh . _y .~ titleHeight
-        restBounds = bounds 
+        restBounds = bounds
           & #xy . _y +~ titleHeight
           & #wh . _y -~ titleHeight
     r <- view #renderer

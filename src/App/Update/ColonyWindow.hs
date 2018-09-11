@@ -4,7 +4,6 @@ where
 
 import App.Prelude
 
-import qualified App.Model.Body as Body
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
 
@@ -30,7 +29,11 @@ update gs = do
   Widget.window (Rect (V2 32 32) (V2 (4 + 200 + 4 + 256 + 4) (500 + 24))) 20 "Colonies"
   let p = V2 36 56
 
-  selectedBody <- bodyList p gs
+  (selectedBody, _) <- Widget.listBox
+    (Rect p (V2 200 500)) 20
+    (view #uid) (view #name)
+    #selectedBodyUid #selectedBodyScrollOffset
+    (gs ^.. #bodies . folded)
   gs' <- for selectedBody $ \Body{ uid } -> do
     mineralTableHeight <- mineralTable (p + V2 (200 + 4) 0) uid gs
     let q = p + V2 (200 + 4) (mineralTableHeight + 8)
@@ -55,16 +58,6 @@ update gs = do
       Nothing -> gs
 
   pure (gs' & fromMaybe gs)
-
-bodyList :: V2 Int -> GameState -> Updating (Maybe Body)
-bodyList p gs = do
-  (selectedBody, clickedBody) <- use (#ui . #selectedBodyUid) >>= Widget.listBox
-    (Rect p (V2 200 500)) 20
-    (view #uid) (view #name)
-    (gs ^.. #bodies . folded)
-  for_ clickedBody $ \Body{ Body.uid } ->
-    #ui . #selectedBodyUid .= Just uid
-  pure selectedBody
 
 mineralTable :: V2 Int -> Uid Body -> GameState -> Updating Int
 mineralTable p bodyUid gs =
