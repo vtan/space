@@ -32,7 +32,7 @@ update gs = do
   (selectedBody, _) <- Widget.listBox
     (Rect p (V2 200 500)) 20
     (view #uid) (view #name)
-    #selectedBodyUid #selectedBodyScrollOffset
+    #selectedBody
     (gs ^.. #bodies . folded)
   gs' <- for selectedBody $ \Body{ uid } -> do
     mineralTableHeight <- mineralTable (p + V2 (200 + 4) 0) uid gs

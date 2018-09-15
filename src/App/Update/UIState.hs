@@ -2,21 +2,21 @@ module App.Update.UIState where
 
 import App.Prelude
 
+import qualified App.Update.ListBoxState as ListBoxState
+
 import App.Model.Body (Body)
 import App.Model.Ship (Ship)
 import App.Uid (Uid)
+import App.Update.ListBoxState (ListBoxState)
 
 data UIState = UIState
   { activeWindow :: Maybe Window
   -- TODO put these into window-specific substates?
-  , selectedShipUid :: Maybe (Uid Ship)
-  , selectedShipScrollOffset :: Int
-  , selectedBodyUid :: Maybe (Uid Body)
+  , selectedShip :: ListBoxState (Uid Ship)
   -- TODO the body lists on the colony and ship screen are both tied to this
-  , selectedBodyScrollOffset :: Int
-  , selectedResourceUid :: Maybe ()
-  , selectedResourceScrollOffset :: Int
-  , editedShipName :: Maybe Text
+  , selectedBody :: ListBoxState (Uid Body)
+  , selectedResource :: ListBoxState ()
+  , editedShipName :: Text
   }
   deriving (Generic)
 
@@ -28,11 +28,8 @@ data Window
 initial :: UIState
 initial = UIState
   { activeWindow = Nothing
-  , selectedShipUid = Nothing
-  , selectedShipScrollOffset = 0
-  , selectedBodyUid = Nothing
-  , selectedBodyScrollOffset = 0
-  , selectedResourceUid = Nothing
-  , selectedResourceScrollOffset = 0
-  , editedShipName = Nothing
+  , selectedShip = ListBoxState.initial
+  , selectedBody = ListBoxState.initial
+  , selectedResource = ListBoxState.initial
+  , editedShipName = ""
   }

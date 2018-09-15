@@ -31,9 +31,9 @@ update gs = do
   (selectedShip, clickedShip) <- Widget.listBox
     (Rect p (V2 200 500)) 20
     (view #uid) (view #name)
-    #selectedShipUid #selectedShipScrollOffset
+    #selectedShip
     (gs ^.. #ships . folded)
-  for_ clickedShip $ \ship -> #ui . #editedShipName .= Just (ship ^. #name)
+  for_ clickedShip $ \ship -> #ui . #editedShipName .= (ship ^. #name)
 
   gs' <- for selectedShip $ \ship@Ship{ uid } -> do
     rename <- renamePanel (p + V2 (200 + 4) 0)
@@ -47,13 +47,13 @@ update gs = do
     selectedBody <- Widget.closedDropdown
       (Rect (p + V2 (200 + 4) 120) (V2 200 20)) 20 380
       (view #uid) (view #name)
-      #selectedBodyUid #selectedBodyScrollOffset
+      #selectedBody
       (gs ^.. #bodies . folded)
 
     _ <- Widget.closedDropdown
       (Rect (p + V2 (200 + 4) 144) (V2 200 20)) 20 380
       (const ()) id
-      #selectedResourceUid #selectedResourceScrollOffset
+      #selectedResource
       ["Material"]
 
     let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
@@ -68,11 +68,9 @@ update gs = do
 
 renamePanel :: V2 Int -> Updating (Maybe Action)
 renamePanel p = do
-  ename <- use (#ui . #editedShipName) <&> fromMaybe "???"
-  ename' <- Widget.textBox "shipName" (Rect p (V2 160 20)) ename
-  #ui . #editedShipName .= Just ename'
+  ename <- Widget.textBox "shipName" (Rect p (V2 160 20)) #editedShipName
   Widget.button (Rect (p + V2 (160 + 4) 0) (V2 100 20)) "Rename"
-    <&> whenAlt (Rename ename')
+    <&> whenAlt (Rename ename)
 
 infoLabels :: V2 Int -> Ship -> GameState -> Updating ()
 infoLabels p Ship{ speed, order } gs =

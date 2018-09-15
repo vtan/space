@@ -11,6 +11,7 @@ import qualified SDL
 import App.Rect (Rect)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
+import App.Update.ListBoxState (ListBoxState)
 import App.Update.SlotId (SlotId)
 import App.Update.UIState (UIState)
 import App.Update.Updating (Updating)
@@ -46,9 +47,9 @@ button bounds text = do
 listBox :: Eq i
   => Rect Int -> Int
   -> (a -> i) -> (a -> Text)
-  -> Lens' UIState (Maybe i) -> Lens' UIState Int
+  -> Lens' UIState (ListBoxState i)
   -> [a] -> Updating (Maybe a, Maybe a)
-listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
+listBox bounds verticalSpacing toIx toText state items = do
   let hiddenHeight = length items * verticalSpacing - bounds ^. #wh . _y
   mouseInside <- use #mousePosition <&> Rect.contains bounds
   scrollDiff <- if
@@ -64,11 +65,11 @@ listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
     ) <&> listToMaybe
   scrollOffset <- case scrollDiff of
     _ | hiddenHeight < 0 -> pure 0
-    0 -> use (#ui . scrollLens)
+    0 -> use (#ui . state . #scrollOffset)
     _ -> do
-      current <- use (#ui . scrollLens)
+      current <- use (#ui . state . #scrollOffset)
       let new = clamp 0 (current + scrollDiff) hiddenHeight
-      #ui . scrollLens .= new
+      #ui . state . #scrollOffset .= new
       pure new
   -- TODO this works as long as `verticalSpacing` and `scrollOffset` are divisors of the box height
   let scrolledPastItemNo = scrollOffset `div` verticalSpacing
@@ -78,7 +79,7 @@ listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
         ((pos - (bounds ^. #xy)) ^. _y) `div` verticalSpacing + scrolledPastItemNo
       clickedItem = clickedRow >>= \i -> items ^? ix i
       clickedIx = toIx <$> clickedItem
-  selectedIx <- #ui . selectedLens <<%= (clickedIx <|>)
+  selectedIx <- #ui . state . #selectedIndex <<%= (clickedIx <|>)
   let (selectedPos, selectedItem) = munzip $ selectedIx >>= \i ->
         items & ifind (\_ item -> toIx item == i)
       -- TODO ^ could be better?
@@ -113,18 +114,18 @@ listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
 closedDropdown :: Eq i
   => Rect Int -> Int -> Int
   -> (a -> i) -> (a -> Text)
-  -> Lens' UIState (Maybe i) -> Lens' UIState Int
+  -> Lens' UIState (ListBoxState i)
   -> [a] -> Updating (Maybe a)
-closedDropdown bounds verticalSpacing openHeight toIx toText selectedLens scrollLens items = do
+closedDropdown bounds verticalSpacing openHeight toIx toText state items = do
   clickedOpen <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos
         | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
       _ -> Nothing
     ) <&> (not . null)
   when clickedOpen $ do
-    let this = () <$ openDropdown bounds verticalSpacing openHeight toIx toText selectedLens scrollLens items
+    let this = () <$ openDropdown bounds verticalSpacing openHeight toIx toText state items
     #activeDropdown .= Just this
-  selectedIx <- use (#ui . selectedLens)
+  selectedIx <- use (#ui . state . #selectedIndex)
   let selectedItem = selectedIx >>= \i -> items & find (toIx >>> (== i))
       text = selectedItem & fmap toText & fromMaybe ""
   Updating.render $ dropdownRendering bounds text
@@ -133,17 +134,17 @@ closedDropdown bounds verticalSpacing openHeight toIx toText selectedLens scroll
 openDropdown :: Eq i
   => Rect Int -> Int -> Int
   -> (a -> i) -> (a -> Text)
-  -> Lens' UIState (Maybe i) -> Lens' UIState Int
+  -> Lens' UIState (ListBoxState i)
   -> [a] -> Updating (Maybe a)
-openDropdown bounds verticalSpacing openHeight toIx toText selectedLens scrollLens items = do
-  selectedIx <- use (#ui . selectedLens)
+openDropdown bounds verticalSpacing openHeight toIx toText state items = do
+  selectedIx <- use (#ui . state . #selectedIndex)
   let selectedItem = selectedIx >>= \i -> items & find (toIx >>> (== i))
       text = selectedItem & fmap toText & fromMaybe ""
   (selectedItem', clickedItem) <- do
     let openListBounds = bounds
           & #xy . _y +~ verticalSpacing
           & #wh . _y .~ openHeight
-    listBox openListBounds verticalSpacing toIx toText selectedLens scrollLens items
+    listBox openListBounds verticalSpacing toIx toText state items
   clickedOutside <- Updating.consumeEvents (\case
       MousePressEvent{} -> Just ()
       _ -> Nothing
@@ -177,9 +178,8 @@ window bounds titleHeight title =
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
     Rendering.text (bounds ^. #xy) title
 
--- TODO modify the text here via a lens
-textBox :: SlotId -> Rect Int -> Text -> Updating Text
-textBox slotId bounds text = do
+textBox :: SlotId -> Rect Int -> Lens' UIState Text -> Updating Text
+textBox slotId bounds state = do
   focused <- do
     clicked <- Updating.consumeEvents (\case
         MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
@@ -188,6 +188,7 @@ textBox slotId bounds text = do
     if clicked
     then True <$ (#focusedWidget .= Just slotId)
     else elem slotId <$> use #focusedWidget
+  text <- use (#ui . state)
   text' <- if focused
     then do
       textMods <- Updating.consumeEvents $ \case
@@ -195,7 +196,10 @@ textBox slotId bounds text = do
         KeyPressEvent SDL.ScancodeBackspace -> Just (Text.dropEnd 1)
         e | isUnicodeKeyEvent e -> Just id -- consume key events for which we also had a text input event
         _ -> Nothing
-      pure $ foldl' (&) text textMods
+      let new = foldl' (&) text textMods
+      when (textMods & not . null) $
+        #ui . state .= new
+      pure new
     else pure text
   Updating.render $ do
     r <- view #renderer
