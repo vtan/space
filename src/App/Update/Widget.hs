@@ -38,7 +38,7 @@ button bounds text = do
     ) <&> (not . null)
   Updating.render $ do
     r <- view #renderer
-    let color = if clicked then V4 31 171 171 255 else V4 71 71 71 255
+    let color = if clicked then highlight else shade3
     SDL.rendererDrawColor r $= color
     SDL.fillRect r (Just $ Rect.toSdl bounds)
     Rendering.text (bounds ^. #xy) text
@@ -92,13 +92,13 @@ listBox bounds verticalSpacing toIx toText state items = do
         | otherwise = Just $ (fromIntegral scrollOffset / fromIntegral hiddenHeight)
   Updating.render $ do
     r <- view #renderer
-    SDL.rendererDrawColor r $= V4 31 31 31 255
+    SDL.rendererDrawColor r $= shade1
     SDL.fillRect r (Just $ Rect.toSdl bounds)
     for_ selectedRow $ \row -> do
       let rect = bounds
             & #xy . _y +~ row * verticalSpacing
             & #wh . _y .~ verticalSpacing
-      SDL.rendererDrawColor r $= V4 31 171 171 255
+      SDL.rendererDrawColor r $= highlight
       SDL.fillRect r (Just $ Rect.toSdl rect)
     ifor_ texts $ \row text ->
       let pos = (bounds ^. #xy) & _y +~ row * verticalSpacing
@@ -107,7 +107,7 @@ listBox bounds verticalSpacing toIx toText state items = do
       let x = bounds ^. #xy . _x + bounds ^. #wh . _x - 4
           y = bounds ^. #xy . _y + floor (ratio * fromIntegral (bounds ^. #wh . _y - 8))
           rect = Rect.fromMinSize (V2 x y) (V2 4 8)
-      SDL.rendererDrawColor r $= V4 91 91 91 255
+      SDL.rendererDrawColor r $= shade3
       SDL.fillRect r (Just $ Rect.toSdl rect)
   pure (selectedItem, clickedItem)
 
@@ -158,7 +158,7 @@ openDropdown bounds verticalSpacing openHeight toIx toText state items = do
 dropdownRendering :: Rect Int -> Text -> Rendering ()
 dropdownRendering bounds text = do
   r <- view #renderer
-  SDL.rendererDrawColor r $= V4 71 71 71 255
+  SDL.rendererDrawColor r $= shade3
   SDL.fillRect r (Just $ Rect.toSdl bounds)
   Rendering.text (bounds ^. #xy) text
   let arrowPos = bounds ^. #xy & _x +~ (bounds ^. #wh . _x) - 20
@@ -172,9 +172,9 @@ window bounds titleHeight title =
           & #xy . _y +~ titleHeight
           & #wh . _y -~ titleHeight
     r <- view #renderer
-    SDL.rendererDrawColor r $= V4 63 63 63 255
+    SDL.rendererDrawColor r $= shade2
     SDL.fillRect r (Just $ Rect.toSdl titleBounds)
-    SDL.rendererDrawColor r $= V4 23 23 23 255
+    SDL.rendererDrawColor r $= shade0
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
     Rendering.text (bounds ^. #xy) title
 
@@ -203,9 +203,16 @@ textBox slotId bounds state = do
     else pure text
   Updating.render $ do
     r <- view #renderer
-    SDL.rendererDrawColor r $= V4 63 63 63 255
+    SDL.rendererDrawColor r $= shade2
     SDL.fillRect r (Just $ Rect.toSdl bounds)
     Rendering.text (bounds ^. #xy) text'
-    SDL.rendererDrawColor r $= if focused then V4 31 171 171 255 else V4 31 31 31 255
+    SDL.rendererDrawColor r $= if focused then highlight else shade1
     SDL.drawRect r (Just $ Rect.toSdl bounds)
   pure text'
+
+shade0, shade1, shade2, shade3, highlight :: Num a => V4 a
+shade0 = V4 23 23 23 255
+shade1 = V4 31 31 31 255
+shade2 = V4 63 63 63 255
+shade3 = V4 91 91 91 255
+highlight = V4 31 171 171 255
