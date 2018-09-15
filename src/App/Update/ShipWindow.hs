@@ -52,9 +52,9 @@ update gs = do
 
     _ <- Widget.closedDropdown
       (Rect (p + V2 (200 + 4) 144) (V2 200 20)) 20 380
-      (const ()) id
+      id (show >>> fromString)
       #selectedResource
-      ["Material"]
+      [minBound .. maxBound]
 
     let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
         action = rename <|> moveToSelected <|> cancel

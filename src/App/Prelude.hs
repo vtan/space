@@ -40,6 +40,8 @@ import Data.HashMap.Strict as X
   (HashMap)
 import Data.HashSet as X
   (HashSet)
+import Data.Hashable as X
+  (Hashable)
 import Data.IntMap.Strict as X
   (IntMap)
 import Data.List.NonEmpty as X

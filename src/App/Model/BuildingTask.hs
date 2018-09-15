@@ -2,10 +2,10 @@ module App.Model.BuildingTask where
 
 import App.Prelude
 
-import App.Model.BodyMinerals (Mineral)
+import App.Model.Resource (Resource)
 
 data BuildingTask = BuildingTask
-  { minedMineral :: Mineral
+  { minedMineral :: Resource
   , finishTime :: Int
   }
   deriving (Show, Generic)

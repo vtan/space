@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Model.Resource as Resource
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Widget as Widget
 
@@ -11,7 +12,7 @@ import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
-import App.Model.BodyMinerals (MineralData(..))
+import App.Model.Mineral (Mineral(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Rect (Rect(..))
 import App.Uid (Uid)
@@ -52,7 +53,7 @@ update gs = do
           <&> whenAlt FoundColony
 
     pure $ case action of
-      Just BuildMine -> Logic.startBuildingTask uid 0 gs
+      Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
       Just BuildShip -> Logic.startShipBuildingTask uid gs
       Just FoundColony -> Logic.foundColony uid gs
       Nothing -> gs
@@ -63,8 +64,8 @@ mineralTable :: V2 Int -> Uid Body -> GameState -> Updating Int
 mineralTable p bodyUid gs =
   let minerals = gs ^@.. #bodyMinerals . at bodyUid . _Just . ifolded
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
-        minerals <&> \(mineral, MineralData{ available, accessibility }) ->
-          ( fromString $ printf "Mineral #%d" mineral
+        minerals <&> \(mineral, Mineral{ available, accessibility }) ->
+          ( fromString $ show mineral
           , fromString $ printf "%.2f t" available
           , fromString $ printf "%.0f%%" (100 * accessibility)
           ) -- TODO table widget?
@@ -78,7 +79,7 @@ mineralTable p bodyUid gs =
 stockpileTable :: V2 Int -> Colony -> Updating Int
 stockpileTable p Colony{ stockpile } =
   let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
-        ( fromString $ printf "Mineral #%d" mineral
+        ( fromString $ show mineral
         , fromString $ printf "%.2f t" qty
         )
   in do
@@ -90,7 +91,7 @@ stockpileTable p Colony{ stockpile } =
 mineTable :: V2 Int -> Colony -> Updating Int
 mineTable p Colony{ mines } =
   let (mineLabels, mineQtyLabels) = unzip $ itoList mines <&> \(mineral, mineQty) ->
-        ( fromString $ printf "Mineral #%d" mineral
+        ( fromString $ show mineral
         , fromString $ printf "%d mines" mineQty
         )
   in do
@@ -103,10 +104,10 @@ buildingPanel :: V2 Int -> Colony -> Updating (Maybe Action)
 buildingPanel p Colony{ buildingTask } = do
   case buildingTask of
     Just BuildingTask{ minedMineral } ->
-      Widget.label p (fromString $ printf "Building: Mine for Mineral #%d" minedMineral)
+      Widget.label p (fromString $ printf "Building: Mine for %s" (show minedMineral))
     Nothing ->
       Widget.label p "Building: nothing"
-  Widget.button (Rect (p + V2 0 20) (V2 256 20)) "Build mine for Mineral #0"
+  Widget.button (Rect (p + V2 0 20) (V2 256 20)) "Build mine for Mineral"
     <&> whenAlt BuildMine
 
 shipBuildingPanel :: V2 Int -> Colony -> Updating (Maybe Action)

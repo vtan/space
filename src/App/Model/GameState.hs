@@ -3,14 +3,16 @@ module App.Model.GameState where
 import App.Prelude
 
 import qualified App.Model.Body as Body
+import qualified App.Model.Resource as Resource
 import qualified App.UidMap as UidMap
 
 import App.Camera (Camera(..))
 import App.Model.Body (Body(..))
-import App.Model.BodyMinerals (BodyMinerals, MineralData(..))
 import App.Model.Colony (Colony(..))
 import App.Model.Dims (AU(..), _AU)
+import App.Model.Mineral (Mineral(..))
 import App.Model.OrbitalState (OrbitalState)
+import App.Model.Resource (Resource)
 import App.Model.Ship (Ship)
 import App.Uid (Uid(..))
 import App.UidMap (UidMap)
@@ -19,7 +21,7 @@ data GameState = GameState
   { rootBody :: Body
   , bodies :: UidMap Body Body
   , bodyOrbitalStates :: UidMap Body OrbitalState
-  , bodyMinerals :: UidMap Body BodyMinerals
+  , bodyMinerals :: UidMap Body (HashMap Resource Mineral)
   , colonies :: UidMap Body Colony
   , ships :: UidMap Ship Ship
   , time :: Int
@@ -37,11 +39,19 @@ initial = GameState
       & UidMap.fromList
   , bodyOrbitalStates = Body.statesAtTime 0 theRootBody
   , bodyMinerals = UidMap.fromList
-    [ (Uid @Body 2, [(0, MineralData{ available = 10, accessibility = 0.6 })])
-    , (Uid @Body 3, [(0, MineralData{ available = 5, accessibility = 0.85 })])
+    [ (Uid @Body 2, [(Resource.Mineral, Mineral{ available = 10, accessibility = 0.6 })])
+    , (Uid @Body 3, [(Resource.Mineral, Mineral{ available = 5, accessibility = 0.85 })])
     ]
   , colonies = UidMap.fromList
-    [(Uid @Body 2, Colony{ stockpile = [(0, 2.5)], mines = [(0, 1)], buildingTask = Nothing, shipBuildingTask = Nothing })]
+    [ ( Uid @Body 2
+      , Colony
+        { stockpile = [(Resource.Mineral, 2.5)]
+        , mines = [(Resource.Mineral, 1)]
+        , buildingTask = Nothing
+        , shipBuildingTask = Nothing
+        }
+      )
+    ]
   , ships = mempty
   , time = 0
   , timeStepPerFrame = Nothing

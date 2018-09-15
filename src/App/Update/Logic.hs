@@ -5,16 +5,18 @@ import App.Prelude
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.PlottedPath as PlottedPath
+import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 import qualified App.UidMap as UidMap
 import qualified Data.HashMap.Strict as HashMap
 
 import App.Model.Body (Body(..))
-import App.Model.BodyMinerals (BodyMinerals, Mineral, MineralData(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
+import App.Model.Mineral (Mineral(..))
+import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Uid (Uid(..))
@@ -84,10 +86,10 @@ buildShipOnColony bodyUid Colony{ shipBuildingTask } gs@GameState{ time } =
         & #ships . at shipUid .~ ship
     _ -> gs
 
-mineOnColony :: Uid Body -> Colony -> BodyMinerals -> GameState -> GameState
+mineOnColony :: Uid Body -> Colony -> HashMap Resource Mineral -> GameState -> GameState
 mineOnColony bodyUid Colony{ mines } minerals gs =
   let mineralsReservesMines = itoList $ HashMap.intersectionWith (,) minerals mines
-  in gs & reduce mineralsReservesMines (\gs' (mineral, (MineralData{ available, accessibility }, mineQty)) ->
+  in gs & reduce mineralsReservesMines (\gs' (mineral, (Mineral{ available, accessibility }, mineQty)) ->
       let minedQty = min (fromIntegral mineQty * 0.01 * accessibility) available
       in gs'
         & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
@@ -124,30 +126,30 @@ foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
   gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty, buildingTask = Nothing, shipBuildingTask = Nothing }
 
-startBuildingTask :: Uid Body -> Mineral -> GameState -> GameState
+startBuildingTask :: Uid Body -> Resource -> GameState -> GameState
 startBuildingTask bodyUid minedMineral gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
-    let buildingMaterials = colony ^. #stockpile . at 0 . non 0
+    let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
         cost = 1
         finishTime = (gs ^. #time) + 30 * 24 * 3600
         newTask = BuildingTask{ minedMineral, BuildingTask.finishTime }
     in case colony ^. #buildingTask of
       Nothing | buildingMaterials >= cost ->
         colony
-          & #stockpile . at 0 . non 0 -~ cost
+          & #stockpile . at Resource.Mineral . non 0 -~ cost
           & #buildingTask .~ Just newTask
       _ -> colony
 
 startShipBuildingTask :: Uid Body -> GameState -> GameState
 startShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
-    let buildingMaterials = colony ^. #stockpile . at 0 . non 0
+    let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
         cost = 2
         finishTime = (gs ^. #time) + 1 * 24 * 3600
         newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
     in case colony ^. #shipBuildingTask of
       Nothing | buildingMaterials >= cost ->
         colony
-          & #stockpile . at 0 . non 0 -~ cost
+          & #stockpile . at Resource.Mineral . non 0 -~ cost
           & #shipBuildingTask .~ Just newTask
       _ -> colony
