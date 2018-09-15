@@ -19,8 +19,9 @@ data State = State
   , totalRealTime :: Double
   , quit :: Bool
   , focusedWidget :: Maybe SlotId
+  , activeDropdown :: Maybe (Updating ())
   , ui :: UIState
-  , deferredRendering :: Rendering ()
+  , deferredRendering :: [Rendering ()]
   }
   deriving (Generic)
 
@@ -31,8 +32,9 @@ initialState = State
   , totalRealTime = 0
   , quit = False
   , focusedWidget = Nothing
+  , activeDropdown = Nothing
   , ui = UIState.initial
-  , deferredRendering = pure ()
+  , deferredRendering = [pure ()]
   }
 
 runFrame :: Double -> V2 Int -> [SDL.Event] -> State -> Updating a -> (a, State)
@@ -41,7 +43,7 @@ runFrame dtime mousePos events st u =
         & #totalRealTime +~ dtime
         & #events .~ []
         & #mousePosition .~ mousePos
-        & #deferredRendering .~ pure ()
+        & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
       Identity (a, st'') = runStateT u st'
   in (a, st'')
@@ -53,7 +55,11 @@ runFrame dtime mousePos events st u =
 
 render :: Rendering () -> Updating ()
 render r =
-  #deferredRendering %= (*> r)
+  #deferredRendering . _head %= (*> r)
+
+pushRendering :: Updating ()
+pushRendering =
+  #deferredRendering %= (pure () :)
 
 filterEvents :: (SDL.Event -> Maybe a) -> Updating [a]
 filterEvents p =

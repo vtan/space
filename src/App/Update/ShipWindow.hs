@@ -44,11 +44,17 @@ update gs = do
     cancel <- Widget.button (Rect (p + V2 (200 + 4 + 80 + 4) 92) (V2 80 20)) "Cancel"
       <&> whenAlt CancelOrder
 
-    (selectedBody, _) <- Widget.listBox
-      (Rect (p + V2 (200 + 4) 120) (V2 200 380)) 20
+    selectedBody <- Widget.closedDropdown
+      (Rect (p + V2 (200 + 4) 120) (V2 200 20)) 20 380
       (view #uid) (view #name)
       #selectedBodyUid #selectedBodyScrollOffset
       (gs ^.. #bodies . folded)
+
+    _ <- Widget.closedDropdown
+      (Rect (p + V2 (200 + 4) 144) (V2 200 20)) 20 380
+      (const ()) id
+      #selectedResourceUid #selectedResourceScrollOffset
+      ["Material"]
 
     let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
         action = rename <|> moveToSelected <|> cancel

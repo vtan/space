@@ -18,7 +18,7 @@ import Numeric.Extras (cbrt)
 update :: GameState -> Updating GameState
 update gs = do
   gs' <- use #events <&> foldl' handleEvent gs
-  #deferredRendering %= (Render.SystemMap.render gs' *>)
+  #deferredRendering %= (Render.SystemMap.render gs' :)
   pure gs'
 
 handleEvent :: GameState -> SDL.Event -> GameState

@@ -5,6 +5,7 @@ import App.Prelude.Labels as X ()
 import Control.Applicative as X
 import Control.Arrow as X
 import Control.Lens.At as X
+import Control.Lens.Cons as X
 import Control.Lens.Each as X
 import Control.Lens.Empty as X
 import Control.Lens.Getter as X

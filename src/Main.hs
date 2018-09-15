@@ -34,7 +34,8 @@ main = do
     let (!gs', !us') = Update.update gs
           & Updating.runFrame (fc ^. #lastFrameTime) mousePos events us
         Updating.State{ Updating.deferredRendering } = us'
-    ((), rs') <- deferredRendering & Rendering.runFrame renderContext rs
+        flatRendering = foldl' (*>) (pure ()) deferredRendering
+    ((), rs') <- flatRendering & Rendering.runFrame renderContext rs
 
     if us' ^. #quit
     then pure ()

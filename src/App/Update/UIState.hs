@@ -14,6 +14,8 @@ data UIState = UIState
   , selectedBodyUid :: Maybe (Uid Body)
   -- TODO the body lists on the colony and ship screen are both tied to this
   , selectedBodyScrollOffset :: Int
+  , selectedResourceUid :: Maybe ()
+  , selectedResourceScrollOffset :: Int
   , editedShipName :: Maybe Text
   }
   deriving (Generic)
@@ -30,5 +32,7 @@ initial = UIState
   , selectedShipScrollOffset = 0
   , selectedBodyUid = Nothing
   , selectedBodyScrollOffset = 0
+  , selectedResourceUid = Nothing
+  , selectedResourceScrollOffset = 0
   , editedShipName = Nothing
   }

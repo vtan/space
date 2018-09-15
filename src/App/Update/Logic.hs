@@ -143,7 +143,7 @@ startShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
     let buildingMaterials = colony ^. #stockpile . at 0 . non 0
         cost = 2
-        finishTime = (gs ^. #time) + 60 * 24 * 3600
+        finishTime = (gs ^. #time) + 1 * 24 * 3600
         newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
     in case colony ^. #shipBuildingTask of
       Nothing | buildingMaterials >= cost ->

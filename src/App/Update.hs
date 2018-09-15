@@ -36,6 +36,10 @@ update gs = do
     <&> (not . null)
   when clickedAnywhere $ #focusedWidget .= Nothing -- if clicked on a focusable widget, it will consume the click and set the focus
 
+  activeDropdown <- use #activeDropdown
+  for_ activeDropdown $ \updateDropdown ->
+    updateDropdown *> Updating.pushRendering
+
   gs' <- handleUI gs
   gs'' <- SystemMap.update gs'
 

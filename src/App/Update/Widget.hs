@@ -9,6 +9,7 @@ import qualified Data.Text as Text
 import qualified SDL
 
 import App.Rect (Rect)
+import App.Render.Rendering (Rendering)
 import App.Update.Events
 import App.Update.SlotId (SlotId)
 import App.Update.UIState (UIState)
@@ -42,8 +43,7 @@ button bounds text = do
     Rendering.text (bounds ^. #xy) text
   pure clicked
 
-listBox
-  :: Eq i
+listBox :: Eq i
   => Rect Int -> Int
   -> (a -> i) -> (a -> Text)
   -> Lens' UIState (Maybe i) -> Lens' UIState Int
@@ -109,6 +109,59 @@ listBox bounds verticalSpacing toIx toText selectedLens scrollLens items = do
       SDL.rendererDrawColor r $= V4 91 91 91 255
       SDL.fillRect r (Just $ Rect.toSdl rect)
   pure (selectedItem, clickedItem)
+
+closedDropdown :: Eq i
+  => Rect Int -> Int -> Int
+  -> (a -> i) -> (a -> Text)
+  -> Lens' UIState (Maybe i) -> Lens' UIState Int
+  -> [a] -> Updating (Maybe a)
+closedDropdown bounds verticalSpacing openHeight toIx toText selectedLens scrollLens items = do
+  clickedOpen <- Updating.consumeEvents (\case
+      MousePressEvent SDL.ButtonLeft pos
+        | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
+      _ -> Nothing
+    ) <&> (not . null)
+  when clickedOpen $ do
+    let this = () <$ openDropdown bounds verticalSpacing openHeight toIx toText selectedLens scrollLens items
+    #activeDropdown .= Just this
+  selectedIx <- use (#ui . selectedLens)
+  let selectedItem = selectedIx >>= \i -> items & find (toIx >>> (== i))
+      text = selectedItem & fmap toText & fromMaybe ""
+  Updating.render $ dropdownRendering bounds text
+  pure selectedItem
+
+openDropdown :: Eq i
+  => Rect Int -> Int -> Int
+  -> (a -> i) -> (a -> Text)
+  -> Lens' UIState (Maybe i) -> Lens' UIState Int
+  -> [a] -> Updating (Maybe a)
+openDropdown bounds verticalSpacing openHeight toIx toText selectedLens scrollLens items = do
+  selectedIx <- use (#ui . selectedLens)
+  let selectedItem = selectedIx >>= \i -> items & find (toIx >>> (== i))
+      text = selectedItem & fmap toText & fromMaybe ""
+  (selectedItem', clickedItem) <- do
+    let openListBounds = bounds
+          & #xy . _y +~ verticalSpacing
+          & #wh . _y .~ openHeight
+    listBox openListBounds verticalSpacing toIx toText selectedLens scrollLens items
+  clickedOutside <- Updating.consumeEvents (\case
+      MousePressEvent{} -> Just ()
+      _ -> Nothing
+    ) <&> (not . null)
+  _ <- Updating.consumeEvents $ const (Just ())
+  when (clickedOutside || has _Just clickedItem) $
+    #activeDropdown .= Nothing
+  Updating.render $ dropdownRendering bounds text
+  pure selectedItem'
+
+dropdownRendering :: Rect Int -> Text -> Rendering ()
+dropdownRendering bounds text = do
+  r <- view #renderer
+  SDL.rendererDrawColor r $= V4 71 71 71 255
+  SDL.fillRect r (Just $ Rect.toSdl bounds)
+  Rendering.text (bounds ^. #xy) text
+  let arrowPos = bounds ^. #xy & _x +~ (bounds ^. #wh . _x) - 20
+  Rendering.text arrowPos "▼"
 
 window :: Rect Int -> Int -> Text -> Updating ()
 window bounds titleHeight title =
