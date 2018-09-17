@@ -18,14 +18,13 @@ import Control.Lens.Setter as X
 import Control.Lens.Tuple as X
 import Control.Lens.Traversal as X
 import Control.Lens.Zoom as X
+import Control.Monad as X
 import Data.Either as X
 import Data.Foldable as X
 import Data.Function as X
 import Data.Maybe as X
 import Data.Traversable as X
 
-import Control.Monad as X
-  (when)
 import Control.Monad.IO.Class as X
   (MonadIO)
 import Control.Monad.Reader as X

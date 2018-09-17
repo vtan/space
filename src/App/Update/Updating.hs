@@ -7,11 +7,17 @@ import qualified SDL
 
 import App.Render.Rendering (Rendering)
 import App.Update.Events
+import App.Update.UILayout (UILayout)
 import App.Update.UIState (UIState)
 import App.Update.SlotId (SlotId)
+import Control.Monad.Reader (runReaderT)
 import Control.Monad.State.Strict (runStateT)
 
-type Updating a = StateT State Identity a
+type Updating a = ReaderT Context (StateT State Identity) a
+
+data Context = Context
+  { uiLayout :: UILayout }
+  deriving (Show, Generic)
 
 data State = State
   { events :: [SDL.Event]
@@ -37,15 +43,15 @@ initialState = State
   , deferredRendering = [pure ()]
   }
 
-runFrame :: Double -> V2 Int -> [SDL.Event] -> State -> Updating a -> (a, State)
-runFrame dtime mousePos events st u =
+runFrame :: Double -> V2 Int -> [SDL.Event] -> Context -> State -> Updating a -> (a, State)
+runFrame dtime mousePos events ctx st u =
   let st' = st
         & #totalRealTime +~ dtime
         & #events .~ []
         & #mousePosition .~ mousePos
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
-      Identity (a, st'') = runStateT u st'
+      Identity (a, st'') = runStateT (runReaderT u ctx) st'
   in (a, st'')
   where
     applyEvent :: State -> SDL.Event -> State

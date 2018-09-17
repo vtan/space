@@ -6,7 +6,10 @@ import qualified App.FpsCounter as FpsCounter
 import qualified App.Model.GameState as GameState
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update as Update
+import qualified App.Update.UILayout as Update.UILayout
 import qualified App.Update.Updating as Updating
+import qualified Data.Aeson as Aeson
+import qualified Data.ByteString as ByteString
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
 import qualified SDL.Raw
@@ -20,7 +23,9 @@ main = do
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
   font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
+  uiLayout <- loadUILayout "data/layout.json"
   let renderContext = Rendering.newContext renderer font
+      updateContext = Updating.Context uiLayout
   SDL.Raw.startTextInput
 
   fcInitial <- FpsCounter.new
@@ -32,7 +37,7 @@ main = do
     events <- SDL.pollEvents
     SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
     let (!gs', !us') = Update.update gs
-          & Updating.runFrame (fc ^. #lastFrameTime) mousePos events us
+          & Updating.runFrame (fc ^. #lastFrameTime) mousePos events updateContext us
         Updating.State{ Updating.deferredRendering } = us'
         flatRendering = foldl' (*>) (pure ()) deferredRendering
     ((), rs') <- flatRendering & Rendering.runFrame renderContext rs
@@ -44,3 +49,10 @@ main = do
       cont (fc', gs', us', rs')
   SDL.TTF.quit
   SDL.quit
+
+loadUILayout :: FilePath -> IO Update.UILayout.UILayout
+loadUILayout path = do
+  contents <- ByteString.readFile path
+  case Aeson.eitherDecodeStrict' contents of
+    Right uiLayout -> pure (Update.UILayout.fromRead uiLayout)
+    Left err -> fail err

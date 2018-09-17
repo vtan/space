@@ -6,6 +6,7 @@ import App.Prelude
 
 import qualified App.Model.Resource as Resource
 import qualified App.Update.Logic as Logic
+import qualified App.Update.UILayout as UILayout
 import qualified App.Update.Widget as Widget
 
 import App.Model.Body (Body(..))
@@ -18,6 +19,7 @@ import App.Rect (Rect(..))
 import App.Uid (Uid)
 import App.Update.Updating (Updating)
 import App.Util (whenAlt)
+import Control.Monad.Reader.Class (local)
 import Data.String (fromString)
 
 data Action
@@ -27,38 +29,41 @@ data Action
 
 update :: GameState -> Updating GameState
 update gs = do
-  Widget.window (Rect (V2 32 32) (V2 (4 + 200 + 4 + 256 + 4) (500 + 24))) 20 "Colonies"
-  let p = V2 36 56
+  local (#uiLayout %~ UILayout.child "colonyWindow") $ do
+    Widget.window (Rect (V2 32 32) (V2 (4 + 200 + 4 + 256 + 4) (500 + 24))) 20 "Colonies"
+    let p = V2 36 56
 
-  (selectedBody, _) <- Widget.listBox
-    (Rect p (V2 200 500)) 20
-    (view #uid) (view #name)
-    #selectedBody
-    (gs ^.. #bodies . folded)
-  gs' <- for selectedBody $ \Body{ uid } -> do
-    mineralTableHeight <- mineralTable (p + V2 (200 + 4) 0) uid gs
-    let q = p + V2 (200 + 4) (mineralTableHeight + 8)
+    (selectedBody, _) <-
+      view (#uiLayout . to (UILayout.child "selectedBody") . #bounds) >>= \bounds ->
+        Widget.listBox
+          bounds 20
+          (view #uid) (view #name)
+          #selectedBody
+          (gs ^.. #bodies . folded)
+    gs' <- for selectedBody $ \Body{ uid } -> do
+      mineralTableHeight <- mineralTable (p + V2 (200 + 4) 0) uid gs
+      let q = p + V2 (200 + 4) (mineralTableHeight + 8)
 
-    action <- case gs ^. #colonies . at uid of
-      Just colony -> do
-        stockpileTableHeight <- stockpileTable q colony
-        mineTableHeight <- mineTable (q + V2 0 (stockpileTableHeight + 8)) colony
+      action <- case gs ^. #colonies . at uid of
+        Just colony -> do
+          stockpileTableHeight <- stockpileTable q colony
+          mineTableHeight <- mineTable (q + V2 0 (stockpileTableHeight + 8)) colony
 
-        let r = q + V2 0 (stockpileTableHeight + 8 + mineTableHeight + 8)
-        buildMine <- buildingPanel r colony
-        buildShip <- shipBuildingPanel (r + V2 0 48) colony
-        pure (buildMine <|> buildShip)
-      Nothing ->
-        Widget.button (Rect q (V2 128 20)) "Found colony"
-          <&> whenAlt FoundColony
+          let r = q + V2 0 (stockpileTableHeight + 8 + mineTableHeight + 8)
+          buildMine <- buildingPanel r colony
+          buildShip <- shipBuildingPanel (r + V2 0 48) colony
+          pure (buildMine <|> buildShip)
+        Nothing ->
+          Widget.button (Rect q (V2 128 20)) "Found colony"
+            <&> whenAlt FoundColony
 
-    pure $ case action of
-      Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
-      Just BuildShip -> Logic.startShipBuildingTask uid gs
-      Just FoundColony -> Logic.foundColony uid gs
-      Nothing -> gs
+      pure $ case action of
+        Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
+        Just BuildShip -> Logic.startShipBuildingTask uid gs
+        Just FoundColony -> Logic.foundColony uid gs
+        Nothing -> gs
 
-  pure (gs' & fromMaybe gs)
+    pure (gs' & fromMaybe gs)
 
 mineralTable :: V2 Int -> Uid Body -> GameState -> Updating Int
 mineralTable p bodyUid gs =
