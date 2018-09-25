@@ -7,7 +7,6 @@ import qualified App.Rect as Rect
 import qualified Data.Text as Text
 
 import App.Rect (Rect)
-import App.Read.UILayout (RootLayout(..))
 
 data UILayout = UILayout
   { name :: Text
@@ -22,14 +21,8 @@ child childName UILayout{ name, children } =
     Just foundChild -> foundChild
     Nothing -> error . Text.unpack $ Text.unwords ["UI layout", name, "has no child", childName]
 
-fromReadRoot :: Read.RootLayout -> UILayout
-fromReadRoot (RootLayout rootChildren) =
-  let rootChildren' = fromChildren "root" 0 rootChildren
-  in UILayout
-    { name = "root"
-    , bounds = Rect.fromMinSize 0 0
-    , children = rootChildren'
-    }
+fromRead :: Read.UILayout -> UILayout
+fromRead = fromRead' "root" 0
   where
     fromRead' :: Text -> V2 Int -> Read.UILayout -> UILayout
     fromRead' accName accOffset Read.UILayout{..} =

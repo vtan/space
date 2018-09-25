@@ -67,5 +67,5 @@ loadUILayout :: FilePath -> IO Update.UILayout.UILayout
 loadUILayout path = do
   contents <- ByteString.readFile path
   case Aeson.eitherDecodeStrict' contents of
-    Right rootLayout -> pure (Update.UILayout.fromReadRoot rootLayout)
+    Right uiLayout -> pure (Update.UILayout.fromRead uiLayout)
     Left err -> fail err

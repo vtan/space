@@ -7,11 +7,6 @@ import qualified Data.Aeson.Types as Aeson
 
 import Data.Aeson ((.:?))
 
-newtype RootLayout = RootLayout (HashMap Text UILayout)
-  deriving (Show, Generic)
-
-instance Aeson.FromJSON RootLayout
-
 data UILayout = UILayout
   { xy :: V2 Int
   , wh :: V2 Int
