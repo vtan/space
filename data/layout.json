@@ -3,9 +3,42 @@
     "xy": [36, 56],
     "wh": [0, 0],
     "children": {
+      "decoration": {
+        "xy": [-4, -24],
+        "wh": [468, 524]
+      },
       "selectedBody": {
         "xy": [0, 0],
         "wh": [200, 500]
+      },
+      "rightPanel": {
+        "xy": [204, 0],
+        "children" : {
+          "mineralTable": {
+            "xy": [0, 0],
+            "wh": [0, 60]
+          },
+          "stockpileTable": {
+            "xy": [0, 68],
+            "wh": [0, 60]
+          },
+          "mineTable": {
+            "xy": [0, 136],
+            "wh": [0, 60]
+          },
+          "buildingPanel": {
+            "xy": [0, 196],
+            "wh": [256, 40]
+          },
+          "shipBuildingPanel": {
+            "xy": [0, 244],
+            "wh": [256, 40]
+          },
+          "foundColony": {
+            "xy": [0, 68],
+            "wh": [128, 20]
+          }
+        }
       }
     }
   }

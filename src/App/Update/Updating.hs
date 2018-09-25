@@ -2,15 +2,17 @@ module App.Update.Updating where
 
 import App.Prelude
 
+import qualified App.Update.UILayout as UILayout
 import qualified App.Update.UIState as UIState
 import qualified SDL
 
+import App.Rect (Rect)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
 import App.Update.UILayout (UILayout)
 import App.Update.UIState (UIState)
 import App.Update.SlotId (SlotId)
-import Control.Monad.Reader (runReaderT)
+import Control.Monad.Reader (local, runReaderT)
 import Control.Monad.State.Strict (runStateT)
 
 type Updating a = ReaderT Context (StateT State Identity) a
@@ -66,6 +68,15 @@ render r =
 pushRendering :: Updating ()
 pushRendering =
   #deferredRendering %= (pure () :)
+
+childLayout :: Text -> Updating a -> Updating a
+childLayout childName =
+  local (#uiLayout %~ UILayout.child childName)
+
+childBounds :: Text -> (Rect Int -> Updating a) -> Updating a
+childBounds childName f = do
+  child <- view (#uiLayout . to (UILayout.child childName))
+  f (child ^. #bounds)
 
 filterEvents :: (SDL.Event -> Maybe a) -> Updating [a]
 filterEvents p =

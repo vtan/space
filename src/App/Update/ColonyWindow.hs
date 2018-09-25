@@ -6,7 +6,7 @@ import App.Prelude
 
 import qualified App.Model.Resource as Resource
 import qualified App.Update.Logic as Logic
-import qualified App.Update.UILayout as UILayout
+import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 
 import App.Model.Body (Body(..))
@@ -19,7 +19,6 @@ import App.Rect (Rect(..))
 import App.Uid (Uid)
 import App.Update.Updating (Updating)
 import App.Util (whenAlt)
-import Control.Monad.Reader.Class (local)
 import Data.String (fromString)
 
 data Action
@@ -29,45 +28,51 @@ data Action
 
 update :: GameState -> Updating GameState
 update gs = do
-  local (#uiLayout %~ UILayout.child "colonyWindow") $ do
-    Widget.window (Rect (V2 32 32) (V2 (4 + 200 + 4 + 256 + 4) (500 + 24))) 20 "Colonies"
-    let p = V2 36 56
+  Updating.childLayout "colonyWindow" $ do
+    Updating.childBounds "decoration" $ \bounds ->
+      Widget.window bounds 20 "Colonies"
 
     (selectedBody, _) <-
-      view (#uiLayout . to (UILayout.child "selectedBody") . #bounds) >>= \bounds ->
+      Updating.childBounds "selectedBody" $ \bounds ->
         Widget.listBox
           bounds 20
           (view #uid) (view #name)
           #selectedBody
           (gs ^.. #bodies . folded)
-    gs' <- for selectedBody $ \Body{ uid } -> do
-      mineralTableHeight <- mineralTable (p + V2 (200 + 4) 0) uid gs
-      let q = p + V2 (200 + 4) (mineralTableHeight + 8)
+    gs' <- Updating.childLayout "rightPanel" $
+      for selectedBody $ \Body{ uid } -> do
+        Updating.childBounds "mineralTable" $ \bounds ->
+          mineralTable bounds uid gs
 
-      action <- case gs ^. #colonies . at uid of
-        Just colony -> do
-          stockpileTableHeight <- stockpileTable q colony
-          mineTableHeight <- mineTable (q + V2 0 (stockpileTableHeight + 8)) colony
+        action <- case gs ^. #colonies . at uid of
+          Just colony -> do
+            Updating.childBounds "stockpileTable" $ \bounds ->
+              stockpileTable bounds colony
+            Updating.childBounds "mineTable" $ \bounds ->
+              mineTable bounds colony
 
-          let r = q + V2 0 (stockpileTableHeight + 8 + mineTableHeight + 8)
-          buildMine <- buildingPanel r colony
-          buildShip <- shipBuildingPanel (r + V2 0 48) colony
-          pure (buildMine <|> buildShip)
-        Nothing ->
-          Widget.button (Rect q (V2 128 20)) "Found colony"
-            <&> whenAlt FoundColony
+            buildMine <- Updating.childBounds "buildingPanel" $ \bounds ->
+              buildingPanel bounds colony
+            buildShip <- Updating.childBounds "shipBuildingPanel" $ \bounds ->
+              shipBuildingPanel bounds colony
+            pure (buildMine <|> buildShip)
+          Nothing ->
+            Updating.childBounds "foundColony" $ \bounds ->
+              Widget.button bounds "Found colony"
+              <&> whenAlt FoundColony
 
-      pure $ case action of
-        Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
-        Just BuildShip -> Logic.startShipBuildingTask uid gs
-        Just FoundColony -> Logic.foundColony uid gs
-        Nothing -> gs
+        pure $ case action of
+          Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
+          Just BuildShip -> Logic.startShipBuildingTask uid gs
+          Just FoundColony -> Logic.foundColony uid gs
+          Nothing -> gs
 
     pure (gs' & fromMaybe gs)
 
-mineralTable :: V2 Int -> Uid Body -> GameState -> Updating Int
-mineralTable p bodyUid gs =
-  let minerals = gs ^@.. #bodyMinerals . at bodyUid . _Just . ifolded
+mineralTable :: Rect Int -> Uid Body -> GameState -> Updating ()
+mineralTable bounds bodyUid gs =
+  let p = bounds ^. #xy
+      minerals = gs ^@.. #bodyMinerals . at bodyUid . _Just . ifolded
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
           ( fromString $ show mineral
@@ -79,11 +84,11 @@ mineralTable p bodyUid gs =
     Widget.labels (p + V2 0 20) 20 mineralLabels
     Widget.labels (p + V2 100 20) 20 availableLabels
     Widget.labels (p + V2 180 20) 20 accessibilityLabels
-    pure $ (1 + length minerals) * 20
 
-stockpileTable :: V2 Int -> Colony -> Updating Int
-stockpileTable p Colony{ stockpile } =
-  let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
+stockpileTable :: Rect Int -> Colony -> Updating ()
+stockpileTable bounds Colony{ stockpile } =
+  let p = bounds ^. #xy
+      (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
         ( fromString $ show mineral
         , fromString $ printf "%.2f t" qty
         )
@@ -91,11 +96,11 @@ stockpileTable p Colony{ stockpile } =
     Widget.label p "Resource stockpile"
     Widget.labels (p + V2 0 20) 20 itemLabels
     Widget.labels (p + V2 100 20) 20 qtyLabels
-    pure $ (1 + length stockpile) * 20
 
-mineTable :: V2 Int -> Colony -> Updating Int
-mineTable p Colony{ mines } =
-  let (mineLabels, mineQtyLabels) = unzip $ itoList mines <&> \(mineral, mineQty) ->
+mineTable :: Rect Int -> Colony -> Updating ()
+mineTable bounds Colony{ mines } =
+  let p = bounds ^. #xy
+      (mineLabels, mineQtyLabels) = unzip $ itoList mines <&> \(mineral, mineQty) ->
         ( fromString $ show mineral
         , fromString $ printf "%d mines" mineQty
         )
@@ -103,10 +108,10 @@ mineTable p Colony{ mines } =
     Widget.label p "Mining"
     Widget.labels (p + V2 0 20) 20 mineLabels
     Widget.labels (p + V2 100 20) 20 mineQtyLabels
-    pure $ (1 + length mines) * 20
 
-buildingPanel :: V2 Int -> Colony -> Updating (Maybe Action)
-buildingPanel p Colony{ buildingTask } = do
+buildingPanel :: Rect Int -> Colony -> Updating (Maybe Action)
+buildingPanel bounds Colony{ buildingTask } = do
+  let p = bounds ^. #xy
   case buildingTask of
     Just BuildingTask{ minedMineral } ->
       Widget.label p (fromString $ printf "Building: Mine for %s" (show minedMineral))
@@ -115,8 +120,9 @@ buildingPanel p Colony{ buildingTask } = do
   Widget.button (Rect (p + V2 0 20) (V2 256 20)) "Build mine for Mineral"
     <&> whenAlt BuildMine
 
-shipBuildingPanel :: V2 Int -> Colony -> Updating (Maybe Action)
-shipBuildingPanel p Colony{ shipBuildingTask } = do
+shipBuildingPanel :: Rect Int -> Colony -> Updating (Maybe Action)
+shipBuildingPanel bounds Colony{ shipBuildingTask } = do
+  let p = bounds ^. #xy
   case shipBuildingTask of
     Just ShipBuildingTask{} -> Widget.label p "Producing: Ship"
     Nothing -> Widget.label p "Producing: nothing"
