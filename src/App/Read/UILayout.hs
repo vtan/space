@@ -24,7 +24,10 @@ instance Aeson.FromJSON UILayout where
     Aeson.Object o -> do
       [x, y] :: [Int] <- o .:? "xy" <&> fromMaybe [0, 0]
       [w, h] :: [Int] <- o .:? "wh" <&> fromMaybe [0, 0]
-      children <- o .:? "children" <&> fromMaybe mempty
+      let rest = o
+            & at "xy" .~ Nothing
+            & at "wh" .~ Nothing
+      children <- rest & traverse Aeson.parseJSON
       let xy = V2 x y
           wh = V2 w h
       pure UILayout{..}
