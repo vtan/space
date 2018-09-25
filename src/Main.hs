@@ -14,8 +14,21 @@ import qualified SDL
 import qualified SDL.Font as SDL.TTF
 import qualified SDL.Raw
 
+import Control.Exception (SomeException, displayException, try)
+import Data.String (fromString)
+import System.IO (hPutStrLn, stderr)
+
 main :: IO ()
-main = do
+main =
+  try main' >>= \case
+    Right () -> pure ()
+    Left (ex :: SomeException) -> do
+      let message = displayException ex
+      hPutStrLn stderr message
+      SDL.showSimpleMessageBox Nothing SDL.Error "Exception" (fromString message)
+
+main' :: IO ()
+main' = do
   SDL.initializeAll
   SDL.TTF.initialize
   window <- SDL.createWindow ""
