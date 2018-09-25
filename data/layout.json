@@ -1,16 +1,11 @@
 {
-  "xy": [0, 0],
-  "wh": [0, 0],
-  "children": {
-    "colonyWindow": {
-      "xy": [36, 56],
-      "wh": [0, 0],
-      "children": {
-        "selectedBody": {
-          "xy": [0, 0],
-          "wh": [200, 500],
-          "children": {}
-        }
+  "colonyWindow": {
+    "xy": [36, 56],
+    "wh": [0, 0],
+    "children": {
+      "selectedBody": {
+        "xy": [0, 0],
+        "wh": [200, 500]
       }
     }
   }
