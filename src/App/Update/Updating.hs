@@ -5,6 +5,7 @@ import App.Prelude
 import qualified App.Update.UILayout as UILayout
 import qualified App.Update.UIState as UIState
 import qualified SDL
+import qualified SDL.Internal.Numbered
 
 import App.Rect (Rect)
 import App.Render.Rendering (Rendering)
@@ -23,9 +24,11 @@ data Context = Context
 
 data State = State
   { events :: [SDL.Event]
+  , keyModifier :: SDL.KeyModifier
   , mousePosition :: V2 Int
   , totalRealTime :: Double
   , quit :: Bool
+  , reloadResources :: Bool
   , focusedWidget :: Maybe SlotId
   , activeDropdown :: Maybe (Updating ())
   , ui :: UIState
@@ -36,20 +39,23 @@ data State = State
 initialState :: State
 initialState = State
   { events = []
+  , keyModifier = SDL.Internal.Numbered.fromNumber 0
   , mousePosition = 0
   , totalRealTime = 0
   , quit = False
+  , reloadResources = False
   , focusedWidget = Nothing
   , activeDropdown = Nothing
   , ui = UIState.initial
   , deferredRendering = [pure ()]
   }
 
-runFrame :: Double -> V2 Int -> [SDL.Event] -> Context -> State -> Updating a -> (a, State)
-runFrame dtime mousePos events ctx st u =
+runFrame :: Double -> V2 Int -> [SDL.Event] -> SDL.KeyModifier -> Context -> State -> Updating a -> (a, State)
+runFrame dtime mousePos events keyMod ctx st u =
   let st' = st
         & #totalRealTime +~ dtime
         & #events .~ []
+        & #keyModifier .~ keyMod
         & #mousePosition .~ mousePos
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)

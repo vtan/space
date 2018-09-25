@@ -18,6 +18,15 @@ import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
 update gs = do
+  reloadResources <- use #keyModifier >>= \case
+    (SDL.keyModifierLeftCtrl -> True) ->
+      Updating.consumeEvents (\case
+        KeyPressEvent SDL.ScancodeR -> Just ()
+        _ -> Nothing
+      ) <&> (not . null)
+    _ -> pure False
+  #reloadResources .= reloadResources
+
   hasFocusedWidget <- use #focusedWidget <&> has _Just
   toggleWindow <- Updating.consumeEvents (\case
       KeyPressEvent SDL.ScancodeC | not hasFocusedWidget -> Just UIState.ColonyWindow

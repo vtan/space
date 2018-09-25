@@ -14,7 +14,7 @@ import qualified SDL
 import qualified SDL.Font as SDL.TTF
 import qualified SDL.Raw
 
-import Control.Exception (SomeException, displayException, try)
+import Control.Exception (Exception, SomeException, displayException, try)
 import Data.String (fromString)
 import System.IO (hPutStrLn, stderr)
 
@@ -22,10 +22,7 @@ main :: IO ()
 main =
   try main' >>= \case
     Right () -> pure ()
-    Left (ex :: SomeException) -> do
-      let message = displayException ex
-      hPutStrLn stderr message
-      SDL.showSimpleMessageBox Nothing SDL.Error "Exception" (fromString message)
+    Left (ex :: SomeException) -> logError ex
 
 main' :: IO ()
 main' = do
@@ -36,36 +33,54 @@ main' = do
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
   font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
-  uiLayout <- loadUILayout "data/layout.json"
   let renderContext = Rendering.newContext renderer font
-      updateContext = Updating.Context uiLayout
+  updateContext <- loadUpdateContext
   SDL.Raw.startTextInput
 
   fcInitial <- FpsCounter.new
-  flip fix (fcInitial, GameState.initial, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, us, rs) -> do
+  flip fix (fcInitial, GameState.initial, updateContext, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, uc, us, rs) -> do
     case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
     events <- SDL.pollEvents
+    keyMod <- SDL.getModState
     SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
     let (!gs', !us') = Update.update gs
-          & Updating.runFrame (fc ^. #lastFrameTime) mousePos events updateContext us
+          & Updating.runFrame (fc ^. #lastFrameTime) mousePos events keyMod uc us
         Updating.State{ Updating.deferredRendering } = us'
         flatRendering = foldl' (*>) (pure ()) deferredRendering
     ((), rs') <- flatRendering & Rendering.runFrame renderContext rs
+
+    uc' <-
+      if us' ^. #reloadResources
+      then reloadUpdateContext <&> fromMaybe uc
+      else pure uc
 
     if us' ^. #quit
     then pure ()
     else do
       fc' <- FpsCounter.record fc
-      cont (fc', gs', us', rs')
+      cont (fc', gs', uc', us', rs')
   SDL.TTF.quit
   SDL.quit
 
-loadUILayout :: FilePath -> IO Update.UILayout.UILayout
-loadUILayout path = do
-  contents <- ByteString.readFile path
+loadUpdateContext :: IO Updating.Context
+loadUpdateContext = do
+  contents <- ByteString.readFile "data/layout.json"
   case Aeson.eitherDecodeStrict' contents of
-    Right uiLayout -> pure (Update.UILayout.fromRead uiLayout)
+    Right uiLayout ->
+      pure $ Updating.Context (Update.UILayout.fromRead uiLayout)
     Left err -> fail err
+
+reloadUpdateContext :: IO (Maybe Updating.Context)
+reloadUpdateContext =
+  try loadUpdateContext >>= \case
+    Right ctx -> pure (Just ctx)
+    Left (ex :: SomeException) -> Nothing <$ logError ex
+
+logError :: Exception e => e -> IO ()
+logError ex = do
+  let message = displayException ex
+  hPutStrLn stderr message
+  SDL.showSimpleMessageBox Nothing SDL.Error "Exception" (fromString message)
