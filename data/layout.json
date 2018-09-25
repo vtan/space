@@ -1,7 +1,6 @@
 {
   "colonyWindow": {
     "xy": [36, 56],
-    "wh": [0, 0],
     "children": {
       "decoration": {
         "xy": [-4, -24],
@@ -37,6 +36,57 @@
           "foundColony": {
             "xy": [0, 68],
             "wh": [128, 20]
+          }
+        }
+      }
+    }
+  },
+
+  "shipWindow": {
+    "xy": [36, 56],
+    "children": {
+      "decoration": {
+        "xy": [-4, -24],
+        "wh": [609, 524]
+      },
+      "selectedShip": {
+        "xy": [0, 0],
+        "wh": [200, 500]
+      },
+      "rightPanel": {
+        "xy": [204, 0],
+        "children": {
+          "renamePanel": {
+            "xy": [0, 0],
+            "children": {
+              "shipName": {
+                "xy": [0, 0],
+                "wh": [160, 20]
+              },
+              "button": {
+                "xy": [164, 0],
+                "wh": [100, 20]
+              }
+            }
+          },
+          "infoLabels": {
+            "xy": [0, 28]
+          },
+          "moveTo": {
+            "xy": [0, 92],
+            "wh": [80, 20]
+          },
+          "cancel": {
+            "xy": [84, 92],
+            "wh": [80, 20]
+          },
+          "selectedBody": {
+            "xy": [0, 120],
+            "wh": [200, 20]
+          },
+          "selectedResource": {
+            "xy": [0, 144],
+            "wh": [200, 20]
           }
         }
       }
