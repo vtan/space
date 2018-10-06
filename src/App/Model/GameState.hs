@@ -13,7 +13,7 @@ import App.Model.Dims (AU(..), _AU)
 import App.Model.Mineral (Mineral(..))
 import App.Model.OrbitalState (OrbitalState)
 import App.Model.Resource (Resource)
-import App.Model.Ship (Ship)
+import App.Model.Ship (Ship(..))
 import App.Uid (Uid(..))
 import App.UidMap (UidMap)
 
@@ -52,7 +52,16 @@ initial = GameState
         }
       )
     ]
-  , ships = mempty
+  , ships = UidMap.fromEntities (view #uid)
+    [ Ship
+      { uid = Uid 0
+      , name = "Ship 0"
+      , position = V2 1 0
+      , speed = 1 / 1495970 -- 100 km/s
+      , order = Nothing
+      , attachedToBody = Just (Uid 2)
+      }
+    ]
   , time = 0
   , timeStepPerFrame = Nothing
   , movingViewport = False
