@@ -4,7 +4,6 @@ import App.Prelude
 
 import qualified App.Read.UILayout as Read
 import qualified App.Rect as Rect
-import qualified Data.Text as Text
 
 import App.Rect (Rect)
 
@@ -15,11 +14,18 @@ data UILayout = UILayout
   }
   deriving (Show, Generic)
 
+empty :: UILayout
+empty = UILayout
+  { name = ""
+  , bounds = Rect.fromMinSize 0 0
+  , children = mempty
+  }
+
 child :: Text -> UILayout -> UILayout
-child childName UILayout{ name, children } =
+child childName UILayout{ children } =
   case children ^. at childName of
     Just foundChild -> foundChild
-    Nothing -> error . Text.unpack $ Text.unwords ["UI layout", name, "has no child", childName]
+    Nothing -> App.Update.UILayout.empty
 
 fromRead :: Read.UILayout -> UILayout
 fromRead = fromRead' "root" 0
