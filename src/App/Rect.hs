@@ -37,5 +37,15 @@ intersects (Rect axy@(V2 ax ay) awh) (Rect bxy@(V2 bx by) bwh) =
       V2 bx' by' = bxy + bwh
   in ax < bx' && bx < ax' && ay < by' && by < ay'
 
+union :: (Num a, Ord a) => Rect a -> Rect a -> Rect a
+union (Rect axy@(V2 ax ay) awh) (Rect bxy@(V2 bx by) bwh) =
+  let V2 ax' ay' = axy + awh
+      V2 bx' by' = bxy + bwh
+      x = min ax bx
+      y = min ay by
+      w = max ax' bx' - x
+      h = max ay' by' - y
+  in Rect (V2 x y) (V2 w h)
+
 toSdl :: Integral a => Rect a -> SDL.Rectangle CInt
 toSdl (Rect xy wh) = SDL.Rectangle (Lin.P $ fromIntegral <$> xy) (fromIntegral <$> wh)

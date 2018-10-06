@@ -53,5 +53,15 @@ instance Aeson.FromJSON WidgetLayout where
 
       pure WidgetLayout{..}
 
+    Aeson.Array values -> do
+      children <- values & toList & traverse Aeson.parseJSON
+      pure WidgetLayout
+        { name = ""
+        , xy = Nothing
+        , wh = Nothing
+        , layout = Fixed
+        , children = children
+        }
+
     invalid ->
       Aeson.typeMismatch "WidgetLayout" invalid

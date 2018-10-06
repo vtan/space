@@ -32,7 +32,6 @@ child childName WidgetTree{ children } =
 fromWidgetLayout :: WidgetLayout -> WidgetTree
 fromWidgetLayout WidgetLayout{ children = layoutChildren, xy, wh, layout } =
   let position = xy & fromMaybe 0
-      size = wh & fromMaybe 0
       children = layoutChildren
         & map (\ch@WidgetLayout{ name } -> (name, fromWidgetLayout ch))
         & unzip
@@ -40,6 +39,10 @@ fromWidgetLayout WidgetLayout{ children = layoutChildren, xy, wh, layout } =
         & uncurry zip
         & HashMap.fromList
         & unpackUnderscoreChildren
+      size = wh & fromMaybe (
+          foldl' Rect.union Rect.zero (children ^.. folded . #bounds)
+            & view #wh
+        )
   in WidgetTree
     { bounds = Rect.fromMinSize position size
     , children = children
