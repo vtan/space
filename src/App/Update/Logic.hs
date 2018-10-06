@@ -143,6 +143,7 @@ unloadResourceFromShip :: Maybe Double -> Resource -> Ship -> GameState -> GameS
 unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, loadedCargo } gs =
   fromMaybe gs $ do
     bodyUid <- attachedToBody
+    _ <- gs ^. #colonies . at bodyUid
     availableOnShip <- loadedCargo ^. at resource
     let unloadedQty = minimum (toList qtyOrAll ++ [availableOnShip])
     pure $ gs
