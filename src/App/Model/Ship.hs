@@ -5,6 +5,7 @@ import App.Prelude
 import App.Model.Body (Body)
 import App.Model.Dims (AU)
 import App.Model.PlottedPath (PlottedPath)
+import App.Model.Resource (Resource)
 import App.Uid (Uid)
 
 data Ship = Ship
@@ -12,6 +13,8 @@ data Ship = Ship
   , name :: Text
   , position :: V2 (AU Double)
   , speed :: AU Double
+  , cargoCapacity :: Double
+  , loadedCargo :: HashMap Resource Double
   , order :: Maybe Order
   , attachedToBody :: Maybe (Uid Body)
   }
@@ -21,7 +24,7 @@ drawnRadius :: Num a => a
 drawnRadius = 6
 
 data Order
-  = MoveToBody 
+  = MoveToBody
     { bodyUid :: Uid Body
     , path :: PlottedPath
     }

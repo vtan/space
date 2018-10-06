@@ -16,6 +16,7 @@ import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
+import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
@@ -70,21 +71,27 @@ buildShipOnColony :: Uid Body -> Colony -> GameState -> GameState
 buildShipOnColony bodyUid Colony{ shipBuildingTask } gs@GameState{ time } =
   case shipBuildingTask of
     Just ShipBuildingTask{ ShipBuildingTask.finishTime } | finishTime <= time ->
-      let shipUid@(Uid shipNo) = gs ^. #ships & UidMap.nextUid
+      let shipUid = gs ^. #ships & UidMap.nextUid
           ship = do
-            position <- gs ^? #bodyOrbitalStates . at bodyUid . _Just . #position
-            pure $ Ship
-              { Ship.uid = shipUid
-              , Ship.name = fromString $ "Ship " ++ show shipNo
-              , Ship.position
-              , Ship.speed = 1 / 1495970 -- 100 km/s
-              , Ship.order = Nothing
-              , Ship.attachedToBody = Just bodyUid
-              }
+            orbitalState <- gs ^. #bodyOrbitalStates . at bodyUid
+            pure $ shipBuiltAt bodyUid orbitalState shipUid
       in gs
         & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
         & #ships . at shipUid .~ ship
     _ -> gs
+
+shipBuiltAt :: Uid Body -> OrbitalState -> Uid Ship -> Ship
+shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
+  Ship
+    { Ship.uid = shipUid
+    , Ship.name = fromString $ "Ship " ++ show shipNo
+    , Ship.position = position
+    , Ship.cargoCapacity = 5
+    , Ship.loadedCargo = mempty
+    , Ship.speed = 1 / 1495970 -- 100 km/s
+    , Ship.order = Nothing
+    , Ship.attachedToBody = Just bodyUid
+    }
 
 mineOnColony :: Uid Body -> Colony -> HashMap Resource Mineral -> GameState -> GameState
 mineOnColony bodyUid Colony{ mines } minerals gs =
@@ -121,6 +128,26 @@ moveShipToBody Ship{ Ship.uid, Ship.position, speed } bodyUid gs =
 cancelShipOrder :: Ship -> GameState -> GameState
 cancelShipOrder Ship{ Ship.uid } gs =
   gs & #ships . at uid . _Just . #order .~ Nothing
+
+loadResourceToShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
+loadResourceToShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, cargoCapacity } gs =
+  fromMaybe gs $ do
+    bodyUid <- attachedToBody
+    availableOnColony <- gs ^? #colonies . at bodyUid . _Just . #stockpile . at resource . _Just
+    let loadedQty = minimum (toList qtyOrAll ++ [availableOnColony, cargoCapacity])
+    pure $ gs
+      & #ships . at shipUid . _Just . #loadedCargo . at resource . non 0 +~ loadedQty
+      & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 -~ loadedQty
+
+unloadResourceFromShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
+unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, loadedCargo } gs =
+  fromMaybe gs $ do
+    bodyUid <- attachedToBody
+    availableOnShip <- loadedCargo ^. at resource
+    let unloadedQty = minimum (toList qtyOrAll ++ [availableOnShip])
+    pure $ gs
+      & #ships . at shipUid . _Just . #loadedCargo . at resource . non 0 -~ unloadedQty
+      & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 +~ unloadedQty
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =

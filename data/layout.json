@@ -94,7 +94,36 @@
             ]
           },
           { "name": "selectedBody", "wh": [200, 20] },
-          { "name": "selectedResource", "wh": [200, 20] }
+          {
+            "name": "cargoPanel",
+            "layout": "vertical",
+            "padding": 4,
+            "children": [
+              {
+                "name": "_row1",
+                "layout": "horizontal",
+                "padding": 4,
+                "children": [
+                  { "name": "selectedResource", "wh": [208, 20] },
+                  { "name": "qtyLabel", "wh": [36, 20] },
+                  { "name": "qty", "wh": [80, 20]}
+                ]
+              },
+              {
+                "name": "_row2",
+                "layout": "horizontal",
+                "padding": 4,
+                "children": [
+                  { "name": "load", "wh": [80, 20] },
+                  { "name": "loadAll", "wh": [80, 20] },
+                  { "name": "unload", "wh": [80, 20] },
+                  { "name": "unloadAll", "wh": [80, 20] }
+                ]
+              },
+              { "name": "cargoCapacity", "wh": [240, 20] },
+              { "name": "loadedCargo", "wh": [240, 60] }
+            ]
+          }
         ]
       }
     ]

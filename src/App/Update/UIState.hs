@@ -18,6 +18,7 @@ data UIState = UIState
   , selectedBody :: ListBoxState (Uid Body)
   , selectedResource :: ListBoxState Resource
   , editedShipName :: Text
+  , editedResourceQty :: Text
   }
   deriving (Generic)
 
@@ -33,4 +34,5 @@ initial = UIState
   , selectedBody = ListBoxState.initial
   , selectedResource = ListBoxState.initial
   , editedShipName = ""
+  , editedResourceQty = ""
   }

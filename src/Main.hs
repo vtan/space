@@ -3,9 +3,9 @@ module Main (main) where
 import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
-import qualified App.Model.GameState as GameState
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update as Update
+import qualified App.Update.Initial as Initial
 import qualified App.Update.Updating as Updating
 import qualified App.Update.WidgetTree as Update.WidgetTree
 import qualified Data.Aeson as Aeson
@@ -38,7 +38,7 @@ main' = do
   SDL.Raw.startTextInput
 
   fcInitial <- FpsCounter.new
-  flip fix (fcInitial, GameState.initial, updateContext, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, uc, us, rs) -> do
+  flip fix (fcInitial, Initial.gameState, updateContext, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, uc, us, rs) -> do
     case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
