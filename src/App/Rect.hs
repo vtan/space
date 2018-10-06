@@ -11,6 +11,9 @@ data Rect a = Rect
   }
   deriving (Show, Generic, Functor)
 
+zero :: Num a => Rect a
+zero = Rect 0 0
+
 fromMinSize :: V2 a -> V2 a -> Rect a
 fromMinSize = Rect
 
@@ -29,7 +32,7 @@ containsRect (Rect (V2 x1 y1) (V2 w1 h1)) (Rect (V2 x2 y2) (V2 w2 h2)) =
   x2 >= x1 && x2 + w2 <= x1 + w1 && y2 >= y1 && y2 + h2 <= y1 + h1
 
 intersects :: (Num a, Ord a) => Rect a -> Rect a -> Bool
-intersects (Rect axy@(V2 ax ay) awh) (Rect bxy@(V2 bx by) bwh) = 
+intersects (Rect axy@(V2 ax ay) awh) (Rect bxy@(V2 bx by) bwh) =
   let V2 ax' ay' = axy + awh
       V2 bx' by' = bxy + bwh
   in ax < bx' && bx < ax' && ay < by' && by < ay'

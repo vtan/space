@@ -2,24 +2,24 @@ module App.Update.Updating where
 
 import App.Prelude
 
-import qualified App.Update.UILayout as UILayout
 import qualified App.Update.UIState as UIState
+import qualified App.Update.WidgetTree as WidgetTree
 import qualified SDL
 import qualified SDL.Internal.Numbered
 
 import App.Rect (Rect)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
-import App.Update.UILayout (UILayout)
 import App.Update.UIState (UIState)
 import App.Update.SlotId (SlotId)
+import App.Update.WidgetTree (WidgetTree)
 import Control.Monad.Reader (local, runReaderT)
 import Control.Monad.State.Strict (runStateT)
 
 type Updating a = ReaderT Context (StateT State Identity) a
 
 data Context = Context
-  { uiLayout :: UILayout }
+  { widgetTree :: WidgetTree }
   deriving (Show, Generic)
 
 data State = State
@@ -77,11 +77,11 @@ pushRendering =
 
 childLayout :: Text -> Updating a -> Updating a
 childLayout childName =
-  local (#uiLayout %~ UILayout.child childName)
+  local (#widgetTree %~ WidgetTree.child childName)
 
 childBounds :: Text -> (Rect Int -> Updating a) -> Updating a
 childBounds childName f = do
-  child <- view (#uiLayout . to (UILayout.child childName))
+  child <- view (#widgetTree . to (WidgetTree.child childName))
   f (child ^. #bounds)
 
 filterEvents :: (SDL.Event -> Maybe a) -> Updating [a]

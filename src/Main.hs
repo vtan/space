@@ -6,8 +6,8 @@ import qualified App.FpsCounter as FpsCounter
 import qualified App.Model.GameState as GameState
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update as Update
-import qualified App.Update.UILayout as Update.UILayout
 import qualified App.Update.Updating as Updating
+import qualified App.Update.WidgetTree as Update.WidgetTree
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString as ByteString
 import qualified SDL
@@ -69,8 +69,8 @@ loadUpdateContext :: IO Updating.Context
 loadUpdateContext = do
   contents <- ByteString.readFile "data/layout.json"
   case Aeson.eitherDecodeStrict' contents of
-    Right uiLayout ->
-      pure $ Updating.Context (Update.UILayout.fromRead uiLayout)
+    Right widgetLayout ->
+      pure $ Updating.Context (Update.WidgetTree.fromWidgetLayout widgetLayout)
     Left err -> fail err
 
 reloadUpdateContext :: IO (Maybe Updating.Context)

@@ -1,107 +1,150 @@
 {
-  "colonyWindow": {
-    "xy": [36, 56],
-    "decoration": {
-      "xy": [-4, -24],
-      "wh": [468, 524]
-    },
-    "selectedBody": {
-      "xy": [0, 0],
-      "wh": [200, 500]
-    },
-    "rightPanel": {
-      "xy": [204, 0],
-      "mineralTable": {
-        "xy": [0, 0],
-        "wh": [0, 60]
-      },
-      "stockpileTable": {
-        "xy": [0, 68],
-        "wh": [0, 60]
-      },
-      "mineTable": {
-        "xy": [0, 136],
-        "wh": [0, 60]
-      },
-      "buildingPanel": {
-        "xy": [0, 196],
-        "wh": [256, 68],
-        "label": {
-          "xy": [0, 0]
+  "children": [
+    {
+      "name": "colonyWindow",
+      "xy": [36, 56],
+      "children": [
+        {
+          "name": "decoration",
+          "xy": [-4, -24],
+          "wh": [468, 524]
         },
-        "build": {
-          "xy": [0, 24],
-          "wh": [256, 20]
-        },
-        "cancel": {
-          "xy": [0, 48],
-          "wh": [256, 20]
-        }
-      },
-      "shipBuildingPanel": {
-        "xy": [0, 272],
-        "wh": [256, 40],
-        "label": {
-          "xy": [0, 0]
-        },
-        "build": {
-          "xy": [0, 24],
-          "wh": [256, 20]
-        },
-        "cancel": {
-          "xy": [0, 48],
-          "wh": [256, 20]
-        }
-      },
-      "foundColony": {
-        "xy": [0, 68],
-        "wh": [128, 20]
-      }
-    }
-  },
-
-  "shipWindow": {
-    "xy": [36, 56],
-    "decoration": {
-      "xy": [-4, -24],
-      "wh": [609, 524]
-    },
-    "selectedShip": {
-      "xy": [0, 0],
-      "wh": [200, 500]
-    },
-    "rightPanel": {
-      "xy": [204, 0],
-      "renamePanel": {
-        "xy": [0, 0],
-        "shipName": {
+        {
+          "name": "selectedBody",
           "xy": [0, 0],
-          "wh": [160, 20]
+          "wh": [200, 500]
         },
-        "button": {
-          "xy": [164, 0],
-          "wh": [100, 20]
+        {
+          "name": "rightPanel",
+          "xy": [204, 0],
+          "children": [
+            {
+              "name": "mineralTable",
+              "xy": [0, 0],
+              "wh": [0, 60]
+            },
+            {
+              "name": "stockpileTable",
+              "xy": [0, 68],
+              "wh": [0, 60]
+            },
+            {
+              "name": "mineTable",
+              "xy": [0, 136],
+              "wh": [0, 60]
+            },
+            {
+              "name": "buildingPanel",
+              "xy": [0, 196],
+              "wh": [256, 68],
+              "children": [
+                {
+                  "name": "label",
+                  "xy": [0, 0]
+                },
+                {
+                  "name": "build",
+                  "xy": [0, 24],
+                  "wh": [256, 20]
+                },
+                {
+                  "name": "cancel",
+                  "xy": [0, 48],
+                  "wh": [256, 20]
+                }
+              ]
+            },
+            {
+              "name": "shipBuildingPanel",
+              "xy": [0, 272],
+              "wh": [256, 40],
+              "children": [
+                {
+                  "name": "label",
+                  "xy": [0, 0]
+                },
+                {
+                  "name": "build",
+                  "xy": [0, 24],
+                  "wh": [256, 20]
+                },
+                {
+                  "name": "cancel",
+                  "xy": [0, 48],
+                  "wh": [256, 20]
+                }
+              ]
+            },
+            {
+              "name": "foundColony",
+              "xy": [0, 68],
+              "wh": [128, 20]
+            }
+          ]
         }
-      },
-      "infoLabels": {
-        "xy": [0, 28]
-      },
-      "moveTo": {
-        "xy": [0, 92],
-        "wh": [80, 20]
-      },
-      "cancel": {
-        "xy": [84, 92],
-        "wh": [80, 20]
-      },
-      "selectedBody": {
-        "xy": [0, 120],
-        "wh": [200, 20]
-      },
-      "selectedResource": {
-        "xy": [0, 144],
-        "wh": [200, 20]
-      }
+      ]
+    },
+    {
+      "name": "shipWindow",
+      "xy": [36, 56],
+      "children": [
+        {
+          "name": "decoration",
+          "xy": [-4, -24],
+          "wh": [609, 524]
+        },
+        {
+          "name": "selectedShip",
+          "xy": [0, 0],
+          "wh": [200, 500]
+        },
+        {
+          "name": "rightPanel",
+          "xy": [204, 0],
+          "children": [
+            {
+              "name": "renamePanel",
+              "xy": [0, 0],
+              "children": [
+                {
+                  "name": "shipName",
+                  "xy": [0, 0],
+                  "wh": [160, 20]
+                },
+                {
+                  "name": "button",
+                  "xy": [164, 0],
+                  "wh": [100, 20]
+                }
+              ]
+            },
+            {
+              "name": "infoLabels",
+              "xy": [0, 28]
+            },
+            {
+              "name": "moveTo",
+              "xy": [0, 92],
+              "wh": [80, 20]
+            },
+            {
+              "name": "cancel",
+              "xy": [84, 92],
+              "wh": [80, 20]
+            },
+            {
+              "name": "selectedBody",
+              "xy": [0, 120],
+              "wh": [200, 20]
+            },
+            {
+              "name": "selectedResource",
+              "xy": [0, 144],
+              "wh": [200, 20]
+            }
+          ]
+        }
+      ]
     }
-  }
+  ]
 }
