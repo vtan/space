@@ -140,6 +140,10 @@ startBuildingTask bodyUid minedMineral gs =
           & #buildingTask .~ Just newTask
       _ -> colony
 
+cancelBuildingTask :: Uid Body -> GameState -> GameState
+cancelBuildingTask bodyUid gs =
+  gs & #colonies . at bodyUid . _Just . #buildingTask .~ Nothing
+
 startShipBuildingTask :: Uid Body -> GameState -> GameState
 startShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
@@ -153,3 +157,7 @@ startShipBuildingTask bodyUid gs =
           & #stockpile . at Resource.Mineral . non 0 -~ cost
           & #shipBuildingTask .~ Just newTask
       _ -> colony
+
+cancelShipBuildingTask :: Uid Body -> GameState -> GameState
+cancelShipBuildingTask bodyUid gs =
+  gs & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing

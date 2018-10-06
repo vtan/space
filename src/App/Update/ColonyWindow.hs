@@ -24,6 +24,8 @@ import Data.String (fromString)
 data Action
   = BuildMine
   | BuildShip
+  | CancelBuildingMine
+  | CancelBuildingShip
   | FoundColony
 
 update :: GameState -> Updating GameState
@@ -51,10 +53,10 @@ update gs = do
             Updating.childBounds "mineTable" $ \bounds ->
               mineTable bounds colony
 
-            buildMine <- Updating.childBounds "buildingPanel" $ \bounds ->
-              buildingPanel bounds colony
-            buildShip <- Updating.childBounds "shipBuildingPanel" $ \bounds ->
-              shipBuildingPanel bounds colony
+            buildMine <- Updating.childLayout "buildingPanel" $
+              buildingPanel colony
+            buildShip <- Updating.childLayout "shipBuildingPanel" $
+              shipBuildingPanel colony
             pure (buildMine <|> buildShip)
           Nothing ->
             Updating.childBounds "foundColony" $ \bounds ->
@@ -64,6 +66,8 @@ update gs = do
         pure $ case action of
           Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
           Just BuildShip -> Logic.startShipBuildingTask uid gs
+          Just CancelBuildingMine -> Logic.cancelBuildingTask uid gs
+          Just CancelBuildingShip -> Logic.cancelShipBuildingTask uid gs
           Just FoundColony -> Logic.foundColony uid gs
           Nothing -> gs
 
@@ -109,22 +113,40 @@ mineTable bounds Colony{ mines } =
     Widget.labels (p + V2 0 20) 20 mineLabels
     Widget.labels (p + V2 100 20) 20 mineQtyLabels
 
-buildingPanel :: Rect Int -> Colony -> Updating (Maybe Action)
-buildingPanel bounds Colony{ buildingTask } = do
-  let p = bounds ^. #xy
-  case buildingTask of
-    Just BuildingTask{ minedMineral } ->
-      Widget.label p (fromString $ printf "Building: Mine for %s" (show minedMineral))
-    Nothing ->
-      Widget.label p "Building: nothing"
-  Widget.button (Rect (p + V2 0 20) (V2 256 20)) "Build mine for Mineral"
-    <&> whenAlt BuildMine
+buildingPanel :: Colony -> Updating (Maybe Action)
+buildingPanel Colony{ buildingTask } = do
+  Updating.childBounds "label" $ \bounds -> do
+    let p = bounds ^. #xy
+    case buildingTask of
+      Just BuildingTask{ minedMineral } ->
+        Widget.label p (fromString $ printf "Building: Mine for %s" (show minedMineral))
+      Nothing ->
+        Widget.label p "Building: nothing"
 
-shipBuildingPanel :: Rect Int -> Colony -> Updating (Maybe Action)
-shipBuildingPanel bounds Colony{ shipBuildingTask } = do
-  let p = bounds ^. #xy
-  case shipBuildingTask of
-    Just ShipBuildingTask{} -> Widget.label p "Producing: Ship"
-    Nothing -> Widget.label p "Producing: nothing"
-  Widget.button (Rect (p + V2 0 20) (V2 256 20)) "Produce ship"
-    <&> whenAlt BuildShip
+  build <- Updating.childBounds "build" $ \bounds -> do
+    Widget.button bounds "Build mine for Mineral"
+      <&> whenAlt BuildMine
+
+  cancel <- Updating.childBounds "cancel" $ \bounds -> do
+    Widget.button bounds "Cancel"
+      <&> whenAlt CancelBuildingMine
+
+  pure (build <|> cancel)
+
+shipBuildingPanel :: Colony -> Updating (Maybe Action)
+shipBuildingPanel Colony{ shipBuildingTask } = do
+  Updating.childBounds "label" $ \bounds -> do
+    let p = bounds ^. #xy
+    case shipBuildingTask of
+      Just ShipBuildingTask{} -> Widget.label p "Producing: Ship"
+      Nothing -> Widget.label p "Producing: nothing"
+
+  build <- Updating.childBounds "build" $ \bounds -> do
+    Widget.button bounds "Produce ship"
+      <&> whenAlt BuildShip
+
+  cancel <- Updating.childBounds "cancel" $ \bounds -> do
+    Widget.button bounds "Cancel"
+      <&> whenAlt CancelBuildingShip
+
+  pure (build <|> cancel)
