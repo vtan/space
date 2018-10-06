@@ -12,15 +12,14 @@ data WidgetLayout = WidgetLayout
   , xy :: Maybe (V2 Int)
   , wh :: Maybe (V2 Int)
   , layout :: Layout
-  , padding :: Maybe Int
   , children :: [WidgetLayout]
   }
   deriving (Show, Generic)
 
 data Layout
   = Fixed
-  | Vertical
-  | Horizontal
+  | Vertical { padding :: Int }
+  | Horizontal { padding :: Int }
   deriving (Show, Generic)
 
 instance Aeson.FromJSON WidgetLayout where
@@ -39,13 +38,16 @@ instance Aeson.FromJSON WidgetLayout where
         Just invalid -> fail ("Invalid vector: " ++ show invalid)
 
       layout <- obj .:? "layout" >>= \case
+        Just "vertical" -> do
+          padding <- obj .:? "padding" <&> fromMaybe 0
+          pure $ Vertical padding
+        Just "horizontal" -> do
+          padding <- obj .:? "padding" <&> fromMaybe 0
+          pure $ Horizontal padding
         Just "fixed" -> pure Fixed
-        Just "vertical" -> pure Vertical
-        Just "horizontal" -> pure Horizontal
         Nothing -> pure Fixed
         Just invalid -> fail ("Invalid layout: " ++ invalid)
 
-      padding <- obj .:? "padding"
       childList <- obj .:? "children" <&> fromMaybe []
       children <- childList & traverse Aeson.parseJSON
 
