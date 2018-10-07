@@ -6,6 +6,7 @@ import App.Prelude
 
 import qualified App.Update.ColonyWindow as ColonyWindow
 import qualified App.Update.Logic as Logic
+import qualified App.Update.ScreenOverlay as ScreenOverlay
 import qualified App.Update.ShipWindow as ShipWindow
 import qualified App.Update.SystemMap as SystemMap
 import qualified App.Update.UIState as UIState
@@ -57,8 +58,9 @@ update gs = do
     Nothing -> gs''
 
 handleUI :: GameState -> Updating GameState
-handleUI gs =
+handleUI gs = do
+  gs' <- ScreenOverlay.update gs
   use (#ui . #activeWindow) >>= \case
-    Just UIState.ColonyWindow -> ColonyWindow.update gs
-    Just UIState.ShipWindow -> ShipWindow.update gs
-    Nothing -> pure gs
+    Just UIState.ColonyWindow -> ColonyWindow.update gs'
+    Just UIState.ShipWindow -> ShipWindow.update gs'
+    Nothing -> pure gs'

@@ -24,6 +24,25 @@ import App.Uid (Uid(..))
 import App.Util (reduce)
 import Data.String (fromString)
 
+setGameSpeed :: Int -> GameState -> GameState
+setGameSpeed speed gs =
+  -- TODO assuming 60 fps
+  case speed of
+    0 -> gs & #timeStepPerFrame .~ Nothing
+    1 -> gs & #timeStepPerFrame .~ Just 1
+    2 -> gs & #timeStepPerFrame .~ Just 10
+    3 -> gs & #timeStepPerFrame .~ Just 60
+    4 -> gs & #timeStepPerFrame .~ Just (12 * 60)
+    5 -> gs & #timeStepPerFrame .~ Just (5 * 24 * 60)
+    _ -> gs
+
+jumpToNextMidnight :: GameState -> GameState
+jumpToNextMidnight gs
+  | gs ^. #timeStepPerFrame & has _Nothing =
+    let now = gs ^. #time
+    in gs & stepTime (timeUntilNextMidnight now)
+  | otherwise = gs
+
 stepTime :: Int -> GameState -> GameState
 stepTime dt gs =
   let now = gs ^. #time

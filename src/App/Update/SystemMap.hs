@@ -42,13 +42,11 @@ handleEvent gs = \case
           auInPixels' = zoomLevel' * zoomLevel' * zoomLevel'
           scale' = V2 auInPixels' (- auInPixels')
       in gs & #camera . #scale .~ scale'
-  KeyPressEvent SDL.ScancodePeriod | gs ^. #timeStepPerFrame & has _Nothing ->
-    let now = gs ^. #time
-    in gs & Logic.stepTime (Logic.timeUntilNextMidnight now)
-  KeyPressEvent SDL.ScancodeGrave -> gs & #timeStepPerFrame .~ Nothing
-  KeyPressEvent SDL.Scancode1 -> gs & #timeStepPerFrame .~ Just 1
-  KeyPressEvent SDL.Scancode2 -> gs & #timeStepPerFrame .~ Just 10
-  KeyPressEvent SDL.Scancode3 -> gs & #timeStepPerFrame .~ Just 100
-  KeyPressEvent SDL.Scancode4 -> gs & #timeStepPerFrame .~ Just 1200
-  KeyPressEvent SDL.Scancode5 -> gs & #timeStepPerFrame .~ Just (3 * 3600)
+  KeyPressEvent SDL.ScancodePeriod -> Logic.jumpToNextMidnight gs
+  KeyPressEvent SDL.ScancodeGrave -> Logic.setGameSpeed 0 gs
+  KeyPressEvent SDL.Scancode1 -> Logic.setGameSpeed 1 gs
+  KeyPressEvent SDL.Scancode2 -> Logic.setGameSpeed 2 gs
+  KeyPressEvent SDL.Scancode3 -> Logic.setGameSpeed 3 gs
+  KeyPressEvent SDL.Scancode4 -> Logic.setGameSpeed 4 gs
+  KeyPressEvent SDL.Scancode5 -> Logic.setGameSpeed 5 gs
   _ -> gs

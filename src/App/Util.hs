@@ -17,8 +17,10 @@ showDate t =
   let secs = t `rem` 60
       mins = t `quot` 60 `rem` 60
       hours = t `quot` 3600 `rem` 24
-      days = t `quot` (24 * 3600)
-  in printf "%dd %02d:%02d:%02d" days hours mins secs
+      day = 1 + t `quot` (24 * 3600) `rem` 30
+      month = 1 + t `quot` (30 * 24 * 3600) `rem` 12
+      year = 2100 + t `quot` (12 * 30 * 24 * 3600)
+  in printf "%d-%02d-%02d %02d:%02d:%02d" year month day hours mins secs
 
 showDuration :: Int -> String
 showDuration t

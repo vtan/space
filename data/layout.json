@@ -1,7 +1,7 @@
 [
   {
     "name": "colonyWindow",
-    "xy": [36, 56],
+    "xy": [36, 120],
     "children": [
       { "name": "decoration", "xy": [-4, -24], "wh": [468, 524] },
       {
@@ -63,7 +63,7 @@
 
   {
     "name": "shipWindow",
-    "xy": [36, 56],
+    "xy": [36, 120],
     "children": [
       { "name": "decoration", "xy": [-4, -24], "wh": [609, 524] },
       { "name": "selectedShip", "xy": [0, 0], "wh": [200, 500] },
@@ -126,6 +126,38 @@
           }
         ]
       }
+    ]
+  },
+
+  {
+    "name": "overlay",
+    "layout": "vertical",
+    "padding": 4,
+    "children": [
+      {
+        "name": "_screens",
+        "layout": "horizontal",
+        "padding": 4,
+        "children": [
+          { "name": "colonies", "wh": [80, 20] },
+          { "name": "ships", "wh": [80, 20] }
+        ]
+      },
+      {
+        "name": "_timeControls",
+        "layout": "horizontal",
+        "padding": 4,
+        "children": [
+          { "name": "nextMidnight", "wh": [48, 20] },
+          { "name": "speed0", "wh": [48, 20] },
+          { "name": "speed1", "wh": [48, 20] },
+          { "name": "speed2", "wh": [48, 20] },
+          { "name": "speed3", "wh": [48, 20] },
+          { "name": "speed4", "wh": [48, 20] },
+          { "name": "speed5", "wh": [48, 20] }
+        ]
+      },
+      { "name": "currentTime", "wh": [80, 20] }
     ]
   }
 ]

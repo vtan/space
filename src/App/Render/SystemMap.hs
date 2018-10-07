@@ -22,13 +22,12 @@ import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.PlottedPath (PlottedPath(..))
 import App.Model.Ship (Ship(..))
 import App.Render.Rendering (Rendering)
-import App.Util (showDate, toMap)
-import Data.String (fromString)
+import App.Util (toMap)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: GameState -> Rendering ()
-render gs@GameState{ rootBody, bodyOrbitalStates, ships, time, camera } = do
+render gs@GameState{ rootBody, bodyOrbitalStates, ships, camera } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
@@ -40,7 +39,6 @@ render gs@GameState{ rootBody, bodyOrbitalStates, ships, time, camera } = do
     ifor_ labels $ \row label ->
       let pos = anchor & _y +~ 8 + row * 16
       in Rendering.text pos label
-  Rendering.text (V2 8 8) (fromString $ showDate time)
 
 renderOrbit :: Camera (AU Double) Double -> Body -> OrbitalState -> Rendering ()
 renderOrbit camera Body{ orbitRadius } OrbitalState{ OrbitalState.position, orbitCenter } =
