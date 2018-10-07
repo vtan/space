@@ -3,18 +3,19 @@
     "name": "colonyWindow",
     "xy": [36, 120],
     "children": [
-      { "name": "decoration", "xy": [-4, -24], "wh": [609, 524] },
+      { "name": "decoration", "xy": [-4, -24], "wh": [609, 536] },
       {
         "name": "_content",
         "layout": "horizontal",
         "padding": 4,
         "children": [
-          { "name": "selectedBody", "wh": [200, 500] },
+          { "name": "selectedBody", "wh": [200, 512] },
           {
             "name": "rightPanel",
             "layout": "vertical",
             "padding": 8,
             "children": [
+              { "name": "info", "wh": [0, 20] },
               { "name": "mineralTable", "wh": [0, 60] },
               {
                 "name": "_hasColony",
@@ -30,6 +31,7 @@
                     "children": [
                       { "name": "stockpileTable", "wh": [0, 72] },
                       { "name": "installationTable", "wh": [0, 60] },
+                      { "name": "populationInfo", "wh": [0, 40] },
                       {
                         "name": "buildingPanel",
                         "layout": "vertical",
@@ -99,8 +101,8 @@
     "name": "shipWindow",
     "xy": [36, 120],
     "children": [
-      { "name": "decoration", "xy": [-4, -24], "wh": [609, 524] },
-      { "name": "selectedShip", "xy": [0, 0], "wh": [200, 500] },
+      { "name": "decoration", "xy": [-4, -24], "wh": [609, 536] },
+      { "name": "selectedShip", "xy": [0, 0], "wh": [200, 512] },
       {
         "name": "rightPanel",
         "xy": [204, 0],

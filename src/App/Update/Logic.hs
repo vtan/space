@@ -175,7 +175,14 @@ unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBod
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
-  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, installations = mempty, buildingTask = Nothing, shipBuildingTask = Nothing }
+  gs & #colonies . at bodyUid .~ Just Colony
+    { population = 0
+    , isHomeworld = False
+    , stockpile = mempty
+    , installations = mempty
+    , buildingTask = Nothing
+    , shipBuildingTask = Nothing
+    }
 
 startBuildingTask :: Uid Body -> Installation -> GameState -> GameState
 startBuildingTask bodyUid installation gs =
@@ -235,3 +242,12 @@ uninstallInstallation installation qty bodyUid colony gs =
           & #installations . at installation . non 0 -~ uninstalledQty
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
+
+colonyMaxPopulation :: Body -> Colony -> Maybe Int
+colonyMaxPopulation Body{ colonyCost } Colony{ isHomeworld, installations } =
+  case colonyCost of
+    _ | isHomeworld -> Nothing
+    Nothing -> Just 0
+    Just cc ->
+      let installationQty = installations ^. at Installation.Infrastructure . non 0
+      in Just $ floor (10 / cc * fromIntegral installationQty)

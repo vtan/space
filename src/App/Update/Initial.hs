@@ -30,7 +30,9 @@ gameState = GameState
   , colonies = UidMap.fromList
     [ ( Uid @Body 2
       , Colony
-        { stockpile = [(Resource.Mineral, 2500)]
+        { population = 10000000000
+        , isHomeworld = True
+        , stockpile = [(Resource.Mineral, 2500)]
         , installations = [(Installation.Mine, 500)]
         , buildingTask = Nothing
         , shipBuildingTask = Nothing

@@ -8,7 +8,9 @@ import App.Model.Resource (Resource)
 import App.Model.ShipBuildingTask (ShipBuildingTask)
 
 data Colony = Colony
-  { stockpile :: HashMap Resource Int
+  { population :: Int
+  , isHomeworld :: Bool
+  , stockpile :: HashMap Resource Int
   , installations :: HashMap Installation Int
   , buildingTask :: Maybe BuildingTask
   , shipBuildingTask :: Maybe ShipBuildingTask

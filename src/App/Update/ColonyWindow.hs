@@ -47,16 +47,29 @@ update gs = do
           #selectedBody
           (gs ^.. #bodies . folded)
     gs' <- Updating.childLayout "rightPanel" $
-      for selectedBody $ \Body{ uid } -> do
+      for selectedBody $ \body@Body{ uid, colonyCost } -> do
+        Updating.childBounds "info" $ \bounds ->
+          Widget.labels (bounds ^. #xy) 20
+            [ case colonyCost of
+                Just cc -> fromString $ printf "Colony cost: ×%.1f" cc
+                Nothing -> "Uncolonizable"
+            ]
         Updating.childBounds "mineralTable" $ \bounds ->
           mineralTable bounds uid gs
 
         action <- case gs ^. #colonies . at uid of
-          Just colony -> do
+          Just colony@Colony{ population } -> do
             Updating.childBounds "stockpileTable" $ \bounds ->
               stockpileTable bounds colony
             Updating.childBounds "installationTable" $ \bounds ->
               installationTable bounds colony
+            Updating.childBounds "populationInfo" $ \bounds ->
+              Widget.labels (bounds ^. #xy) 20
+                [ fromString $ printf "Population: %d" population
+                , case Logic.colonyMaxPopulation body colony of
+                    Just mp -> fromString $ printf "Max. population: %d" mp
+                    Nothing -> "Max. population: ∞"
+                ]
 
             buildMine <- Updating.childLayout "buildingPanel" $
               buildingPanel colony
@@ -67,9 +80,12 @@ update gs = do
 
             pure (buildMine <|> buildShip <|> install)
           Nothing ->
-            Updating.childBounds "foundColony" $ \bounds ->
-              Widget.button bounds "Found colony"
-              <&> whenAlt FoundColony
+            case colonyCost of
+              Just _ ->
+                Updating.childBounds "foundColony" $ \bounds ->
+                  Widget.button bounds "Found colony"
+                  <&> whenAlt FoundColony
+              Nothing -> pure Nothing
 
         pure $ case action of
           Just (Build installation) -> Logic.startBuildingTask uid installation gs
