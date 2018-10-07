@@ -25,9 +25,9 @@ import Data.String (fromString)
 import Text.Read (readMaybe)
 
 data Action
-  = BuildMine
+  = Build Installation
   | BuildShip
-  | CancelBuildingMine
+  | CancelBuilding
   | CancelBuildingShip
   | Install Installation Int Colony
   | Uninstall Installation Int Colony
@@ -72,9 +72,9 @@ update gs = do
               <&> whenAlt FoundColony
 
         pure $ case action of
-          Just BuildMine -> Logic.startBuildingTask uid Installation.Mine gs
+          Just (Build installation) -> Logic.startBuildingTask uid installation gs
           Just BuildShip -> Logic.startShipBuildingTask uid gs
-          Just CancelBuildingMine -> Logic.cancelBuildingTask uid gs
+          Just CancelBuilding -> Logic.cancelBuildingTask uid gs
           Just CancelBuildingShip -> Logic.cancelShipBuildingTask uid gs
           Just (Install installation qty colony) -> Logic.installInstallation installation qty uid colony gs
           Just (Uninstall installation qty colony) -> Logic.uninstallInstallation installation qty uid colony gs
@@ -133,13 +133,21 @@ buildingPanel Colony{ buildingTask } = do
       Nothing ->
         Widget.label p "Building: nothing"
 
+  selectedInstallation <- Updating.childBounds "selectedInstallation" $ \bounds ->
+    Widget.closedDropdown
+      bounds 20 380
+      id (show >>> fromString)
+      #selectedInstallation
+      Installation.all
+
   build <- Updating.childBounds "build" $ \bounds -> do
-    Widget.button bounds "Build mine"
-      <&> whenAlt BuildMine
+    Widget.button bounds "Build"
+      <&> whenAlt (Build <$> selectedInstallation)
+      <&> join
 
   cancel <- Updating.childBounds "cancel" $ \bounds -> do
     Widget.button bounds "Cancel"
-      <&> whenAlt CancelBuildingMine
+      <&> whenAlt CancelBuilding
 
   pure (build <|> cancel)
 

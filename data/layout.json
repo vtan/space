@@ -28,16 +28,24 @@
                     "layout": "vertical",
                     "padding": 12,
                     "children": [
-                      { "name": "stockpileTable", "wh": [0, 60] },
+                      { "name": "stockpileTable", "wh": [0, 72] },
                       { "name": "installationTable", "wh": [0, 60] },
                       {
                         "name": "buildingPanel",
                         "layout": "vertical",
                         "padding": 4,
                         "children": [
-                          { "name": "label", "wh": [256, 20] },
-                          { "name": "build", "wh": [256, 20] },
-                          { "name": "cancel", "wh": [256, 20] }
+                          { "name": "label", "wh": [164, 20] },
+                          { "name": "selectedInstallation", "wh": [164, 20] },
+                          {
+                            "name": "_row",
+                            "layout": "horizontal",
+                            "padding": 4,
+                            "children": [
+                              { "name": "build", "wh": [80, 20] },
+                              { "name": "cancel", "wh": [80, 20] }
+                            ]
+                          }
                         ]
                       },
                       {
