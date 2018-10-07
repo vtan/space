@@ -213,3 +213,25 @@ startShipBuildingTask bodyUid gs =
 cancelShipBuildingTask :: Uid Body -> GameState -> GameState
 cancelShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
+
+installInstallation :: Installation -> Int -> Uid Body -> Colony -> GameState -> GameState
+installInstallation installation qty bodyUid colony gs =
+  fromMaybe gs $ do
+    availableQty <- colony ^. #stockpile . at (Resource.Installation installation)
+    let installedQty = min qty availableQty
+        colony' = colony
+          & #installations . at installation . non 0 +~ installedQty
+          & #stockpile . at (Resource.Installation installation) . non 0 -~ installedQty
+    pure $ gs
+      & #colonies . at bodyUid .~ Just colony'
+
+uninstallInstallation :: Installation -> Int -> Uid Body -> Colony -> GameState -> GameState
+uninstallInstallation installation qty bodyUid colony gs =
+  fromMaybe gs $ do
+    installedQty <- colony ^. #installations . at installation
+    let uninstalledQty = min qty installedQty
+        colony' = colony
+          & #stockpile . at (Resource.Installation installation) . non 0 +~ uninstalledQty
+          & #installations . at installation . non 0 -~ uninstalledQty
+    pure $ gs
+      & #colonies . at bodyUid .~ Just colony'

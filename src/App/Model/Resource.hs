@@ -2,6 +2,8 @@ module App.Model.Resource where
 
 import App.Prelude
 
+import qualified App.Model.Installation as Installation
+
 import App.Model.Installation (Installation(..))
 
 data Resource
@@ -19,4 +21,4 @@ instance Hashable Resource
 all :: [Resource]
 all =
   [Mineral]
-  ++ [Installation i | i <- [minBound .. maxBound]]
+  ++ [Installation i | i <- Installation.all]

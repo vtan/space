@@ -8,11 +8,13 @@ import qualified App.Model.Installation as Installation
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
+import qualified Data.Text as Text
 
 import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
+import App.Model.Installation (Installation)
 import App.Model.Mineral (Mineral(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Rect (Rect(..))
@@ -20,12 +22,15 @@ import App.Uid (Uid)
 import App.Update.Updating (Updating)
 import App.Util (whenAlt)
 import Data.String (fromString)
+import Text.Read (readMaybe)
 
 data Action
   = BuildMine
   | BuildShip
   | CancelBuildingMine
   | CancelBuildingShip
+  | Install Installation Int Colony
+  | Uninstall Installation Int Colony
   | FoundColony
 
 update :: GameState -> Updating GameState
@@ -57,7 +62,10 @@ update gs = do
               buildingPanel colony
             buildShip <- Updating.childLayout "shipBuildingPanel" $
               shipBuildingPanel colony
-            pure (buildMine <|> buildShip)
+            install <- Updating.childLayout "installationPanel" $
+              installationPanel colony
+
+            pure (buildMine <|> buildShip <|> install)
           Nothing ->
             Updating.childBounds "foundColony" $ \bounds ->
               Widget.button bounds "Found colony"
@@ -68,6 +76,8 @@ update gs = do
           Just BuildShip -> Logic.startShipBuildingTask uid gs
           Just CancelBuildingMine -> Logic.cancelBuildingTask uid gs
           Just CancelBuildingShip -> Logic.cancelShipBuildingTask uid gs
+          Just (Install installation qty colony) -> Logic.installInstallation installation qty uid colony gs
+          Just (Uninstall installation qty colony) -> Logic.uninstallInstallation installation qty uid colony gs
           Just FoundColony -> Logic.foundColony uid gs
           Nothing -> gs
 
@@ -99,7 +109,7 @@ stockpileTable bounds Colony{ stockpile } =
   in do
     Widget.label p "Resource stockpile"
     Widget.labels (p + V2 0 20) 20 itemLabels
-    Widget.labels (p + V2 100 20) 20 qtyLabels
+    Widget.labels (p + V2 180 20) 20 qtyLabels
 
 installationTable :: Rect Int -> Colony -> Updating ()
 installationTable bounds Colony{ installations } =
@@ -150,3 +160,31 @@ shipBuildingPanel Colony{ shipBuildingTask } = do
       <&> whenAlt CancelBuildingShip
 
   pure (build <|> cancel)
+
+installationPanel :: Colony -> Updating (Maybe Action)
+installationPanel colony = do
+  selectedInstallation <- Updating.childBounds "selectedInstallation" $ \bounds ->
+    Widget.closedDropdown
+      bounds 20 380
+      id (show >>> fromString)
+      #selectedInstallation
+      Installation.all
+
+  Updating.childBounds "qtyLabel" $ \bounds ->
+    Widget.label (bounds ^. #xy) "Qty:"
+
+  qty <- Updating.childBounds "qty" $ \bounds ->
+    Widget.textBox "installationQty" bounds #editedInstallationQty
+      <&> (Text.unpack >>> readMaybe @Int)
+
+  install <- Updating.childBounds "install" $ \bounds ->
+    Widget.button bounds "Install"
+      <&> whenAlt (Install <$> selectedInstallation <*> qty <*> pure colony)
+      <&> join
+
+  uninstall <- Updating.childBounds "uninstall" $ \bounds ->
+    Widget.button bounds "Uninstall"
+      <&> whenAlt (Uninstall <$> selectedInstallation <*> qty <*> pure colony)
+      <&> join
+
+  pure (install <|> uninstall)

@@ -3,7 +3,7 @@
     "name": "colonyWindow",
     "xy": [36, 120],
     "children": [
-      { "name": "decoration", "xy": [-4, -24], "wh": [468, 524] },
+      { "name": "decoration", "xy": [-4, -24], "wh": [609, 524] },
       {
         "name": "_content",
         "layout": "horizontal",
@@ -26,7 +26,7 @@
                   {
                     "name": "_colonyWidgets",
                     "layout": "vertical",
-                    "padding": 8,
+                    "padding": 12,
                     "children": [
                       { "name": "stockpileTable", "wh": [0, 60] },
                       { "name": "installationTable", "wh": [0, 60] },
@@ -48,6 +48,32 @@
                           { "name": "label", "wh": [256, 20] },
                           { "name": "build", "wh": [256, 20] },
                           { "name": "cancel", "wh": [256, 20] }
+                        ]
+                      },
+                      {
+                        "name": "installationPanel",
+                        "layout": "vertical",
+                        "padding": 4,
+                        "children": [
+                          {
+                            "name": "_row1",
+                            "layout": "horizontal",
+                            "padding": 4,
+                            "children": [
+                              { "name": "selectedInstallation", "wh": [208, 20] },
+                              { "name": "qtyLabel", "wh": [36, 20] },
+                              { "name": "qty", "wh": [80, 20]}
+                            ]
+                          },
+                          {
+                            "name": "_row2",
+                            "layout": "horizontal",
+                            "padding": 4,
+                            "children": [
+                              { "name": "install", "wh": [80, 20] },
+                              { "name": "uninstall", "wh": [80, 20] }
+                            ]
+                          }
                         ]
                       }
                     ]
