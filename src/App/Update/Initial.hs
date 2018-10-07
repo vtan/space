@@ -3,6 +3,7 @@ module App.Update.Initial where
 import App.Prelude
 
 import qualified App.Model.Body as Body
+import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 import qualified App.Update.Logic as Logic
 import qualified App.UidMap as UidMap
@@ -30,7 +31,7 @@ gameState = GameState
     [ ( Uid @Body 2
       , Colony
         { stockpile = [(Resource.Mineral, 2500)]
-        , mines = [(Resource.Mineral, 1)]
+        , installations = [(Installation.Mine, 500)]
         , buildingTask = Nothing
         , shipBuildingTask = Nothing
         }

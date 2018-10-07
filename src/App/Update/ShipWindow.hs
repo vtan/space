@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Updating as Updating
@@ -113,7 +114,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
       bounds 20 380
       id (show >>> fromString)
       #selectedResource
-      [minBound .. maxBound]
+      Resource.all
 
   Updating.childBounds "qtyLabel" $ \bounds ->
     Widget.label (bounds ^. #xy) "Qty:"

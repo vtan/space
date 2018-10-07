@@ -29,7 +29,7 @@
                     "padding": 8,
                     "children": [
                       { "name": "stockpileTable", "wh": [0, 60] },
-                      { "name": "mineTable", "wh": [0, 60] },
+                      { "name": "installationTable", "wh": [0, 60] },
                       {
                         "name": "buildingPanel",
                         "layout": "vertical",

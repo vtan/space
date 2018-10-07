@@ -4,7 +4,7 @@ where
 
 import App.Prelude
 
-import qualified App.Model.Resource as Resource
+import qualified App.Model.Installation as Installation
 import qualified App.Update.Logic as Logic
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
@@ -50,8 +50,8 @@ update gs = do
           Just colony -> do
             Updating.childBounds "stockpileTable" $ \bounds ->
               stockpileTable bounds colony
-            Updating.childBounds "mineTable" $ \bounds ->
-              mineTable bounds colony
+            Updating.childBounds "installationTable" $ \bounds ->
+              installationTable bounds colony
 
             buildMine <- Updating.childLayout "buildingPanel" $
               buildingPanel colony
@@ -64,7 +64,7 @@ update gs = do
               <&> whenAlt FoundColony
 
         pure $ case action of
-          Just BuildMine -> Logic.startBuildingTask uid Resource.Mineral gs
+          Just BuildMine -> Logic.startBuildingTask uid Installation.Mine gs
           Just BuildShip -> Logic.startShipBuildingTask uid gs
           Just CancelBuildingMine -> Logic.cancelBuildingTask uid gs
           Just CancelBuildingShip -> Logic.cancelShipBuildingTask uid gs
@@ -101,30 +101,30 @@ stockpileTable bounds Colony{ stockpile } =
     Widget.labels (p + V2 0 20) 20 itemLabels
     Widget.labels (p + V2 100 20) 20 qtyLabels
 
-mineTable :: Rect Int -> Colony -> Updating ()
-mineTable bounds Colony{ mines } =
+installationTable :: Rect Int -> Colony -> Updating ()
+installationTable bounds Colony{ installations } =
   let p = bounds ^. #xy
-      (mineLabels, mineQtyLabels) = unzip $ itoList mines <&> \(mineral, mineQty) ->
-        ( fromString $ show mineral
-        , fromString $ printf "%d mines" mineQty
+      (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
+        ( fromString $ show installation
+        , fromString $ printf "%d t" qty
         )
   in do
-    Widget.label p "Mining"
+    Widget.label p "Installations"
     Widget.labels (p + V2 0 20) 20 mineLabels
-    Widget.labels (p + V2 100 20) 20 mineQtyLabels
+    Widget.labels (p + V2 180 20) 20 mineQtyLabels
 
 buildingPanel :: Colony -> Updating (Maybe Action)
 buildingPanel Colony{ buildingTask } = do
   Updating.childBounds "label" $ \bounds -> do
     let p = bounds ^. #xy
     case buildingTask of
-      Just BuildingTask{ minedMineral } ->
-        Widget.label p (fromString $ printf "Building: Mine for %s" (show minedMineral))
+      Just BuildingTask{ installation, quantity } ->
+        Widget.label p (fromString $ printf "Building: %s (%d t)" (show installation) quantity)
       Nothing ->
         Widget.label p "Building: nothing"
 
   build <- Updating.childBounds "build" $ \bounds -> do
-    Widget.button bounds "Build mine for Mineral"
+    Widget.button bounds "Build mine"
       <&> whenAlt BuildMine
 
   cancel <- Updating.childBounds "cancel" $ \bounds -> do

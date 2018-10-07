@@ -4,17 +4,18 @@ import App.Prelude
 
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
+import qualified App.Model.Installation as Installation
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 import qualified App.UidMap as UidMap
-import qualified Data.HashMap.Strict as HashMap
 
 import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
+import App.Model.Installation (Installation)
 import App.Model.Mineral (Mineral(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Resource (Resource)
@@ -79,12 +80,13 @@ productionTick gs@GameState{ bodies } =
 buildOnColony :: Uid Body -> Colony -> GameState -> GameState
 buildOnColony bodyUid col@Colony{ buildingTask } gs@GameState{ time } =
   case buildingTask of
-    Just BuildingTask{ minedMineral, BuildingTask.finishTime } | finishTime <= time ->
+    Just BuildingTask{ installation, quantity, BuildingTask.finishTime } | finishTime <= time ->
       let col' = col
-            & #mines . at minedMineral . non 0 +~ 1
+            & #stockpile . at (Resource.Installation installation) . non 0 +~ quantity
             & #buildingTask .~ Nothing
       in gs & #colonies . at bodyUid . _Just .~ col'
-    _ -> gs
+    Just BuildingTask{} -> gs
+    Nothing -> gs
 
 buildShipOnColony :: Uid Body -> Colony -> GameState -> GameState
 buildShipOnColony bodyUid Colony{ shipBuildingTask } gs@GameState{ time } =
@@ -113,10 +115,11 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     }
 
 mineOnColony :: Uid Body -> Colony -> HashMap Resource Mineral -> GameState -> GameState
-mineOnColony bodyUid Colony{ mines } minerals gs =
-  let mineralsReservesMines = itoList $ HashMap.intersectionWith (,) minerals mines
-  in gs & reduce mineralsReservesMines (\gs' (mineral, (Mineral{ available, accessibility }, mineQty)) ->
-      let minedQty = min (mineQty * floor (10 * accessibility)) available
+mineOnColony bodyUid Colony{ installations } minerals gs =
+  let mines = installations ^. at Installation.Mine . non 0
+      mineralsReserves = itoList minerals
+  in gs & reduce mineralsReserves (\gs' (mineral, Mineral{ available, accessibility }) ->
+      let minedQty = min (floor (10 * accessibility * fromIntegral mines / 1000)) available
       in gs'
         & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
         & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
@@ -172,15 +175,16 @@ unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBod
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
-  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, mines = mempty, buildingTask = Nothing, shipBuildingTask = Nothing }
+  gs & #colonies . at bodyUid .~ Just Colony{ stockpile = mempty, installations = mempty, buildingTask = Nothing, shipBuildingTask = Nothing }
 
-startBuildingTask :: Uid Body -> Resource -> GameState -> GameState
-startBuildingTask bodyUid minedMineral gs =
+startBuildingTask :: Uid Body -> Installation -> GameState -> GameState
+startBuildingTask bodyUid installation gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
     let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
         cost = 1000
+        quantity = 500
         finishTime = (gs ^. #time) + 30 * 24 * 3600
-        newTask = BuildingTask{ minedMineral, BuildingTask.finishTime }
+        newTask = BuildingTask{ installation, quantity, BuildingTask.finishTime }
     in case colony ^. #buildingTask of
       Nothing | buildingMaterials >= cost ->
         colony
