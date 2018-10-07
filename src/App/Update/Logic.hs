@@ -86,7 +86,7 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     { Ship.uid = shipUid
     , Ship.name = fromString $ "Ship " ++ show shipNo
     , Ship.position = position
-    , Ship.cargoCapacity = 5
+    , Ship.cargoCapacity = 1000
     , Ship.loadedCargo = mempty
     , Ship.speed = 1 / 1495970 -- 100 km/s
     , Ship.order = Nothing
@@ -97,7 +97,7 @@ mineOnColony :: Uid Body -> Colony -> HashMap Resource Mineral -> GameState -> G
 mineOnColony bodyUid Colony{ mines } minerals gs =
   let mineralsReservesMines = itoList $ HashMap.intersectionWith (,) minerals mines
   in gs & reduce mineralsReservesMines (\gs' (mineral, (Mineral{ available, accessibility }, mineQty)) ->
-      let minedQty = min (fromIntegral mineQty * 0.01 * accessibility) available
+      let minedQty = min (mineQty * floor (10 * accessibility)) available
       in gs'
         & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
         & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
@@ -129,17 +129,18 @@ cancelShipOrder :: Ship -> GameState -> GameState
 cancelShipOrder Ship{ Ship.uid } gs =
   gs & #ships . at uid . _Just . #order .~ Nothing
 
-loadResourceToShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
-loadResourceToShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, cargoCapacity } gs =
+loadResourceToShip :: Maybe Int -> Resource -> Ship -> GameState -> GameState
+loadResourceToShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, cargoCapacity, loadedCargo } gs =
   fromMaybe gs $ do
     bodyUid <- attachedToBody
     availableOnColony <- gs ^? #colonies . at bodyUid . _Just . #stockpile . at resource . _Just
-    let loadedQty = minimum (toList qtyOrAll ++ [availableOnColony, cargoCapacity])
+    let remainingCargoSpace = cargoCapacity - sum loadedCargo
+    let loadedQty = minimum (toList qtyOrAll ++ [availableOnColony, remainingCargoSpace])
     pure $ gs
       & #ships . at shipUid . _Just . #loadedCargo . at resource . non 0 +~ loadedQty
       & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 -~ loadedQty
 
-unloadResourceFromShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
+unloadResourceFromShip :: Maybe Int -> Resource -> Ship -> GameState -> GameState
 unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, loadedCargo } gs =
   fromMaybe gs $ do
     bodyUid <- attachedToBody
@@ -158,7 +159,7 @@ startBuildingTask :: Uid Body -> Resource -> GameState -> GameState
 startBuildingTask bodyUid minedMineral gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
     let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
-        cost = 1
+        cost = 1000
         finishTime = (gs ^. #time) + 30 * 24 * 3600
         newTask = BuildingTask{ minedMineral, BuildingTask.finishTime }
     in case colony ^. #buildingTask of
@@ -176,7 +177,7 @@ startShipBuildingTask :: Uid Body -> GameState -> GameState
 startShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
     let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
-        cost = 2
+        cost = 2000
         finishTime = (gs ^. #time) + 1 * 24 * 3600
         newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
     in case colony ^. #shipBuildingTask of

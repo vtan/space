@@ -80,7 +80,7 @@ mineralTable bounds bodyUid gs =
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
           ( fromString $ show mineral
-          , fromString $ printf "%.2f t" available
+          , fromString $ printf "%d t" available
           , fromString $ printf "%.0f%%" (100 * accessibility)
           ) -- TODO table widget?
   in do
@@ -94,7 +94,7 @@ stockpileTable bounds Colony{ stockpile } =
   let p = bounds ^. #xy
       (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
         ( fromString $ show mineral
-        , fromString $ printf "%.2f t" qty
+        , fromString $ printf "%d t" qty
         )
   in do
     Widget.label p "Resource stockpile"

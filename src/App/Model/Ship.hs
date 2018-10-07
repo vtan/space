@@ -13,8 +13,8 @@ data Ship = Ship
   , name :: Text
   , position :: V2 (AU Double)
   , speed :: AU Double
-  , cargoCapacity :: Double
-  , loadedCargo :: HashMap Resource Double
+  , cargoCapacity :: Int
+  , loadedCargo :: HashMap Resource Int
   , order :: Maybe Order
   , attachedToBody :: Maybe (Uid Body)
   }

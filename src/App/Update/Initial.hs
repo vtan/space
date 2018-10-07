@@ -23,13 +23,13 @@ gameState = GameState
       & UidMap.fromList
   , bodyOrbitalStates = Body.statesAtTime 0 theRootBody
   , bodyMinerals = UidMap.fromList
-    [ (Uid @Body 2, [(Resource.Mineral, Mineral{ available = 10, accessibility = 0.6 })])
-    , (Uid @Body 3, [(Resource.Mineral, Mineral{ available = 5, accessibility = 0.85 })])
+    [ (Uid @Body 2, [(Resource.Mineral, Mineral{ available = 10000, accessibility = 0.6 })])
+    , (Uid @Body 3, [(Resource.Mineral, Mineral{ available = 5000, accessibility = 0.8 })])
     ]
   , colonies = UidMap.fromList
     [ ( Uid @Body 2
       , Colony
-        { stockpile = [(Resource.Mineral, 2.5)]
+        { stockpile = [(Resource.Mineral, 2500)]
         , mines = [(Resource.Mineral, 1)]
         , buildingTask = Nothing
         , shipBuildingTask = Nothing

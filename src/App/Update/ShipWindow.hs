@@ -25,8 +25,8 @@ data Action
   = Rename Text
   | MoveToBody (Uid Body)
   | CancelOrder
-  | LoadResource Resource (Maybe Double)
-  | UnloadResource Resource (Maybe Double)
+  | LoadResource Resource (Maybe Int)
+  | UnloadResource Resource (Maybe Int)
 
 update :: GameState -> Updating GameState
 update gs =
@@ -120,7 +120,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "cargoQty" bounds #editedResourceQty
-      <&> (Text.unpack >>> readMaybe @Double)
+      <&> (Text.unpack >>> readMaybe @Int)
 
   load <- Updating.childBounds "load" $ \bounds ->
     Widget.button bounds "Load"
@@ -144,14 +144,14 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
   Updating.childBounds "cargoCapacity" $ \bounds ->
     Widget.label (bounds ^. #xy) $
-      fromString (printf "Cargo capacity: %.2f t" cargoCapacity)
+      fromString (printf "Cargo capacity: %d t" cargoCapacity)
 
   Updating.childBounds "loadedCargo" $ \bounds ->
     Widget.labels (bounds ^. #xy) 20 $
       loadedCargo
         & itoList
         & map (\(resource, loadedQty) ->
-          fromString (printf "Stored %s: %.2f t" (show resource) loadedQty)
+          fromString (printf "Stored %s: %d t" (show resource) loadedQty)
         )
 
   pure $ load <|> loadAll <|> unload <|> unloadAll
