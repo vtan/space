@@ -15,6 +15,7 @@ data Body = Body
   , name :: Text
   , orbitRadius :: AU Double
   , angularVelocity :: Double
+  , colonyCost :: Maybe Double
   , children :: [Body]
   }
   deriving (Show, Generic)
