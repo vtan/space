@@ -23,6 +23,9 @@ nextUid (UidMap xs) =
     & fromMaybe 0
     & Uid
 
+keys :: UidMap i a -> [Uid i]
+keys = getIntMap >>> IntMap.keys >>> map Uid
+
 zip :: UidMap i a -> UidMap i b -> UidMap i (a, b)
 zip (UidMap xs) (UidMap ys) = UidMap $ IntMap.intersectionWith (,) xs ys
 

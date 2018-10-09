@@ -67,36 +67,32 @@ timeUntilNextMidnight :: Int -> Int
 timeUntilNextMidnight now = (quot now 86400 + 1) * 86400 - now
 
 productionTick :: GameState -> GameState
-productionTick gs@GameState{ bodies } =
-  gs & reduce bodies (\gs' Body{ Body.uid = bodyUid } ->
-      case gs' ^. #colonies . at bodyUid of
-        Just colony -> productionTickOnColony bodyUid colony gs'
-        Nothing -> gs'
-    )
+productionTick gs@GameState{ colonies } =
+  UidMap.keys colonies
+    & foldl' (flip productionTickOnColony) gs
 
-productionTickOnColony :: Uid Body -> Colony -> GameState -> GameState
-productionTickOnColony bodyUid colony gs =
-  let minerals = gs ^. #bodyMinerals . at bodyUid . _Just
-  in gs
-    & buildOnColony bodyUid colony
-    & buildShipOnColony bodyUid colony
-    & mineOnColony bodyUid colony minerals
-    & shrinkPopulation bodyUid
+productionTickOnColony :: Uid Body -> GameState -> GameState
+productionTickOnColony bodyUid =
+  buildOnColony bodyUid
+  >>> buildShipOnColony bodyUid
+  >>> mineOnColony bodyUid
+  >>> shrinkPopulation bodyUid
 
-buildOnColony :: Uid Body -> Colony -> GameState -> GameState
-buildOnColony bodyUid col@Colony{ buildingTask } gs@GameState{ time } =
-  case buildingTask of
+buildOnColony :: Uid Body -> GameState -> GameState
+buildOnColony bodyUid gs@GameState{ colonies, time } =
+  case colonies ^? at bodyUid . _Just . #buildingTask . _Just of
     Just BuildingTask{ installation, quantity, BuildingTask.finishTime } | finishTime <= time ->
-      let col' = col
+      gs & #colonies . at bodyUid . _Just %~ (\col ->
+          col
             & #stockpile . at (Resource.Installation installation) . non 0 +~ quantity
             & #buildingTask .~ Nothing
-      in gs & #colonies . at bodyUid . _Just .~ col'
+        )
     Just BuildingTask{} -> gs
     Nothing -> gs
 
-buildShipOnColony :: Uid Body -> Colony -> GameState -> GameState
-buildShipOnColony bodyUid Colony{ shipBuildingTask } gs@GameState{ time } =
-  case shipBuildingTask of
+buildShipOnColony :: Uid Body -> GameState -> GameState
+buildShipOnColony bodyUid gs@GameState{ colonies, time } =
+  case colonies ^? at bodyUid . _Just . #shipBuildingTask . _Just of
     Just ShipBuildingTask{ ShipBuildingTask.finishTime } | finishTime <= time ->
       let shipUid = gs ^. #ships & UidMap.nextUid
           ship = do
@@ -105,7 +101,8 @@ buildShipOnColony bodyUid Colony{ shipBuildingTask } gs@GameState{ time } =
       in gs
         & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
         & #ships . at shipUid .~ ship
-    _ -> gs
+    Just ShipBuildingTask{} -> gs
+    Nothing -> gs
 
 shipBuiltAt :: Uid Body -> OrbitalState -> Uid Ship -> Ship
 shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
@@ -122,16 +119,20 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     , Ship.attachedToBody = Just bodyUid
     }
 
-mineOnColony :: Uid Body -> Colony -> HashMap Resource Mineral -> GameState -> GameState
-mineOnColony bodyUid Colony{ installations } minerals gs =
-  let mines = installations ^. at Installation.Mine . non 0
-      mineralsReserves = itoList minerals
-  in gs & reduce mineralsReserves (\gs' (mineral, Mineral{ available, accessibility }) ->
-      let minedQty = min (floor (10 * accessibility * fromIntegral mines / 1000)) available
-      in gs'
-        & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
-        & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
-    )
+mineOnColony :: Uid Body -> GameState -> GameState
+mineOnColony bodyUid gs@GameState{ colonies, bodyMinerals } =
+  fromMaybe gs $ do
+    Colony{ installations } <- colonies ^. at bodyUid
+    minerals <- bodyMinerals ^. at bodyUid
+    let mines = installations ^. at Installation.Mine . non 0
+        mineralsReserves = itoList minerals
+    pure $
+      gs & reduce mineralsReserves (\gs' (mineral, Mineral{ available, accessibility }) ->
+          let minedQty = min (floor (10 * accessibility * fromIntegral mines / 1000)) available
+          in gs'
+            & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
+            & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
+        )
 
 shrinkPopulation :: Uid Body -> GameState -> GameState
 shrinkPopulation bodyUid gs =
