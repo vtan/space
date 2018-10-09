@@ -199,7 +199,7 @@ installationPanel colony = do
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "installationQty" bounds #editedInstallationQty
-      <&> (Text.unpack >>> readMaybe @Int)
+      <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
 
   install <- Updating.childBounds "install" $ \bounds ->
     Widget.button bounds "Install"

@@ -159,6 +159,32 @@
               { "name": "cargoCapacity", "wh": [240, 20] },
               { "name": "loadedCargo", "wh": [240, 60] }
             ]
+          },
+          {
+            "name": "cabinPanel",
+            "layout": "vertical",
+            "padding": 4,
+            "children": [
+              { "name": "cabinCapacity", "wh": [240, 20] },
+              {
+                "name": "_row1",
+                "layout": "horizontal",
+                "padding": 4,
+                "children": [
+                  { "name": "popLabel", "wh": [36, 20] },
+                  { "name": "pop", "wh": [80, 20]}
+                ]
+              },
+              {
+                "name": "_row2",
+                "layout": "horizontal",
+                "padding": 4,
+                "children": [
+                  { "name": "load", "wh": [100, 20] },
+                  { "name": "unload", "wh": [100, 20] }
+                ]
+              }
+            ]
           }
         ]
       }

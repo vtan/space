@@ -109,6 +109,8 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     , Ship.position = position
     , Ship.cargoCapacity = 1000
     , Ship.loadedCargo = mempty
+    , Ship.cabinCapacity = 1000
+    , Ship.loadedPopulation = 0
     , Ship.speed = 1 / 1495970 -- 100 km/s
     , Ship.order = Nothing
     , Ship.attachedToBody = Just bodyUid
@@ -172,6 +174,27 @@ unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBod
     pure $ gs
       & #ships . at shipUid . _Just . #loadedCargo . at resource . non 0 -~ unloadedQty
       & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 +~ unloadedQty
+
+loadPopulationToShip :: Maybe Int -> Ship -> GameState -> GameState
+loadPopulationToShip qtyOrAll Ship{ Ship.uid = shipUid, attachedToBody, cabinCapacity, loadedPopulation } gs =
+  fromMaybe gs $ do
+    bodyUid <- attachedToBody
+    populationOnColony <- gs ^? #colonies . at bodyUid . _Just . #population
+    let remainingCabinSpace = cabinCapacity - loadedPopulation
+    let loadedQty = minimum (toList qtyOrAll ++ [populationOnColony, remainingCabinSpace])
+    pure $ gs
+      & #ships . at shipUid . _Just . #loadedPopulation +~ loadedQty
+      & #colonies . at bodyUid . _Just . #population -~ loadedQty
+
+unloadPopulationFromShip :: Maybe Int -> Ship -> GameState -> GameState
+unloadPopulationFromShip qtyOrAll Ship{ Ship.uid = shipUid, attachedToBody, loadedPopulation } gs =
+  fromMaybe gs $ do
+    bodyUid <- attachedToBody
+    _ <- gs ^. #colonies . at bodyUid
+    let unloadedQty = minimum (toList qtyOrAll ++ [loadedPopulation])
+    pure $ gs
+      & #ships . at shipUid . _Just . #loadedPopulation -~ unloadedQty
+      & #colonies . at bodyUid . _Just . #population +~ unloadedQty
 
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =

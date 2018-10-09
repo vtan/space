@@ -22,6 +22,7 @@ data UIState = UIState
   , editedShipName :: Text
   , editedResourceQty :: Text
   , editedInstallationQty :: Text
+  , editedPopulationQty :: Text
   }
   deriving (Generic)
 
@@ -40,4 +41,5 @@ initial = UIState
   , editedShipName = ""
   , editedResourceQty = ""
   , editedInstallationQty = ""
+  , editedPopulationQty = ""
   }

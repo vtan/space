@@ -15,6 +15,8 @@ data Ship = Ship
   , speed :: AU Double
   , cargoCapacity :: Int
   , loadedCargo :: HashMap Resource Int
+  , cabinCapacity :: Int
+  , loadedPopulation :: Int
   , order :: Maybe Order
   , attachedToBody :: Maybe (Uid Body)
   }

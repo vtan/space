@@ -28,6 +28,8 @@ data Action
   | CancelOrder
   | LoadResource Resource (Maybe Int)
   | UnloadResource Resource (Maybe Int)
+  | LoadPopulation (Maybe Int)
+  | UnloadPopulation (Maybe Int)
 
 update :: GameState -> Updating GameState
 update gs =
@@ -65,9 +67,10 @@ update gs =
             (gs ^.. #bodies . folded)
 
         cargoAction <- Updating.childLayout "cargoPanel" (cargoPanel ship)
+        cabinAction <- Updating.childLayout "cabinPanel" (cabinPanel ship)
 
         let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
-            action = rename <|> moveToSelected <|> cancel <|> cargoAction
+            action = rename <|> moveToSelected <|> cancel <|> cargoAction <|> cabinAction
         pure $ case action of
           Just (Rename name) ->
             gs & #ships . at uid . _Just . #name .~ name
@@ -79,6 +82,10 @@ update gs =
             Logic.loadResourceToShip qtyOrAll resource ship gs
           Just (UnloadResource resource qtyOrAll) ->
             Logic.unloadResourceFromShip qtyOrAll resource ship gs
+          Just (LoadPopulation qtyOrAll) ->
+            Logic.loadPopulationToShip qtyOrAll ship gs
+          Just (UnloadPopulation qtyOrAll) ->
+            Logic.unloadPopulationFromShip qtyOrAll ship gs
           Nothing -> gs
 
     pure (gs' & fromMaybe gs)
@@ -121,7 +128,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "cargoQty" bounds #editedResourceQty
-      <&> (Text.unpack >>> readMaybe @Int)
+      <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
 
   load <- Updating.childBounds "load" $ \bounds ->
     Widget.button bounds "Load"
@@ -156,3 +163,34 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
         )
 
   pure $ load <|> loadAll <|> unload <|> unloadAll
+
+cabinPanel :: Ship -> Updating (Maybe Action)
+cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
+  Updating.childBounds "cabinCapacity" $ \bounds ->
+    Widget.label (bounds ^. #xy) $
+      fromString (printf "Cabin capacity: %d / %d ppl" loadedPopulation cabinCapacity)
+
+  Updating.childBounds "popLabel" $ \bounds ->
+    Widget.label (bounds ^. #xy) "Pop:"
+
+  qty <- Updating.childBounds "pop" $ \bounds ->
+    Widget.textBox "popQty" bounds #editedPopulationQty
+      <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
+
+  let (loadLabel, unloadLabel) = case qty of
+        Just _ -> ("Load", "Unload")
+        Nothing -> ("Load max", "Unload max")
+
+  load <- Updating.childBounds "load" $ \bounds ->
+    Widget.button bounds loadLabel
+      <&> whenAlt (LoadPopulation qty)
+
+  unload <- Updating.childBounds "unload" $ \bounds ->
+    Widget.button bounds unloadLabel
+      <&> whenAlt (UnloadPopulation qty)
+
+  let action = load <|> unload
+  when (action & has _Just) $
+    #ui . #editedPopulationQty .= ""
+
+  pure action
