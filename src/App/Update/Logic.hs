@@ -68,14 +68,20 @@ timeUntilNextMidnight now = (quot now 86400 + 1) * 86400 - now
 
 productionTick :: GameState -> GameState
 productionTick gs@GameState{ bodies } =
-  gs & reduce bodies (\gs' Body{ Body.uid } ->
-      let colony = gs' ^. #colonies . at uid
-          minerals = gs' ^. #bodyMinerals . at uid
-          build = (buildOnColony uid <$> colony) & fromMaybe id
-          buildShip = (buildShipOnColony uid <$> colony) & fromMaybe id
-          mine = (mineOnColony uid <$> colony <*> minerals) & fromMaybe id
-      in gs' & (build >>> buildShip >>> mine)
+  gs & reduce bodies (\gs' Body{ Body.uid = bodyUid } ->
+      case gs' ^. #colonies . at bodyUid of
+        Just colony -> productionTickOnColony bodyUid colony gs'
+        Nothing -> gs'
     )
+
+productionTickOnColony :: Uid Body -> Colony -> GameState -> GameState
+productionTickOnColony bodyUid colony gs =
+  let minerals = gs ^. #bodyMinerals . at bodyUid . _Just
+  in gs
+    & buildOnColony bodyUid colony
+    & buildShipOnColony bodyUid colony
+    & mineOnColony bodyUid colony minerals
+    & shrinkPopulation bodyUid
 
 buildOnColony :: Uid Body -> Colony -> GameState -> GameState
 buildOnColony bodyUid col@Colony{ buildingTask } gs@GameState{ time } =
@@ -126,6 +132,17 @@ mineOnColony bodyUid Colony{ installations } minerals gs =
         & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
         & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
     )
+
+shrinkPopulation :: Uid Body -> GameState -> GameState
+shrinkPopulation bodyUid gs =
+  fromMaybe gs $ do
+    body <- gs ^. #bodies . at bodyUid
+    colony@Colony{ population } <- gs ^. #colonies . at bodyUid
+    maxPopulation <- colonyMaxPopulation body colony
+    pure $
+      if population > maxPopulation
+      then gs & #colonies . at bodyUid . _Just . #population .~ (population + maxPopulation) `div` 2
+      else gs
 
 updateShip :: GameState -> Ship -> Ship
 updateShip gs ship =
