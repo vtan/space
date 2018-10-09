@@ -11,6 +11,7 @@ sdl2_ttf_dylib=libSDL2_ttf-2.0.0.dylib
 mkdir -p "$appname".app/Contents/{Frameworks,MacOS,Resources}
 
 cp $(stack exec -- which "$appname") "$appname".app/Contents/MacOS
+
 install_name_tool \
   -change "$sdl2_path/$sdl2_dylib" "@executable_path/../Frameworks/$sdl2_dylib" \
   -change "$sdl2_ttf_path/$sdl2_ttf_dylib" "@executable_path/../Frameworks/$sdl2_ttf_dylib" \
@@ -19,8 +20,19 @@ install_name_tool \
 cp "$sdl2_path/$sdl2_dylib" "$sdl2_ttf_path/$sdl2_ttf_dylib" \
   "$appname".app/Contents/Frameworks
 
-cp -r data "$appname".app/Contents/Resources/
+install_name_tool \
+  -change "$sdl2_path/$sdl2_dylib" "@executable_path/lib/$sdl2_dylib" \
+  "$appname/lib/$sdl2_ttf_dylib"
+
+cp -r data "$appname".app/Contents/MacOS/
 cp LICENSE "$appname".app/
+
+cat << 'EOF' > "$appname".app/Contents/MacOS/launcher.sh
+#!/bin/bash
+cd "${0%/*}"
+./space
+EOF
+chmod +x "$appname".app/Contents/MacOS/launcher.sh
 
 cat << EOF > "$appname".app/Contents/Info.plist
 <?xml version="1.0" encoding="UTF-8"?>
@@ -28,7 +40,7 @@ cat << EOF > "$appname".app/Contents/Info.plist
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>$appname</string>
+    <string>launcher.sh</string>
     <key>CFBundleIdentifier</key>
     <string>$appname</string>
     <key>CFBundleInfoDictionaryVersion</key>
