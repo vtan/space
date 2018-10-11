@@ -50,17 +50,20 @@ update gs = do
   for_ activeDropdown $ \updateDropdown ->
     updateDropdown *> Updating.pushRendering
 
-  gs' <- handleUI gs
-  gs'' <- SystemMap.update gs'
+  gs' <- gs & (
+      handleUI
+      >=> ScreenOverlay.update
+      >=> SystemMap.update
+    )
 
-  pure $ case gs ^. #timeStepPerFrame of
-    Just step -> gs'' & Logic.stepTime step
-    Nothing -> gs''
+  timeStep <- use #timeStepPerFrame
+  pure $ case timeStep of
+    Just step -> gs' & Logic.stepTime step
+    Nothing -> gs'
 
 handleUI :: GameState -> Updating GameState
-handleUI gs = do
-  gs' <- ScreenOverlay.update gs
+handleUI gs =
   use (#ui . #activeWindow) >>= \case
-    Just UIState.ColonyWindow -> ColonyWindow.update gs'
-    Just UIState.ShipWindow -> ShipWindow.update gs'
-    Nothing -> pure gs'
+    Just UIState.ColonyWindow -> ColonyWindow.update gs
+    Just UIState.ShipWindow -> ShipWindow.update gs
+    Nothing -> pure gs

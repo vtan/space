@@ -14,7 +14,7 @@ import qualified Data.Vector.Storable as Vector
 import qualified Linear.Affine as Lin
 import qualified SDL
 
-import App.Camera (Camera)
+import App.Camera (Camera(..))
 import App.Model.Body (Body(..))
 import App.Model.Dims
 import App.Model.GameState (GameState(..))
@@ -26,11 +26,12 @@ import App.Util (toMap)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
-render :: GameState -> Rendering ()
-render gs@GameState{ rootBody, bodyOrbitalStates, ships, camera } = do
+render :: Camera (AU Double) Double -> GameState -> Rendering ()
+render camera gs@GameState{ rootBody, bodyOrbitalStates, ships } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
+
   for_ (Body.allChildren rootBody) $ \body ->
     for_ (bodyOrbitalStates ^. at (body ^. #uid)) $ \st ->
       renderOrbit camera body st

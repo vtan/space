@@ -27,6 +27,9 @@ data State = State
   , keyModifier :: SDL.KeyModifier
   , mousePosition :: V2 Int
   , totalRealTime :: Double
+  , timeStepPerFrame :: Maybe Int
+  , movingViewport :: Bool
+  , screenSize :: V2 Int
   , quit :: Bool
   , reloadResources :: Bool
   , focusedWidget :: Maybe SlotId
@@ -42,6 +45,9 @@ initialState = State
   , keyModifier = SDL.Internal.Numbered.fromNumber 0
   , mousePosition = 0
   , totalRealTime = 0
+  , timeStepPerFrame = Nothing
+  , movingViewport = False
+  , screenSize = V2 1728 972
   , quit = False
   , reloadResources = False
   , focusedWidget = Nothing

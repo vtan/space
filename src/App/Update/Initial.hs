@@ -8,10 +8,8 @@ import qualified App.Model.Resource as Resource
 import qualified App.Update.Logic as Logic
 import qualified App.UidMap as UidMap
 
-import App.Camera (Camera(..))
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
-import App.Model.Dims (_AU)
 import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
 import App.Uid (Uid(..))
@@ -44,14 +42,6 @@ gameState = GameState
           Logic.shipBuiltAt (Uid 2) orbitalState (Uid 0)
       )
   , time = 0
-  , timeStepPerFrame = Nothing
-  , movingViewport = False
-  , camera = Camera
-    { conversion = _AU
-    , eyeFrom = V2 0 0
-    , eyeTo = 0.5 *^ V2 1728 972
-    , scale = V2 200 (-200)
-    }
   }
 
 theRootBody :: Body
