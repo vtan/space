@@ -61,24 +61,11 @@ handleUI gs =
       Widget.button bounds "Ships"
         <&> whenAlt (ToggleWindow UIState.ShipWindow)
 
-    nextMidnight <- Updating.childBounds "nextMidnight" $ \bounds ->
-      Widget.button bounds "next"
-        <&> whenAlt NextMidnight
-
-    setSpeed <- (["stop", "1min", "10min", "1h", "12h", "5d"] :: [Text])
-      & itraverse (\speed label -> do
-        let widget = fromString ("speed" ++ show speed)
-        Updating.childBounds widget $ \bounds ->
-          Widget.button bounds label
-            <&> whenAlt (SetSpeed speed)
-      )
-      & fmap asum
-
-    Updating.childBounds "currentTime" $ \bounds ->
-      Widget.label (bounds ^. #xy) (gs ^. #time & Time.printDate & fromString)
+    timeAction <- Updating.childLayout "timePanel" $
+      timePanel gs
 
     activeWindow <- use (#ui . #activeWindow)
-    case toggleColonies <|> toggleShips <|> nextMidnight <|> setSpeed of
+    case toggleColonies <|> toggleShips <|> timeAction of
       Just (ToggleWindow w) | w `elem` activeWindow ->
         gs <$ (#ui . #activeWindow .= Nothing)
       Just (ToggleWindow w) ->
@@ -88,6 +75,32 @@ handleUI gs =
       Just (SetSpeed speed) ->
         gs <$ setGameSpeed speed
       Nothing -> pure gs
+
+timePanel :: GameState -> Updating (Maybe Action)
+timePanel gs = do
+  screenWidth <- use (#ui . #camera . #eyeTo . _x)
+    <&> ((* 2) >>> floor)
+  groupBounds <- view (#widgetTree . #bounds)
+  let controlsOffset = screenWidth - 2 * (groupBounds ^. #xy . _x) - (groupBounds ^. #wh . _x)
+
+  nextMidnight <- Updating.childBounds "nextMidnight" $ \bounds ->
+    Widget.button (bounds & #xy . _x +~ controlsOffset) "next"
+      <&> whenAlt NextMidnight
+
+  setSpeed <- (["stop", "1min", "10min", "1h", "12h", "5d"] :: [Text])
+    & itraverse (\speed label -> do
+      let widget = fromString ("speed" ++ show speed)
+      Updating.childBounds widget $ \bounds ->
+        Widget.button (bounds & #xy . _x +~ controlsOffset) label
+          <&> whenAlt (SetSpeed speed)
+    )
+    & fmap asum
+
+  Updating.childBounds "currentTime" $ \bounds -> do
+    let offset = screenWidth - 2 * (bounds ^. #xy . _x) - (bounds ^. #wh . _x)
+    Widget.label (bounds ^. #xy & _x +~ offset) (gs ^. #time & Time.printDate & fromString)
+
+  pure (nextMidnight <|> setSpeed)
 
 setGameSpeed :: Int -> Updating ()
 setGameSpeed speed =
