@@ -4,6 +4,8 @@ where
 
 import App.Prelude
 
+import qualified App.Dimension.Speed as Speed
+import qualified App.Dimension.Time as Time
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Update.Logic as Logic
@@ -18,7 +20,7 @@ import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
 import App.Uid (Uid)
 import App.Update.Updating (Updating)
-import App.Util (showDate, showDuration, whenAlt)
+import App.Util (whenAlt)
 import Data.String (fromString)
 import Text.Read (readMaybe)
 
@@ -100,16 +102,18 @@ renamePanel = do
 
 infoLabels :: V2 Int -> Ship -> GameState -> Updating ()
 infoLabels p Ship{ speed, order } gs =
-  let commonLabels = [fromString (printf "Speed: %.0f km/s" (speed * 149597000))] -- TODO magic number
+  let commonLabels = [fromString (printf "Speed: %s" (Speed.printKmPerSec speed))]
       orderLabels = case order of
         Just o ->
           let (orderStr, etaStr) = case o of
                 Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
                   let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
-                      etaDate = showDate (path ^. #endTime)
-                      etaDuration = showDuration (path ^. #endTime - gs ^. #time)
-                      actualSpeed = Lin.distance (path ^. #endPos) (path ^. #startPos) / fromIntegral (path ^. #endTime - path ^. #startTime) * 149597000
-                  in (printf "move to %s (act. spd. %.2f)" bodyName actualSpeed, printf "%s, %s" etaDate etaDuration)
+                      etaDate = Time.printDate (path ^. #endTime)
+                      etaDuration = Time.printDuration (path ^. #endTime - gs ^. #time)
+                      actualSpeed = Speed.div
+                        (Lin.distance (path ^. #endPos) (path ^. #startPos))
+                        (path ^. #endTime - path ^. #startTime)
+                  in (printf "move to %s (act. spd. %s)" bodyName (Speed.printKmPerSec actualSpeed), printf "%s, %s" etaDate etaDuration)
           in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
         Nothing -> ["No current order"]
   in Widget.labels p 20 (commonLabels ++ orderLabels)

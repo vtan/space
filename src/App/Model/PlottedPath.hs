@@ -6,35 +6,39 @@ where
 
 import App.Prelude
 
+import qualified App.Dimension.Speed as Speed
+import qualified App.Dimension.Time as Time
 import qualified App.Model.Body as Body
 import qualified Linear as Lin
 
+import App.Dimension.Local (Local)
+import App.Dimension.Speed (Speed)
+import App.Dimension.Time (Time)
 import App.Model.Body (Body)
-import App.Model.Dims (AU)
 import App.Uid (Uid)
 
 data PlottedPath = PlottedPath
-  { startTime :: Int
-  , startPos :: V2 (AU Double)
-  , endTime :: Int
-  , endPos :: V2 (AU Double)
+  { startTime :: Time Int
+  , startPos :: V2 (Local Double)
+  , endTime :: Time Int
+  , endPos :: V2 (Local Double)
   }
   deriving (Generic, Show)
 
-plot :: Int -> V2 (AU Double) -> AU Double -> Uid Body -> Body -> Maybe PlottedPath
+plot :: Time Int -> V2 (Local Double) -> Speed Double -> Uid Body -> Body -> Maybe PlottedPath
 plot startTime startPos speed bodyUid rootBody = do
-  (beforeCrudeApprox, _) <- approxArrival (16 * 3600) 0
-  (beforeFinerApprox, _) <- approxArrival 1800 beforeCrudeApprox
-  (_, endDtime) <- approxArrival 1 beforeFinerApprox
+  (beforeCrudeApprox, _) <- approxArrival (16 & Time.hours) 0
+  (beforeFinerApprox, _) <- approxArrival (30 & Time.minutes) beforeCrudeApprox
+  (_, endDtime) <- approxArrival Time.oneSecond beforeFinerApprox
   let
     endTime = startTime + endDtime
     endPos = Body.statesAtTime endTime rootBody ^?! at bodyUid . _Just . #position
   pure PlottedPath{ startTime, startPos, endTime, endPos }
   where
-    approxArrival :: Int -> Int -> Maybe (Int, Int)
+    approxArrival :: Time Int -> Time Int -> Maybe (Time Int, Time Int)
     approxArrival !timeStep !dtime =
       let !reachSq =
-            let reach = speed * fromIntegral dtime
+            let reach = dtime `Speed.mul` speed
             in reach * reach
           !distSq =
             let time = startTime + dtime
@@ -42,7 +46,7 @@ plot startTime startPos speed bodyUid rootBody = do
             in Lin.qd startPos pos
           !dtime' = dtime + timeStep
           approxTime =
-            let lastReach = speed * fromIntegral (dtime - timeStep)
+            let lastReach = (dtime - timeStep) `Speed.mul` speed
                 lastReachSq = lastReach * lastReach
                 ratio = sqrt $ (distSq - lastReachSq) / (reachSq - lastReachSq)
             in dtime - timeStep + round (ratio * fromIntegral timeStep)
@@ -51,7 +55,7 @@ plot startTime startPos speed bodyUid rootBody = do
         | dtime' <= maxSearchTime -> approxArrival timeStep dtime'
         | otherwise -> Nothing
 
-atTime :: Int -> PlottedPath -> V2 (AU Double)
+atTime :: Time Int -> PlottedPath -> V2 (Local Double)
 atTime time PlottedPath{ startTime, startPos, endTime, endPos }
   | time <= startTime = startPos
   | time >= endTime = endPos

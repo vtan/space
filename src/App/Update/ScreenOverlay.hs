@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Dimension.Time as Time
 import qualified App.Update.Logic as Logic
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
@@ -13,7 +14,7 @@ import qualified SDL
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.Util (showDate, whenAlt)
+import App.Util (whenAlt)
 import Data.String (fromString)
 
 data Action
@@ -74,7 +75,7 @@ handleUI gs =
       & fmap asum
 
     Updating.childBounds "currentTime" $ \bounds ->
-      Widget.label (bounds ^. #xy) (gs ^. #time & showDate & fromString)
+      Widget.label (bounds ^. #xy) (gs ^. #time & Time.printDate & fromString)
 
     activeWindow <- use (#ui . #activeWindow)
     case toggleColonies <|> toggleShips <|> nextMidnight <|> setSpeed of

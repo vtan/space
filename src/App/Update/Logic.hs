@@ -2,6 +2,8 @@ module App.Update.Logic where
 
 import App.Prelude
 
+import qualified App.Dimension.Speed as Speed
+import qualified App.Dimension.Time as Time
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.Installation as Installation
@@ -11,6 +13,7 @@ import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 import qualified App.UidMap as UidMap
 
+import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
@@ -27,12 +30,12 @@ import Data.String (fromString)
 
 jumpToNextMidnight :: GameState -> GameState
 jumpToNextMidnight gs@GameState{ time } =
-  gs & stepTime (timeUntilNextMidnight time)
+  gs & stepTime (Time.nextMidnight time - time)
 
-stepTime :: Int -> GameState -> GameState
+stepTime :: Time Int -> GameState -> GameState
 stepTime dt gs =
   let now = gs ^. #time
-      untilTick = timeUntilNextMidnight now
+      untilTick = Time.nextMidnight now - now
   in if
     | dt == 0 -> gs
     | dt < untilTick -> gs & jumpTimeTo (now + dt)
@@ -41,15 +44,12 @@ stepTime dt gs =
         & productionTick
         & stepTime (dt - untilTick)
 
-jumpTimeTo :: Int -> GameState -> GameState
+jumpTimeTo :: Time Int -> GameState -> GameState
 jumpTimeTo time gs =
   gs
     & #time .~ time
     & #bodyOrbitalStates .~ Body.statesAtTime time (gs ^. #rootBody)
     & (\gs' -> gs' & #ships . traversed %~ updateShip gs')
-
-timeUntilNextMidnight :: Int -> Int
-timeUntilNextMidnight now = (quot now 86400 + 1) * 86400 - now
 
 productionTick :: GameState -> GameState
 productionTick gs@GameState{ colonies } =
@@ -99,7 +99,7 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     , Ship.loadedCargo = mempty
     , Ship.cabinCapacity = 1000
     , Ship.loadedPopulation = 0
-    , Ship.speed = 1 / 1495970 -- 100 km/s
+    , Ship.speed = Speed.kmPerSec 100
     , Ship.order = Nothing
     , Ship.attachedToBody = Just bodyUid
     }

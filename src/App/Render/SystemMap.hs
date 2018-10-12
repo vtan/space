@@ -15,8 +15,8 @@ import qualified Linear.Affine as Lin
 import qualified SDL
 
 import App.Camera (Camera(..))
+import App.Dimension.Local (Local(..))
 import App.Model.Body (Body(..))
-import App.Model.Dims
 import App.Model.GameState (GameState(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.PlottedPath (PlottedPath(..))
@@ -26,7 +26,7 @@ import App.Util (toMap)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
-render :: Camera (AU Double) Double -> GameState -> Rendering ()
+render :: Camera (Local Double) Double -> GameState -> Rendering ()
 render camera gs@GameState{ rootBody, bodyOrbitalStates, ships } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
@@ -41,10 +41,10 @@ render camera gs@GameState{ rootBody, bodyOrbitalStates, ships } = do
       let pos = anchor & _y +~ 8 + row * 16
       in Rendering.text pos label
 
-renderOrbit :: Camera (AU Double) Double -> Body -> OrbitalState -> Rendering ()
+renderOrbit :: Camera (Local Double) Double -> Body -> OrbitalState -> Rendering ()
 renderOrbit camera Body{ orbitRadius } OrbitalState{ OrbitalState.position, orbitCenter } =
   let orbitPoints = circlePoints
-        & Vector.map (fmap AU >>> (orbitRadius *^) >>> (orbitCenter +) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
+        & Vector.map (fmap Local >>> (orbitRadius *^) >>> (orbitCenter +) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
       bodyCenter = Camera.pointToScreen camera position
       bodyPoints = circlePoints
         & Vector.map ((Body.drawnRadius *^) >>> (bodyCenter +) >>> fmap round >>> Lin.P)
@@ -55,7 +55,7 @@ renderOrbit camera Body{ orbitRadius } OrbitalState{ OrbitalState.position, orbi
     SDL.rendererDrawColor renderer $= V4 255 255 255 255
     SDL.drawLines renderer bodyPoints
 
-renderShip :: Camera (AU Double) Double -> Ship -> Rendering ()
+renderShip :: Camera (Local Double) Double -> Ship -> Rendering ()
 renderShip camera Ship{ Ship.position, order } =
   let center = Camera.pointToScreen camera position
       points = circlePoints
@@ -72,7 +72,7 @@ renderShip camera Ship{ Ship.position, order } =
         SDL.drawLine renderer startPos' endPos'
       Nothing -> pure ()
 
-collectLabels :: Camera (AU Double) Double -> GameState -> [(V2 Int, [Text])]
+collectLabels :: Camera (Local Double) Double -> GameState -> [(V2 Int, [Text])]
 collectLabels camera GameState{ bodies, bodyOrbitalStates, ships } = bodyLabels ++ shipLabels
   where
     bodyLabels = (UidMap.zip bodies bodyOrbitalStates) & foldMap (\(Body{ Body.name }, OrbitalState{ OrbitalState.position }) ->
@@ -84,7 +84,7 @@ collectLabels camera GameState{ bodies, bodyOrbitalStates, ships } = bodyLabels 
         in [(pos, [name])]
       )
 
-circlePoints :: (Floating a, Vector.Storable a) => Vector (V2 a)
+circlePoints :: Vector (V2 Double)
 circlePoints =
   let size = 64
   in Vector.fromListN (size + 1) $ do

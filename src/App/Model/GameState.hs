@@ -2,6 +2,7 @@ module App.Model.GameState where
 
 import App.Prelude
 
+import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.Mineral (Mineral(..))
@@ -17,6 +18,6 @@ data GameState = GameState
   , bodyMinerals :: UidMap Body (HashMap Resource Mineral)
   , colonies :: UidMap Body Colony
   , ships :: UidMap Ship Ship
-  , time :: Int
+  , time :: Time Int
   }
   deriving (Show, Generic)

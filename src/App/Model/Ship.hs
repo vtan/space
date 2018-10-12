@@ -2,8 +2,9 @@ module App.Model.Ship where
 
 import App.Prelude
 
+import App.Dimension.Local (Local)
+import App.Dimension.Speed (Speed)
 import App.Model.Body (Body)
-import App.Model.Dims (AU)
 import App.Model.PlottedPath (PlottedPath)
 import App.Model.Resource (Resource)
 import App.Uid (Uid)
@@ -11,8 +12,8 @@ import App.Uid (Uid)
 data Ship = Ship
   { uid :: Uid Ship
   , name :: Text
-  , position :: V2 (AU Double)
-  , speed :: AU Double
+  , position :: V2 (Local Double)
+  , speed :: Speed Double
   , cargoCapacity :: Int
   , loadedCargo :: HashMap Resource Int
   , cabinCapacity :: Int

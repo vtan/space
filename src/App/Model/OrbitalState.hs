@@ -2,10 +2,10 @@ module App.Model.OrbitalState where
 
 import App.Prelude
 
-import App.Model.Dims (AU)
+import App.Dimension.Local (Local)
 
 data OrbitalState = OrbitalState
-  { position :: V2 (AU Double)
-  , orbitCenter :: V2 (AU Double)
+  { position :: V2 (Local Double)
+  , orbitCenter :: V2 (Local Double)
   }
   deriving (Show, Generic)

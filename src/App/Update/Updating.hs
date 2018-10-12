@@ -7,6 +7,7 @@ import qualified App.Update.WidgetTree as WidgetTree
 import qualified SDL
 import qualified SDL.Internal.Numbered
 
+import App.Dimension.Time (Time)
 import App.Rect (Rect)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
@@ -27,7 +28,7 @@ data State = State
   , keyModifier :: SDL.KeyModifier
   , mousePosition :: V2 Int
   , totalRealTime :: Double
-  , timeStepPerFrame :: Maybe Int
+  , timeStepPerFrame :: Maybe (Time Int)
   , movingViewport :: Bool
   , screenSize :: V2 Int
   , quit :: Bool
