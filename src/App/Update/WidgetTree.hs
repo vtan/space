@@ -2,18 +2,20 @@ module App.Update.WidgetTree where
 
 import App.Prelude
 
+import qualified App.HashedText as HashedText
 import qualified App.Rect as Rect
 import qualified App.Update.WidgetLayout as WidgetLayout
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Text as Text
 
+import App.HashedText (HashedText)
 import App.Rect (Rect)
 import App.Update.WidgetLayout (WidgetLayout(..))
 import Control.Lens (Lens')
 
 data WidgetTree = WidgetTree
   { bounds :: Rect Int
-  , children :: HashMap Text WidgetTree
+  , children :: HashMap HashedText WidgetTree
   }
   deriving (Show, Generic)
 
@@ -23,7 +25,7 @@ empty = WidgetTree
   , children = mempty
   }
 
-child :: Text -> WidgetTree -> WidgetTree
+child :: HashedText -> WidgetTree -> WidgetTree
 child childName WidgetTree{ children } =
   case children ^. at childName of
     Just foundChild -> foundChild
@@ -35,6 +37,7 @@ fromWidgetLayout WidgetLayout{ children = layoutChildren, xy, wh, layout } =
       children = layoutChildren
         & map (\ch@WidgetLayout{ name } -> (name, fromWidgetLayout ch))
         & unzip
+        & over _1 (map HashedText.new)
         & over _2 (packChildren position layout)
         & uncurry zip
         & HashMap.fromList
@@ -75,9 +78,9 @@ appendPackedChild axis padding (accChildren, accPosition) ch =
       increment = padding + ch' ^. #bounds . #wh . axis
   in (accChildren |> ch', accPosition & axis +~ increment)
 
-unpackUnderscoreChildren :: HashMap Text WidgetTree -> HashMap Text WidgetTree
+unpackUnderscoreChildren :: HashMap HashedText WidgetTree -> HashMap HashedText WidgetTree
 unpackUnderscoreChildren children =
-  let cond = Text.isPrefixOf "_"
+  let cond = HashedText.toText >>> Text.isPrefixOf "_"
       unpackedChildren = children ^. ifolded . ifiltered (\i _ -> cond i) . #children
   in (children & HashMap.filterWithKey (\i _ -> not (cond i))) <> unpackedChildren
 
