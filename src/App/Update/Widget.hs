@@ -2,20 +2,20 @@ module App.Update.Widget where
 
 import App.Prelude
 
-import qualified App.Rect as Rect
+import qualified App.Common.Rect as Rect
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update.Updating as Updating
 import qualified Data.Text as Text
 import qualified SDL
 
-import App.Rect (Rect)
+import App.Common.Rect (Rect)
+import App.Common.Util (clamp)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
 import App.Update.ListBoxState (ListBoxState)
 import App.Update.SlotId (SlotId)
 import App.Update.UIState (UIState)
 import App.Update.Updating (Updating)
-import App.Util (clamp)
 import Control.Lens (Lens')
 import Control.Monad (mfilter)
 import Control.Monad.Zip (munzip)

@@ -1,17 +1,17 @@
-module App.Update.SystemMap
+module App.UI.SystemMap
   ( update )
 where
 
 import App.Prelude
 
-import qualified App.Camera as Camera
+import qualified App.Common.Camera as Camera
 import qualified App.Render.SystemMap as Render.SystemMap
 import qualified SDL
 
+import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.Util (clamp)
 import Numeric.Extras (cbrt)
 
 update :: GameState -> Updating GameState

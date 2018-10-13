@@ -1,10 +1,10 @@
-module App.UidMap where
+module App.Common.UidMap where
 
 import App.Prelude
 
 import qualified Data.IntMap as IntMap
 
-import App.Uid (Uid(..), getInt)
+import App.Common.Uid (Uid(..), getInt)
 import Control.Lens (Lens', Traversal')
 
 newtype UidMap i a = UidMap { getIntMap :: IntMap a }

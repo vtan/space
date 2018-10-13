@@ -2,12 +2,12 @@ module App.Model.Ship where
 
 import App.Prelude
 
+import App.Common.Uid (Uid)
 import App.Dimension.Local (Local)
 import App.Dimension.Speed (Speed)
 import App.Model.Body (Body)
 import App.Model.PlottedPath (PlottedPath)
 import App.Model.Resource (Resource)
-import App.Uid (Uid)
 
 data Ship = Ship
   { uid :: Uid Ship

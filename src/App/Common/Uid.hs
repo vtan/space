@@ -1,4 +1,4 @@
-module App.Uid where
+module App.Common.Uid where
 
 import App.Prelude
 

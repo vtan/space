@@ -1,4 +1,4 @@
-module App.Rect where
+module App.Common.Rect where
 
 import App.Prelude
 

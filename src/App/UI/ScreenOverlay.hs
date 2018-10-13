@@ -1,20 +1,20 @@
-module App.Update.ScreenOverlay
+module App.UI.ScreenOverlay
   ( update )
 where
 
 import App.Prelude
 
 import qualified App.Dimension.Time as Time
-import qualified App.Update.Logic as Logic
+import qualified App.Logic.Time as Logic.Time
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified SDL
 
+import App.Common.Util (whenAlt)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.Util (whenAlt)
 import Data.String (fromString)
 
 data Action
@@ -47,7 +47,7 @@ handleKeyEvents gs = do
 
   for_ newGameSpeed setGameSpeed
   pure $ if nextMidnight
-    then Logic.jumpToNextMidnight gs
+    then Logic.Time.jumpToNextMidnight gs
     else gs
 
 handleUI :: GameState -> Updating GameState
@@ -71,7 +71,7 @@ handleUI gs =
       Just (ToggleWindow w) ->
         gs <$ (#ui . #activeWindow .= Just w)
       Just NextMidnight ->
-        pure $ Logic.jumpToNextMidnight gs
+        pure $ Logic.Time.jumpToNextMidnight gs
       Just (SetSpeed speed) ->
         gs <$ setGameSpeed speed
       Nothing -> pure gs

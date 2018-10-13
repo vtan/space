@@ -4,11 +4,11 @@ import App.Prelude
 
 import qualified Linear as Lin
 
+import App.Common.Uid (Uid)
+import App.Common.UidMap (UidMap)
 import App.Dimension.Local (Local(..))
 import App.Dimension.Time (Time)
 import App.Model.OrbitalState (OrbitalState(..))
-import App.Uid (Uid)
-import App.UidMap (UidMap)
 import Numeric.Extras (fmod)
 
 data Body = Body

@@ -5,13 +5,13 @@ import App.Prelude
 import qualified App.Dimension.Local as Local
 import qualified App.Update.ListBoxState as ListBoxState
 
-import App.Camera (Camera(..))
+import App.Common.Camera (Camera(..))
+import App.Common.Uid (Uid)
 import App.Dimension.Local (Local)
 import App.Model.Body (Body)
 import App.Model.Installation (Installation)
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship)
-import App.Uid (Uid)
 import App.Update.ListBoxState (ListBoxState)
 
 data UIState = UIState

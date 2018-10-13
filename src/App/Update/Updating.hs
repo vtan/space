@@ -7,9 +7,9 @@ import qualified App.Update.WidgetTree as WidgetTree
 import qualified SDL
 import qualified SDL.Internal.Numbered
 
+import App.Common.HashedText (HashedText)
+import App.Common.Rect (Rect)
 import App.Dimension.Time (Time)
-import App.HashedText (HashedText)
-import App.Rect (Rect)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
 import App.Update.UIState (UIState)

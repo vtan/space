@@ -11,11 +11,11 @@ import qualified App.Dimension.Time as Time
 import qualified App.Model.Body as Body
 import qualified Linear as Lin
 
+import App.Common.Uid (Uid)
 import App.Dimension.Local (Local)
 import App.Dimension.Speed (Speed)
 import App.Dimension.Time (Time)
 import App.Model.Body (Body)
-import App.Uid (Uid)
 
 data PlottedPath = PlottedPath
   { startTime :: Time Int

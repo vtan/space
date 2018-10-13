@@ -1,8 +1,8 @@
-module App.Camera where
+module App.Common.Camera where
 
 import App.Prelude
 
-import App.Rect (Rect(..))
+import App.Common.Rect (Rect(..))
 
 data Camera a b = Camera
   { conversion :: AnIso' a b

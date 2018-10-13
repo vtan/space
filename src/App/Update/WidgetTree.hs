@@ -2,14 +2,14 @@ module App.Update.WidgetTree where
 
 import App.Prelude
 
-import qualified App.HashedText as HashedText
-import qualified App.Rect as Rect
+import qualified App.Common.HashedText as HashedText
+import qualified App.Common.Rect as Rect
 import qualified App.Update.WidgetLayout as WidgetLayout
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Text as Text
 
-import App.HashedText (HashedText)
-import App.Rect (Rect)
+import App.Common.HashedText (HashedText)
+import App.Common.Rect (Rect)
 import App.Update.WidgetLayout (WidgetLayout(..))
 import Control.Lens (Lens')
 

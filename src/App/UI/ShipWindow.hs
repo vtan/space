@@ -1,4 +1,4 @@
-module App.Update.ShipWindow
+module App.UI.ShipWindow
   ( update )
 where
 
@@ -6,21 +6,21 @@ import App.Prelude
 
 import qualified App.Dimension.Speed as Speed
 import qualified App.Dimension.Time as Time
+import qualified App.Logic.Ship as Logic.Ship
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
-import qualified App.Update.Logic as Logic
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 import qualified Linear as Lin
 
+import App.Common.Uid (Uid)
+import App.Common.Util (whenAlt)
 import App.Model.Body (Body)
 import App.Model.GameState (GameState(..))
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
-import App.Uid (Uid)
 import App.Update.Updating (Updating)
-import App.Util (whenAlt)
 import Data.String (fromString)
 import Text.Read (readMaybe)
 
@@ -77,17 +77,17 @@ update gs =
           Just (Rename name) ->
             gs & #ships . at uid . _Just . #name .~ name
           Just (MoveToBody bodyUid) ->
-            Logic.moveShipToBody ship bodyUid gs
+            Logic.Ship.moveShipToBody ship bodyUid gs
           Just CancelOrder ->
-            Logic.cancelShipOrder ship gs
+            Logic.Ship.cancelShipOrder ship gs
           Just (LoadResource resource qtyOrAll) ->
-            Logic.loadResourceToShip qtyOrAll resource ship gs
+            Logic.Ship.loadResourceToShip qtyOrAll resource ship gs
           Just (UnloadResource resource qtyOrAll) ->
-            Logic.unloadResourceFromShip qtyOrAll resource ship gs
+            Logic.Ship.unloadResourceFromShip qtyOrAll resource ship gs
           Just (LoadPopulation qtyOrAll) ->
-            Logic.loadPopulationToShip qtyOrAll ship gs
+            Logic.Ship.loadPopulationToShip qtyOrAll ship gs
           Just (UnloadPopulation qtyOrAll) ->
-            Logic.unloadPopulationFromShip qtyOrAll ship gs
+            Logic.Ship.unloadPopulationFromShip qtyOrAll ship gs
           Nothing -> gs
 
     pure (gs' & fromMaybe gs)

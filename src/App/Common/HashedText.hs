@@ -1,4 +1,4 @@
-module App.HashedText where
+module App.Common.HashedText where
 
 import App.Prelude
 

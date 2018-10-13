@@ -4,11 +4,11 @@ where
 
 import App.Prelude
 
-import qualified App.Update.ColonyWindow as ColonyWindow
-import qualified App.Update.Logic as Logic
-import qualified App.Update.ScreenOverlay as ScreenOverlay
-import qualified App.Update.ShipWindow as ShipWindow
-import qualified App.Update.SystemMap as SystemMap
+import qualified App.Logic.Time as Logic.Time
+import qualified App.UI.ColonyWindow as ColonyWindow
+import qualified App.UI.ScreenOverlay as ScreenOverlay
+import qualified App.UI.ShipWindow as ShipWindow
+import qualified App.UI.SystemMap as SystemMap
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
 import qualified SDL
@@ -58,7 +58,7 @@ update gs = do
 
   timeStep <- use #timeStepPerFrame
   pure $ case timeStep of
-    Just step -> gs' & Logic.stepTime step
+    Just step -> gs' & Logic.Time.stepTime step
     Nothing -> gs'
 
 handleUI :: GameState -> Updating GameState

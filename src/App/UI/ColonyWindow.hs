@@ -1,15 +1,18 @@
-module App.Update.ColonyWindow
+module App.UI.ColonyWindow
   ( update )
 where
 
 import App.Prelude
 
+import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Model.Installation as Installation
-import qualified App.Update.Logic as Logic
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 
+import App.Common.Rect (Rect(..))
+import App.Common.Uid (Uid)
+import App.Common.Util (whenAlt)
 import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
@@ -17,10 +20,7 @@ import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
 import App.Model.Mineral (Mineral(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
-import App.Rect (Rect(..))
-import App.Uid (Uid)
 import App.Update.Updating (Updating)
-import App.Util (whenAlt)
 import Data.String (fromString)
 import Text.Read (readMaybe)
 
@@ -66,7 +66,7 @@ update gs = do
             Updating.childBounds "populationInfo" $ \bounds ->
               Widget.labels (bounds ^. #xy) 20
                 [ fromString $ printf "Population: %d" population
-                , case Logic.colonyMaxPopulation body colony of
+                , case Logic.Colony.colonyMaxPopulation body colony of
                     Just mp -> fromString $ printf "Max. population: %d" mp
                     Nothing -> "Max. population: ∞"
                 ]
@@ -88,13 +88,13 @@ update gs = do
               Nothing -> pure Nothing
 
         pure $ case action of
-          Just (Build installation) -> Logic.startBuildingTask uid installation gs
-          Just BuildShip -> Logic.startShipBuildingTask uid gs
-          Just CancelBuilding -> Logic.cancelBuildingTask uid gs
-          Just CancelBuildingShip -> Logic.cancelShipBuildingTask uid gs
-          Just (Install installation qty colony) -> Logic.installInstallation installation qty uid colony gs
-          Just (Uninstall installation qty colony) -> Logic.uninstallInstallation installation qty uid colony gs
-          Just FoundColony -> Logic.foundColony uid gs
+          Just (Build installation) -> Logic.Colony.startBuildingTask uid installation gs
+          Just BuildShip -> Logic.Colony.startShipBuildingTask uid gs
+          Just CancelBuilding -> Logic.Colony.cancelBuildingTask uid gs
+          Just CancelBuildingShip -> Logic.Colony.cancelShipBuildingTask uid gs
+          Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty uid colony gs
+          Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty uid colony gs
+          Just FoundColony -> Logic.Colony.foundColony uid gs
           Nothing -> gs
 
     pure (gs' & fromMaybe gs)

@@ -2,6 +2,7 @@ module App.Model.GameState where
 
 import App.Prelude
 
+import App.Common.UidMap (UidMap)
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
@@ -9,7 +10,6 @@ import App.Model.Mineral (Mineral(..))
 import App.Model.OrbitalState (OrbitalState)
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
-import App.UidMap (UidMap)
 
 data GameState = GameState
   { rootBody :: Body

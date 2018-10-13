@@ -2,17 +2,17 @@ module App.Update.Initial where
 
 import App.Prelude
 
+import qualified App.Common.UidMap as UidMap
+import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Model.Body as Body
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
-import qualified App.Update.Logic as Logic
-import qualified App.UidMap as UidMap
 
+import App.Common.Uid (Uid(..))
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
-import App.Uid (Uid(..))
 
 gameState :: GameState
 gameState = GameState
@@ -39,7 +39,7 @@ gameState = GameState
     ]
   , ships = UidMap.fromEntities (view #uid)
       ( Body.statesAtTime 0 theRootBody ^.. at (Uid 2) . _Just <&> \orbitalState ->
-          Logic.shipBuiltAt (Uid 2) orbitalState (Uid 0)
+          Logic.Colony.shipBuiltAt (Uid 2) orbitalState (Uid 0)
       )
   , time = 0
   }
