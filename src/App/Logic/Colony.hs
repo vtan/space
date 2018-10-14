@@ -3,6 +3,7 @@ module App.Logic.Colony where
 import App.Prelude
 
 import qualified App.Dimension.Speed as Speed
+import qualified App.Dimension.Time as Time
 import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
@@ -10,12 +11,14 @@ import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 
 import App.Common.Uid (Uid(..))
+import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
 import App.Model.OrbitalState (OrbitalState(..))
+import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import Data.String (fromString)
@@ -34,17 +37,27 @@ foundColony bodyUid gs =
 startBuildingTask :: Uid Body -> Installation -> GameState -> GameState
 startBuildingTask bodyUid installation gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
-    let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
-        cost = 1000
-        quantity = 500
-        finishTime = (gs ^. #time) + 30 * 24 * 3600
-        newTask = BuildingTask{ installation, quantity, BuildingTask.finishTime }
-    in case colony ^. #buildingTask of
-      Nothing | buildingMaterials >= cost ->
-        colony
-          & #stockpile . at Resource.Mineral . non 0 -~ cost
-          & #buildingTask .~ Just newTask
-      _ -> colony
+    fromMaybe colony $ do
+      guard (colony ^. #buildingTask & has _Nothing)
+      let quantity = 500
+          cost = buildCost installation
+          finishTime = (gs ^. #time) + buildTime installation
+          newTask = BuildingTask{ installation, quantity, BuildingTask.finishTime }
+      paidColony <- payResourceCost cost colony
+      pure $
+        paidColony & #buildingTask .~ Just newTask
+
+buildCost :: Installation -> HashMap Resource Int
+buildCost = \case
+  Installation.Infrastructure ->
+    [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
+  Installation.Mine ->
+    [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
+
+buildTime :: Installation -> Time Int
+buildTime = \case
+  Installation.Infrastructure -> 10 & Time.days
+  Installation.Mine -> 20 & Time.days
 
 cancelBuildingTask :: Uid Body -> GameState -> GameState
 cancelBuildingTask bodyUid gs =
@@ -53,16 +66,21 @@ cancelBuildingTask bodyUid gs =
 startShipBuildingTask :: Uid Body -> GameState -> GameState
 startShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
-    let buildingMaterials = colony ^. #stockpile . at Resource.Mineral . non 0
-        cost = 2000
-        finishTime = (gs ^. #time) + 1 * 24 * 3600
-        newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
-    in case colony ^. #shipBuildingTask of
-      Nothing | buildingMaterials >= cost ->
-        colony
-          & #stockpile . at Resource.Mineral . non 0 -~ cost
-          & #shipBuildingTask .~ Just newTask
-      _ -> colony
+    fromMaybe colony $ do
+      guard (colony ^. #shipBuildingTask & has _Nothing)
+      let cost = shipCost
+          finishTime = (gs ^. #time) + shipBuildTime
+          newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
+      paidColony <- payResourceCost cost colony
+      pure $
+        paidColony & #shipBuildingTask .~ Just newTask
+
+shipCost :: HashMap Resource Int
+shipCost =
+  [ (Resource.Cadrium, 1000), (Resource.Erchanite, 100), (Resource.Tellerite, 100) ]
+
+shipBuildTime :: Time Int
+shipBuildTime = 30 & Time.days
 
 cancelShipBuildingTask :: Uid Body -> GameState -> GameState
 cancelShipBuildingTask bodyUid gs =
@@ -113,3 +131,14 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     , Ship.order = Nothing
     , Ship.attachedToBody = Just bodyUid
     }
+
+payResourceCost :: HashMap Resource Int -> Colony -> Maybe Colony
+payResourceCost cost colony =
+  cost & ifoldlM
+    (\resource colonyAcc costQty ->
+      let (remainingQty, colony') = colonyAcc & #stockpile . at resource . non 0 <-~ costQty
+      in if remainingQty >= 0
+        then Just colony'
+        else Nothing
+    )
+    colony

@@ -8,6 +8,7 @@ import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.Installation as Installation
+import qualified App.Model.Mineral as Mineral
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
@@ -106,13 +107,15 @@ mineOnColony bodyUid gs@GameState{ colonies, bodyMinerals } =
   fromMaybe gs $ do
     Colony{ installations } <- colonies ^. at bodyUid
     minerals <- bodyMinerals ^. at bodyUid
-    let mines = installations ^. at Installation.Mine . non 0
+    let availableMineralCount = length minerals
+        mines = installations ^. at Installation.Mine . non 0
         mineralsReserves = itoList minerals
     pure $
       gs & reduce mineralsReserves (\gs' (mineral, Mineral{ available, accessibility }) ->
-          let minedQty = min (floor (10 * accessibility * fromIntegral mines / 1000)) available
+          let minedPerMineQty = 0.1 * accessibility / fromIntegral availableMineralCount
+              minedQty = min (floor (fromIntegral mines * minedPerMineQty)) available
           in gs'
-            & #bodyMinerals . at bodyUid . _Just . at mineral . _Just . #available -~ minedQty
+            & #bodyMinerals . at bodyUid . _Just . at mineral . Mineral.nonEmpty . #available -~ minedQty
             & #colonies . at bodyUid . _Just . #stockpile . at mineral . non 0 +~ minedQty
         )
 

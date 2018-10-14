@@ -3,20 +3,20 @@
     "name": "colonyWindow",
     "xy": [36, 80],
     "children": [
-      { "name": "decoration", "xy": [-4, -24], "wh": [609, 536] },
+      { "name": "decoration", "xy": [-4, -24], "wh": [609, 604] },
       {
         "name": "_content",
         "layout": "horizontal",
         "padding": 4,
         "children": [
-          { "name": "selectedBody", "wh": [200, 512] },
+          { "name": "selectedBody", "wh": [200, 580] },
           {
             "name": "rightPanel",
             "layout": "vertical",
             "padding": 8,
             "children": [
               { "name": "info", "wh": [0, 20] },
-              { "name": "mineralTable", "wh": [0, 60] },
+              { "name": "mineralTable", "wh": [0, 80] },
               {
                 "name": "_hasColony",
                 "children": [
@@ -29,7 +29,7 @@
                     "layout": "vertical",
                     "padding": 12,
                     "children": [
-                      { "name": "stockpileTable", "wh": [0, 72] },
+                      { "name": "stockpileTable", "wh": [0, 120] },
                       { "name": "installationTable", "wh": [0, 60] },
                       { "name": "populationInfo", "wh": [0, 40] },
                       {

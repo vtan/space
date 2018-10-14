@@ -22,15 +22,25 @@ gameState = GameState
       & UidMap.fromList
   , bodyOrbitalStates = Body.statesAtTime 0 theRootBody
   , bodyMinerals = UidMap.fromList
-    [ (Uid @Body 2, [(Resource.Mineral, Mineral{ available = 10000, accessibility = 0.6 })])
-    , (Uid @Body 3, [(Resource.Mineral, Mineral{ available = 5000, accessibility = 0.8 })])
+    [ ( Uid @Body 2
+      , [ (Resource.Cadrium, Mineral{ available = 10000, accessibility = 0.4 })
+        , (Resource.Erchanite, Mineral{ available = 5000, accessibility = 0.4 })
+        , (Resource.Tellerite, Mineral{ available = 2000, accessibility = 0.4 })
+        ]
+      )
+    , ( Uid @Body 3
+      , [ (Resource.Cadrium, Mineral{ available = 10000, accessibility = 0.8 })
+        , (Resource.Erchanite, Mineral{ available = 10000, accessibility = 0.8 })
+        , (Resource.Tellerite, Mineral{ available = 10000, accessibility = 0.8 })
+        ]
+      )
     ]
   , colonies = UidMap.fromList
     [ ( Uid @Body 2
       , Colony
         { population = 10000000000
         , isHomeworld = True
-        , stockpile = [(Resource.Mineral, 2500)]
+        , stockpile = [ (Resource.Cadrium, 2500), (Resource.Erchanite, 2500), (Resource.Tellerite, 2500) ]
         , installations = [(Installation.Mine, 500)]
         , buildingTask = Nothing
         , shipBuildingTask = Nothing
