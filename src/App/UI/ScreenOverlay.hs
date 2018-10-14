@@ -61,11 +61,15 @@ handleUI gs =
       Widget.button bounds "Ships"
         <&> whenAlt (ToggleWindow UIState.ShipWindow)
 
+    toggleProduction <- Updating.childBounds "production" $ \bounds ->
+      Widget.button bounds "Production"
+        <&> whenAlt (ToggleWindow UIState.ProductionWindow)
+
     timeAction <- Updating.childLayout "timePanel" $
       timePanel gs
 
     activeWindow <- use (#ui . #activeWindow)
-    case toggleColonies <|> toggleShips <|> timeAction of
+    case toggleColonies <|> toggleShips <|> toggleProduction <|> timeAction of
       Just (ToggleWindow w) | w `elem` activeWindow ->
         gs <$ (#ui . #activeWindow .= Nothing)
       Just (ToggleWindow w) ->

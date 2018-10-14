@@ -6,6 +6,7 @@ import App.Prelude
 
 import qualified App.Logic.Time as Logic.Time
 import qualified App.UI.ColonyWindow as ColonyWindow
+import qualified App.UI.ProductionWindow as ProductionWindow
 import qualified App.UI.ScreenOverlay as ScreenOverlay
 import qualified App.UI.ShipWindow as ShipWindow
 import qualified App.UI.SystemMap as SystemMap
@@ -66,4 +67,5 @@ handleUI gs =
   use (#ui . #activeWindow) >>= \case
     Just UIState.ColonyWindow -> ColonyWindow.update gs
     Just UIState.ShipWindow -> ShipWindow.update gs
+    Just UIState.ProductionWindow -> ProductionWindow.update gs
     Nothing -> pure gs

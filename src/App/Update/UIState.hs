@@ -33,6 +33,7 @@ data UIState = UIState
 data Window
   = ColonyWindow
   | ShipWindow
+  | ProductionWindow
   deriving (Show, Generic, Eq)
 
 initial :: UIState

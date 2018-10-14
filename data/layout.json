@@ -192,6 +192,56 @@
   },
 
   {
+    "name": "productionWindow",
+    "xy": [36, 80],
+    "children": [
+      { "name": "decoration", "xy": [-4, -24], "wh": [1000, 604] },
+      {
+        "name": "_content",
+        "layout": "horizontal",
+        "padding": 12,
+        "children": [
+          { "name": "selectedBody", "wh": [200, 580] },
+          {
+            "name": "rightPanel",
+            "layout": "vertical",
+            "padding": 8,
+            "children": [
+              {
+                "name": "installations",
+                "layout": "vertical",
+                "xy": [16, 0],
+                "children": [
+                  {
+                    "name": "_row1",
+                    "layout": "horizontal",
+                    "children": [
+                      { "name": "mineCountLabel", "wh": [80, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_row2",
+                    "layout": "horizontal",
+                    "children": [
+                      { "name": "mineCount", "wh": [80, 20] }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "mining",
+                "children": [
+                  { "name": "header", "wh": [80, 20]}
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
     "name": "overlay",
     "children": [
       {
@@ -200,8 +250,9 @@
         "layout": "horizontal",
         "padding": 4,
         "children": [
-          { "name": "colonies", "wh": [80, 20] },
-          { "name": "ships", "wh": [80, 20] }
+          { "name": "colonies", "wh": [88, 20] },
+          { "name": "ships", "wh": [88, 20] },
+          { "name": "production", "wh": [88, 20] }
         ]
       },
       {
