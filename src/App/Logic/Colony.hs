@@ -51,7 +51,7 @@ startBuildingTask bodyUid installation gs =
       pure $
         paidColony & #buildingTask .~ Just newTask
 
-buildCost :: Installation -> HashMap Resource Int
+buildCost :: Installation -> HashMap Resource Double
 buildCost = \case
   Installation.Infrastructure ->
     [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
@@ -79,7 +79,7 @@ startShipBuildingTask bodyUid gs =
       pure $
         paidColony & #shipBuildingTask .~ Just newTask
 
-shipCost :: HashMap Resource Int
+shipCost :: HashMap Resource Double
 shipCost =
   [ (Resource.Cadrium, 1000), (Resource.Erchanite, 100), (Resource.Tellerite, 100) ]
 
@@ -90,7 +90,7 @@ cancelShipBuildingTask :: Uid Body -> GameState -> GameState
 cancelShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
 
-installInstallation :: Installation -> Int -> Uid Body -> Colony -> GameState -> GameState
+installInstallation :: Installation -> Double -> Uid Body -> Colony -> GameState -> GameState
 installInstallation installation qty bodyUid colony gs =
   fromMaybe gs $ do
     availableQty <- colony ^. #stockpile . at (Resource.Installation installation)
@@ -101,7 +101,7 @@ installInstallation installation qty bodyUid colony gs =
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
 
-uninstallInstallation :: Installation -> Int -> Uid Body -> Colony -> GameState -> GameState
+uninstallInstallation :: Installation -> Double -> Uid Body -> Colony -> GameState -> GameState
 uninstallInstallation installation qty bodyUid colony gs =
   fromMaybe gs $ do
     installedQty <- colony ^. #installations . at installation
@@ -124,7 +124,7 @@ colonyMaxPopulation Body{ colonyCost } Colony{ isHomeworld, installations } =
     Nothing -> Just 0
     Just cc ->
       let installationQty = installations ^. at Installation.Infrastructure . non 0
-      in Just $ floor (10 / cc * fromIntegral installationQty)
+      in Just $ floor (10 / cc * installationQty)
 
 shipBuiltAt :: Uid Body -> OrbitalState -> Uid Ship -> Ship
 shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
@@ -141,7 +141,7 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     , Ship.attachedToBody = Just bodyUid
     }
 
-payResourceCost :: HashMap Resource Int -> Colony -> Maybe Colony
+payResourceCost :: HashMap Resource Double -> Colony -> Maybe Colony
 payResourceCost cost colony =
   cost & ifoldlM
     (\resource colonyAcc costQty ->
@@ -152,7 +152,7 @@ payResourceCost cost colony =
     )
     colony
 
-dailyMinedOnColony :: Colony -> HashMap Resource Mineral -> HashMap Resource Int
+dailyMinedOnColony :: Colony -> HashMap Resource Mineral -> HashMap Resource Double
 dailyMinedOnColony Colony{ installations, miningPriorities } minerals =
   let totalPrio = fromIntegral (sum miningPriorities)
   in minerals & imap (\resource Mineral{ accessibility } ->
@@ -163,5 +163,5 @@ dailyMinedOnColony Colony{ installations, miningPriorities } minerals =
         _ ->
           let weight = fromIntegral prio / totalPrio
               minedPerMineQty = 0.1 * weight * accessibility
-          in floor (fromIntegral mines * minedPerMineQty)
+          in mines * minedPerMineQty
     )

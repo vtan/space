@@ -5,7 +5,7 @@ import App.Prelude
 import qualified Control.Lens as Lens
 
 data Mineral = Mineral
-  { available :: Int
+  { available :: Double
   , accessibility :: Double
   }
   deriving (Show, Generic, Eq)

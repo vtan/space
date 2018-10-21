@@ -80,9 +80,9 @@ miningPanel colony@Colony{ miningPriorities } minerals = do
           Updating.childBounds "name" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ show resource)
           Updating.childBounds "monthlyMined" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ show monthlyMined ++ " t")
+            Widget.label (bounds ^. #xy) (fromString $ printf "%.2f t" monthlyMined)
           Updating.childBounds "mineable" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ show available ++ " t")
+            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" available)
           Updating.childBounds "accessibility" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ printf "%.0f%%" (100 * accessibility))
           Updating.childBounds "priority" $ \bounds ->

@@ -21,7 +21,7 @@ cancelShipOrder :: Ship -> GameState -> GameState
 cancelShipOrder Ship{ Ship.uid } gs =
   gs & #ships . at uid . _Just . #order .~ Nothing
 
-loadResourceToShip :: Maybe Int -> Resource -> Ship -> GameState -> GameState
+loadResourceToShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
 loadResourceToShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, cargoCapacity, loadedCargo } gs =
   fromMaybe gs $ do
     bodyUid <- attachedToBody
@@ -32,7 +32,7 @@ loadResourceToShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, c
       & #ships . at shipUid . _Just . #loadedCargo . at resource . non 0 +~ loadedQty
       & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 -~ loadedQty
 
-unloadResourceFromShip :: Maybe Int -> Resource -> Ship -> GameState -> GameState
+unloadResourceFromShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
 unloadResourceFromShip qtyOrAll resource Ship{ Ship.uid = shipUid, attachedToBody, loadedCargo } gs =
   fromMaybe gs $ do
     bodyUid <- attachedToBody

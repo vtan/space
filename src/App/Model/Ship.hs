@@ -14,8 +14,8 @@ data Ship = Ship
   , name :: Text
   , position :: V2 (Local Double)
   , speed :: Speed Double
-  , cargoCapacity :: Int
-  , loadedCargo :: HashMap Resource Int
+  , cargoCapacity :: Double
+  , loadedCargo :: HashMap Resource Double
   , cabinCapacity :: Int
   , loadedPopulation :: Int
   , order :: Maybe Order

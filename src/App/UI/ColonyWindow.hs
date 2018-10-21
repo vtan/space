@@ -29,8 +29,8 @@ data Action
   | BuildShip
   | CancelBuilding
   | CancelBuildingShip
-  | Install Installation Int Colony
-  | Uninstall Installation Int Colony
+  | Install Installation Double Colony
+  | Uninstall Installation Double Colony
   | FoundColony
 
 update :: GameState -> Updating GameState
@@ -106,7 +106,7 @@ mineralTable bounds bodyUid gs =
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
           ( fromString $ show mineral
-          , fromString $ printf "%d t" available
+          , fromString $ printf "%.0f t" available
           , fromString $ printf "%.0f%%" (100 * accessibility)
           ) -- TODO table widget?
   in do
@@ -120,7 +120,7 @@ stockpileTable bounds Colony{ stockpile } =
   let p = bounds ^. #xy
       (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
         ( fromString $ show mineral
-        , fromString $ printf "%d t" qty
+        , fromString $ printf "%.0f t" qty
         )
   in do
     Widget.label p "Resource stockpile"
@@ -132,7 +132,7 @@ installationTable bounds Colony{ installations } =
   let p = bounds ^. #xy
       (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
         ( fromString $ show installation
-        , fromString $ printf "%d t" qty
+        , fromString $ printf "%.0f t" qty
         )
   in do
     Widget.label p "Installations"
@@ -145,7 +145,7 @@ buildingPanel Colony{ buildingTask } = do
     let p = bounds ^. #xy
     case buildingTask of
       Just BuildingTask{ installation, quantity } ->
-        Widget.label p (fromString $ printf "Building: %s (%d t)" (show installation) quantity)
+        Widget.label p (fromString $ printf "Building: %s (%.0f t)" (show installation) quantity)
       Nothing ->
         Widget.label p "Building: nothing"
 
@@ -199,7 +199,7 @@ installationPanel colony = do
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "installationQty" bounds #editedInstallationQty
-      <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
+      <&> (Text.unpack >>> readMaybe @Double >>> mfilter (>= 0))
 
   install <- Updating.childBounds "install" $ \bounds ->
     Widget.button bounds "Install"

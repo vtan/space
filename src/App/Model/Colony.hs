@@ -13,8 +13,8 @@ data Colony = Colony
   { bodyUid :: Uid Body
   , population :: Int
   , isHomeworld :: Bool
-  , stockpile :: HashMap Resource Int
-  , installations :: HashMap Installation Int
+  , stockpile :: HashMap Resource Double
+  , installations :: HashMap Installation Double
   , buildingTask :: Maybe BuildingTask
   , shipBuildingTask :: Maybe ShipBuildingTask
   , miningPriorities :: HashMap Resource Int
