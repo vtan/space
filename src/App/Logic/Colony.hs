@@ -9,6 +9,7 @@ import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
+import qualified Data.HashMap.Strict as HashMap
 
 import App.Common.Uid (Uid(..))
 import App.Dimension.Time (Time)
@@ -34,6 +35,7 @@ foundColony bodyUid gs =
     , installations = mempty
     , buildingTask = Nothing
     , shipBuildingTask = Nothing
+    , miningPriorities = zip Resource.minerals (repeat 1) & HashMap.fromList
     }
 
 startBuildingTask :: Uid Body -> Installation -> GameState -> GameState
@@ -110,6 +112,11 @@ uninstallInstallation installation qty bodyUid colony gs =
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
 
+changeMiningPriority :: Resource -> Int -> Colony -> GameState -> GameState
+changeMiningPriority resource diff Colony{ bodyUid } gs =
+  gs & #colonies . at bodyUid . _Just . #miningPriorities . at resource . non 0 %~ \prio ->
+    max 0 (prio + diff)
+
 colonyMaxPopulation :: Body -> Colony -> Maybe Int
 colonyMaxPopulation Body{ colonyCost } Colony{ isHomeworld, installations } =
   case colonyCost of
@@ -146,9 +153,15 @@ payResourceCost cost colony =
     colony
 
 dailyMinedOnColony :: Colony -> HashMap Resource Mineral -> HashMap Resource Int
-dailyMinedOnColony Colony{ installations } minerals =
-  let availableMineralCount = length minerals
-  in minerals <&> \Mineral{ accessibility } ->
-    let mines = installations ^. at Installation.Mine . non 0
-        minedPerMineQty = 0.1 * accessibility / fromIntegral availableMineralCount
-    in floor (fromIntegral mines * minedPerMineQty)
+dailyMinedOnColony Colony{ installations, miningPriorities } minerals =
+  let totalPrio = fromIntegral (sum miningPriorities)
+  in minerals & imap (\resource Mineral{ accessibility } ->
+      let mines = installations ^. at Installation.Mine . non 0
+          prio = miningPriorities ^. at resource . non 0
+      in case prio of
+        0 -> 0
+        _ ->
+          let weight = fromIntegral prio / totalPrio
+              minedPerMineQty = 0.1 * weight * accessibility
+          in floor (fromIntegral mines * minedPerMineQty)
+    )

@@ -1,4 +1,6 @@
-module App.UI.ProductionWindow where
+module App.UI.ProductionWindow
+  ( update )
+where
 
 import App.Prelude
 
@@ -19,6 +21,9 @@ import App.Model.Resource (Resource)
 import App.Update.Updating (Updating)
 import Control.Monad.Reader.Class (local)
 import Data.String (fromString)
+
+data Action
+  = ChangePriority Resource Int
 
 update :: GameState -> Updating GameState
 update gs@GameState{ bodies, colonies, bodyMinerals } = do
@@ -47,22 +52,27 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
             Updating.childBounds "mineCount" $ \bounds ->
               Widget.label (bounds ^. #xy) (fromString (show mineQty ++ " t"))
 
-          Updating.childLayout "mining" $
+          miningAction <- Updating.childLayout "mining" $
             miningPanel colony minerals
-          pure gs
+
+          pure $ case miningAction of
+            Just (ChangePriority resource diff) ->
+              Logic.Colony.changeMiningPriority resource diff colony gs
+            Nothing -> gs
 
       Nothing -> pure gs
 
-miningPanel :: Colony -> HashMap Resource Mineral -> Updating ()
-miningPanel colony minerals = do
+miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
+miningPanel colony@Colony{ miningPriorities } minerals = do
   Updating.childBounds "header" $ \bounds ->
     Widget.label (bounds ^. #xy) "Mining"
 
   Updating.childLayout "mineralRows" $ do
     let allMonthlyMined = 30 *^ Logic.Colony.dailyMinedOnColony colony minerals
-    ifor_ Resource.minerals $ \i resource -> do
+    actions <- ifor Resource.minerals $ \i resource -> do
       let Mineral{ available, accessibility } = minerals ^. at resource . Mineral.nonEmpty
           monthlyMined = allMonthlyMined ^. at resource . non 0
+          priority = miningPriorities ^. at resource . non 0
       Updating.childLayout "row" $ do
         rowHeight <- view (#widgetTree . #bounds . #wh . _y)
         let offsetRow bounds = bounds & #xy . _y +~ i * rowHeight
@@ -75,3 +85,20 @@ miningPanel colony minerals = do
             Widget.label (bounds ^. #xy) (fromString $ show available ++ " t")
           Updating.childBounds "accessibility" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ printf "%.0f%%" (100 * accessibility))
+          Updating.childBounds "priority" $ \bounds ->
+            Widget.label (bounds ^. #xy) (fromString $ show priority)
+
+          increasePriority <- Updating.childBounds "increasePriority" $ \bounds ->
+            Widget.button bounds "+"
+              <&> whenAlt (ChangePriority resource 1)
+
+          decreasePriority <- Updating.childBounds "decreasePriority" $ \bounds ->
+            Widget.button bounds "-"
+              <&> whenAlt (ChangePriority resource (-1))
+
+          pure (increasePriority <|> decreasePriority)
+
+    actions
+      & catMaybes
+      & listToMaybe
+      & pure

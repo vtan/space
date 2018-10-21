@@ -241,9 +241,13 @@
                       {
                         "name": "row",
                         "layout": "horizontal",
+                        "padding": 4,
                         "children": [
                           { "name": "name", "wh": [100, 24] },
                           { "name": "monthlyMined", "wh": [80, 20] },
+                          { "name": "decreasePriority", "wh": [20, 20] },
+                          { "name": "priority", "wh": [20, 20] },
+                          { "name": "increasePriority", "wh": [20, 20] },
                           { "name": "mineable", "wh": [80, 20] },
                           { "name": "accessibility", "wh": [80, 20] }
                         ]

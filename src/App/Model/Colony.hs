@@ -17,5 +17,6 @@ data Colony = Colony
   , installations :: HashMap Installation Int
   , buildingTask :: Maybe BuildingTask
   , shipBuildingTask :: Maybe ShipBuildingTask
+  , miningPriorities :: HashMap Resource Int
   }
   deriving (Show, Generic)

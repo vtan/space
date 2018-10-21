@@ -7,6 +7,7 @@ import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Model.Body as Body
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
+import qualified Data.HashMap.Strict as HashMap
 
 import App.Common.Uid (Uid(..))
 import App.Model.Body (Body(..))
@@ -45,6 +46,7 @@ gameState = GameState
         , installations = [(Installation.Mine, 500)]
         , buildingTask = Nothing
         , shipBuildingTask = Nothing
+        , miningPriorities = zip Resource.minerals (repeat 1) & HashMap.fromList
         }
       )
     ]
