@@ -64,8 +64,18 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
 
 miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
 miningPanel colony@Colony{ miningPriorities } minerals = do
-  Updating.childBounds "header" $ \bounds ->
+  Updating.childBounds "heading" $ \bounds ->
     Widget.label (bounds ^. #xy) "Mining"
+
+  Updating.childLayout "headerRow" $ do
+    Updating.childBounds "monthlyMined" $ \bounds ->
+      Widget.label (bounds ^. #xy) "Mined / mo"
+    Updating.childBounds "priority" $ \bounds ->
+      Widget.label (bounds ^. #xy) "Priority"
+    Updating.childBounds "mineable" $ \bounds ->
+      Widget.label (bounds ^. #xy) "Mineable"
+    Updating.childBounds "accessibility" $ \bounds ->
+      Widget.label (bounds ^. #xy) "Accessibility"
 
   Updating.childLayout "mineralRows" $ do
     let allMonthlyMined = 30 *^ Logic.Colony.dailyMinedOnColony colony minerals
@@ -80,7 +90,7 @@ miningPanel colony@Colony{ miningPriorities } minerals = do
           Updating.childBounds "name" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ show resource)
           Updating.childBounds "monthlyMined" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ printf "%.2f t" monthlyMined)
+            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" monthlyMined)
           Updating.childBounds "mineable" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" available)
           Updating.childBounds "accessibility" $ \bounds ->

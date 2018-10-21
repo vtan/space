@@ -233,7 +233,19 @@
                 "layout": "vertical",
                 "padding": 4,
                 "children": [
-                  { "name": "header", "wh": [80, 20] },
+                  { "name": "heading", "wh": [80, 20] },
+                  {
+                    "name": "headerRow",
+                    "xy": [120, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "monthlyMined", "wh": [100, 20] },
+                      { "name": "priority", "wh": [88, 20] },
+                      { "name": "mineable", "wh": [80, 20] },
+                      { "name": "accessibility", "wh": [80, 20] }
+                    ]
+                  },
                   {
                     "name": "mineralRows",
                     "xy": [16, 0],
@@ -244,10 +256,11 @@
                         "padding": 4,
                         "children": [
                           { "name": "name", "wh": [100, 24] },
-                          { "name": "monthlyMined", "wh": [80, 20] },
+                          { "name": "monthlyMined", "wh": [100, 20] },
                           { "name": "decreasePriority", "wh": [20, 20] },
                           { "name": "priority", "wh": [20, 20] },
                           { "name": "increasePriority", "wh": [20, 20] },
+                          { "name": "_padding", "wh": [16, 20] },
                           { "name": "mineable", "wh": [80, 20] },
                           { "name": "accessibility", "wh": [80, 20] }
                         ]
