@@ -8,7 +8,7 @@ data Mineral = Mineral
   { available :: Int
   , accessibility :: Double
   }
-  deriving (Show, Generic)
+  deriving (Show, Generic, Eq)
 
 nonEmpty :: Lens.Iso' (Maybe Mineral) Mineral
 nonEmpty =

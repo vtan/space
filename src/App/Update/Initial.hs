@@ -38,7 +38,8 @@ gameState = GameState
   , colonies = UidMap.fromList
     [ ( Uid @Body 2
       , Colony
-        { population = 10000000000
+        { bodyUid = Uid 2
+        , population = 10000000000
         , isHomeworld = True
         , stockpile = [ (Resource.Cadrium, 2500), (Resource.Erchanite, 2500), (Resource.Tellerite, 2500) ]
         , installations = [(Installation.Mine, 500)]

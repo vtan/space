@@ -24,5 +24,8 @@ instance Hashable Resource
 
 all :: [Resource]
 all =
-  [Cadrium]
+  minerals
   ++ [Installation i | i <- Installation.all]
+
+minerals :: [Resource]
+minerals = [Cadrium, Erchanite, Tellerite]

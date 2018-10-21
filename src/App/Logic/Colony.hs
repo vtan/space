@@ -17,6 +17,7 @@ import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
+import App.Model.Mineral (Mineral(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
@@ -26,7 +27,8 @@ import Data.String (fromString)
 foundColony :: Uid Body -> GameState -> GameState
 foundColony bodyUid gs =
   gs & #colonies . at bodyUid .~ Just Colony
-    { population = 0
+    { bodyUid
+    , population = 0
     , isHomeworld = False
     , stockpile = mempty
     , installations = mempty
@@ -142,3 +144,11 @@ payResourceCost cost colony =
         else Nothing
     )
     colony
+
+dailyMinedOnColony :: Colony -> HashMap Resource Mineral -> HashMap Resource Int
+dailyMinedOnColony Colony{ installations } minerals =
+  let availableMineralCount = length minerals
+  in minerals <&> \Mineral{ accessibility } ->
+    let mines = installations ^. at Installation.Mine . non 0
+        minedPerMineQty = 0.1 * accessibility / fromIntegral availableMineralCount
+    in floor (fromIntegral mines * minedPerMineQty)

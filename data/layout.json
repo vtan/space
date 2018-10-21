@@ -230,8 +230,26 @@
               },
               {
                 "name": "mining",
+                "layout": "vertical",
+                "padding": 4,
                 "children": [
-                  { "name": "header", "wh": [80, 20]}
+                  { "name": "header", "wh": [80, 20] },
+                  {
+                    "name": "mineralRows",
+                    "xy": [16, 0],
+                    "children": [
+                      {
+                        "name": "row",
+                        "layout": "horizontal",
+                        "children": [
+                          { "name": "name", "wh": [100, 24] },
+                          { "name": "monthlyMined", "wh": [80, 20] },
+                          { "name": "mineable", "wh": [80, 20] },
+                          { "name": "accessibility", "wh": [80, 20] }
+                        ]
+                      }
+                    ]
+                  }
                 ]
               }
             ]
