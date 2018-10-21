@@ -60,36 +60,37 @@ theRootBody = Body
   , name = "Sol"
   , colonyCost = Nothing
   , orbitRadius = 0
+  , phaseAtEpoch = 0
   , angularVelocity = 0
   , children =
-    [ Body{ uid = Uid 0, name = "Mercury", colonyCost = Just 8,  orbitRadius = 0.38, angularVelocity =  2 * pi / (0.24 * 365 * 24 * 60 * 60), children = [] }
-    , Body{ uid = Uid 1, name = "Venus", colonyCost = Just 16,  orbitRadius = 0.72, angularVelocity =  2 * pi / (0.61 * 365 * 24 * 60 * 60), children = [] }
-    , Body{ uid = Uid 2, name = "Earth", colonyCost = Just 1,  orbitRadius = 1.00, angularVelocity =  2 * pi / (365 * 24 * 60 * 60), children =
-        [ Body{ uid = Uid 9, name = "Luna", colonyCost = Just 2.5,  orbitRadius = 0.0026, angularVelocity =  2 * pi / (27.32 * 24 * 60 * 60), children = [] } ]
+    [ Body{ uid = Uid 0, name = "Mercury", colonyCost = Just 8,  orbitRadius = 0.38, angularVelocity =  2 * pi / (0.24 * 365 * 24 * 60 * 60), phaseAtEpoch = 5.183077334009456, children = [] }
+    , Body{ uid = Uid 1, name = "Venus", colonyCost = Just 16,  orbitRadius = 0.72, angularVelocity =  2 * pi / (0.61 * 365 * 24 * 60 * 60), phaseAtEpoch = 1.2630917966904205, children = [] }
+    , Body{ uid = Uid 2, name = "Earth", colonyCost = Just 1,  orbitRadius = 1.00, angularVelocity =  2 * pi / (365 * 24 * 60 * 60), phaseAtEpoch = 3.150585230297741, children =
+        [ Body{ uid = Uid 9, name = "Luna", colonyCost = Just 2.5,  orbitRadius = 0.0026, angularVelocity =  2 * pi / (27.32 * 24 * 60 * 60), phaseAtEpoch = 1.1052205264497115, children = [] } ]
       }
-    , Body{ uid = Uid 3, name = "Mars", colonyCost = Just 2,  orbitRadius = 1.52, angularVelocity =  2 * pi / (1.88 * 365 * 24 * 60 * 60), children =
-        [ Body{ uid = Uid 10, name = "Phobos", colonyCost = Just 2.5,  orbitRadius = 6.2e-5, angularVelocity =  2 * pi / (0.318 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 11, name = "Deimos", colonyCost = Just 2.5,  orbitRadius = 0.00015, angularVelocity =  2 * pi / (1.263 * 24 * 60 * 60), children = [] }
+    , Body{ uid = Uid 3, name = "Mars", colonyCost = Just 2,  orbitRadius = 1.52, angularVelocity =  2 * pi / (1.88 * 365 * 24 * 60 * 60), phaseAtEpoch = 4.992778300672891, children =
+        [ Body{ uid = Uid 10, name = "Phobos", colonyCost = Just 2.5,  orbitRadius = 6.2e-5, angularVelocity =  2 * pi / (0.318 * 24 * 60 * 60), phaseAtEpoch = 4.951196230681527, children = [] }
+        , Body{ uid = Uid 11, name = "Deimos", colonyCost = Just 2.5,  orbitRadius = 0.00015, angularVelocity =  2 * pi / (1.263 * 24 * 60 * 60), phaseAtEpoch = 3.1702750214086004, children = [] }
         ]
       }
-    , Body{ uid = Uid 4, name = "Jupiter", colonyCost = Nothing,  orbitRadius = 5.20, angularVelocity =  2 * pi / (11.86 * 365 * 24 * 60 * 60), children =
-        [ Body{ uid = Uid 12, name = "Io", colonyCost = Just 4,  orbitRadius = 0.0028, angularVelocity =  2 * pi / (1.77 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 13, name = "Europa", colonyCost = Just 4,  orbitRadius = 0.0044, angularVelocity =  2 * pi / (3.55 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 14, name = "Ganymede", colonyCost = Just 4,  orbitRadius = 0.0071, angularVelocity =  2 * pi / (7.15 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 15, name = "Callisto", colonyCost = Just 4,  orbitRadius = 0.0125, angularVelocity =  2 * pi / (16.69 * 24 * 60 * 60), children = [] }
+    , Body{ uid = Uid 4, name = "Jupiter", colonyCost = Nothing,  orbitRadius = 5.20, angularVelocity =  2 * pi / (11.86 * 365 * 24 * 60 * 60), phaseAtEpoch = 4.389498795147114, children =
+        [ Body{ uid = Uid 12, name = "Io", colonyCost = Just 4,  orbitRadius = 0.0028, angularVelocity =  2 * pi / (1.77 * 24 * 60 * 60), phaseAtEpoch = 0.9847674707864948, children = [] }
+        , Body{ uid = Uid 13, name = "Europa", colonyCost = Just 4,  orbitRadius = 0.0044, angularVelocity =  2 * pi / (3.55 * 24 * 60 * 60), phaseAtEpoch = 4.192675332309923, children = [] }
+        , Body{ uid = Uid 14, name = "Ganymede", colonyCost = Just 4,  orbitRadius = 0.0071, angularVelocity =  2 * pi / (7.15 * 24 * 60 * 60), phaseAtEpoch = 2.7159649277748605, children = [] }
+        , Body{ uid = Uid 15, name = "Callisto", colonyCost = Just 4,  orbitRadius = 0.0125, angularVelocity =  2 * pi / (16.69 * 24 * 60 * 60), phaseAtEpoch = 4.856683528845399, children = [] }
         ]
       }
-    , Body{ uid = Uid 5, name = "Saturn", colonyCost = Nothing,  orbitRadius = 9.53, angularVelocity =  2 * pi / (29.44 * 365 * 24 * 60 * 60), children =
-        [ Body{ uid = Uid 16, name = "Mimas", colonyCost = Just 5,  orbitRadius = 0.0012, angularVelocity =  2 * pi / (0.9 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 17, name = "Enceladus", colonyCost = Just 5,  orbitRadius = 0.0016, angularVelocity =  2 * pi / (1.4 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 18, name = "Tethys", colonyCost = Just 5,  orbitRadius = 0.0020, angularVelocity =  2 * pi / (1.9 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 19, name = "Dione", colonyCost = Just 5,  orbitRadius = 0.0025, angularVelocity =  2 * pi / (2.7 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 20, name = "Rhea", colonyCost = Just 5,  orbitRadius = 0.0040, angularVelocity =  2 * pi / (4.5 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 21, name = "Titan", colonyCost = Just 3,  orbitRadius = 0.0081, angularVelocity =  2 * pi / (16 * 24 * 60 * 60), children = [] }
-        , Body{ uid = Uid 22, name = "Iapetus", colonyCost = Just 5,  orbitRadius = 0.0238, angularVelocity =  2 * pi / (79 * 24 * 60 * 60), children = [] }
+    , Body{ uid = Uid 5, name = "Saturn", colonyCost = Nothing,  orbitRadius = 9.53, angularVelocity =  2 * pi / (29.44 * 365 * 24 * 60 * 60), phaseAtEpoch = 1.3941826461020987, children =
+        [ Body{ uid = Uid 16, name = "Mimas", colonyCost = Just 5,  orbitRadius = 0.0012, angularVelocity =  2 * pi / (0.9 * 24 * 60 * 60), phaseAtEpoch = 5.5490471982273215, children = [] }
+        , Body{ uid = Uid 17, name = "Enceladus", colonyCost = Just 5,  orbitRadius = 0.0016, angularVelocity =  2 * pi / (1.4 * 24 * 60 * 60), phaseAtEpoch = 1.9301490174419995, children = [] }
+        , Body{ uid = Uid 18, name = "Tethys", colonyCost = Just 5,  orbitRadius = 0.0020, angularVelocity =  2 * pi / (1.9 * 24 * 60 * 60), phaseAtEpoch = 5.270329258859241, children = [] }
+        , Body{ uid = Uid 19, name = "Dione", colonyCost = Just 5,  orbitRadius = 0.0025, angularVelocity =  2 * pi / (2.7 * 24 * 60 * 60), phaseAtEpoch = 4.654234941931287, children = [] }
+        , Body{ uid = Uid 20, name = "Rhea", colonyCost = Just 5,  orbitRadius = 0.0040, angularVelocity =  2 * pi / (4.5 * 24 * 60 * 60), phaseAtEpoch = 4.903102665762759, children = [] }
+        , Body{ uid = Uid 21, name = "Titan", colonyCost = Just 3,  orbitRadius = 0.0081, angularVelocity =  2 * pi / (16 * 24 * 60 * 60), phaseAtEpoch = 1.403922883894238, children = [] }
+        , Body{ uid = Uid 22, name = "Iapetus", colonyCost = Just 5,  orbitRadius = 0.0238, angularVelocity =  2 * pi / (79 * 24 * 60 * 60), phaseAtEpoch = 5.90320859341022, children = [] }
         ]
       }
-    , Body{ uid = Uid 6, name = "Uranus", colonyCost = Nothing,  orbitRadius = 19.19, angularVelocity =  2 * pi / (84.01 * 365 * 24 * 60 * 60), children = [] }
-    , Body{ uid = Uid 7, name = "Neptune", colonyCost = Nothing,  orbitRadius = 30.06, angularVelocity =  2 * pi / (164.79 * 365 * 24 * 60 * 60), children = [] }
+    , Body{ uid = Uid 6, name = "Uranus", colonyCost = Nothing,  orbitRadius = 19.19, angularVelocity =  2 * pi / (84.01 * 365 * 24 * 60 * 60), phaseAtEpoch = 5.034906979201371, children = [] }
+    , Body{ uid = Uid 7, name = "Neptune", colonyCost = Nothing,  orbitRadius = 30.06, angularVelocity =  2 * pi / (164.79 * 365 * 24 * 60 * 60), phaseAtEpoch = 3.7836608026774474, children = [] }
     ]
   }

@@ -15,6 +15,7 @@ data Body = Body
   { uid :: Uid Body
   , name :: Text
   , orbitRadius :: Local Double
+  , phaseAtEpoch :: Double
   , angularVelocity :: Double
   , colonyCost :: Maybe Double
   , children :: [Body]
@@ -32,8 +33,8 @@ statesAtTime :: Time Int -> Body -> UidMap Body OrbitalState
 statesAtTime = relStatesAtTime 0
 
 relStatesAtTime :: V2 (Local Double) -> Time Int -> Body -> UidMap Body OrbitalState
-relStatesAtTime origin time Body{ uid, orbitRadius, angularVelocity, children } =
-  let phase = fmod (fromIntegral time * angularVelocity) (2 * pi)
+relStatesAtTime origin time Body{ uid, orbitRadius, phaseAtEpoch, angularVelocity, children } =
+  let phase = (phaseAtEpoch + fromIntegral time * angularVelocity) `fmod` (2 * pi)
       pos = origin + orbitRadius *^ (Local <$> Lin.angle phase)
       state = OrbitalState
         { position = pos
