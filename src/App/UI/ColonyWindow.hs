@@ -92,8 +92,8 @@ update gs = do
           Just BuildShip -> Logic.Colony.startShipBuildingTask uid gs
           Just CancelBuilding -> Logic.Colony.cancelBuildingTask uid gs
           Just CancelBuildingShip -> Logic.Colony.cancelShipBuildingTask uid gs
-          Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty uid colony gs
-          Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty uid colony gs
+          Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty colony gs
+          Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty colony gs
           Just FoundColony -> Logic.Colony.foundColony uid gs
           Nothing -> gs
 

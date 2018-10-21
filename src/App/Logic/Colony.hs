@@ -90,10 +90,10 @@ cancelShipBuildingTask :: Uid Body -> GameState -> GameState
 cancelShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
 
-installInstallation :: Installation -> Double -> Uid Body -> Colony -> GameState -> GameState
-installInstallation installation qty bodyUid colony gs =
+installInstallation :: Installation -> Double -> Colony -> GameState -> GameState
+installInstallation installation qty colony@Colony{ bodyUid, stockpile } gs =
   fromMaybe gs $ do
-    availableQty <- colony ^. #stockpile . at (Resource.Installation installation)
+    availableQty <- stockpile ^. at (Resource.Installation installation)
     let installedQty = min qty availableQty
         colony' = colony
           & #installations . at installation . non 0 +~ installedQty
@@ -101,10 +101,10 @@ installInstallation installation qty bodyUid colony gs =
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
 
-uninstallInstallation :: Installation -> Double -> Uid Body -> Colony -> GameState -> GameState
-uninstallInstallation installation qty bodyUid colony gs =
+uninstallInstallation :: Installation -> Double -> Colony -> GameState -> GameState
+uninstallInstallation installation qty colony@Colony{ bodyUid, installations } gs =
   fromMaybe gs $ do
-    installedQty <- colony ^. #installations . at installation
+    installedQty <- installations ^. at installation
     let uninstalledQty = min qty installedQty
         colony' = colony
           & #stockpile . at (Resource.Installation installation) . non 0 +~ uninstalledQty
