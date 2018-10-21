@@ -22,7 +22,7 @@ cp "$sdl2_path/$sdl2_dylib" "$sdl2_ttf_path/$sdl2_ttf_dylib" \
 
 install_name_tool \
   -change "$sdl2_path/$sdl2_dylib" "@executable_path/lib/$sdl2_dylib" \
-  "$appname/lib/$sdl2_ttf_dylib"
+  "$appname".app/Contents/Frameworks/"$sdl2_ttf_dylib"
 
 cp -r data "$appname".app/Contents/MacOS/
 cp LICENSE "$appname".app/
