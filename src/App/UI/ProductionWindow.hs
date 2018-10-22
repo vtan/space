@@ -28,32 +28,31 @@ data Action
 
 update :: GameState -> Updating GameState
 update gs@GameState{ bodies, colonies, bodyMinerals } = do
-  Updating.childLayout "productionWindow" $ do
-    Updating.childBounds "decoration" $ \bounds ->
-      Widget.window bounds 20 "Production"
+  Updating.useWidget "productionWindow" $ do
+    Updating.widget "decoration" $
+      Widget.window 20 "Production"
 
     let bodiesWithColony = toList (UidMap.zip bodies colonies)
     (selectedColony, _) <-
-      Updating.childBounds "selectedBody" $ \bounds ->
-        Widget.listBox
-            bounds 20
-            (view (_1 . #uid)) (view (_1 . #name))
+      Updating.widget "selectedBody"
+        ( Widget.listBox
+            20 (view (_1 . #uid)) (view (_1 . #name))
             #selectedBody
             bodiesWithColony
-          <&> (_1 . mapped %~ snd)
+        ) <&> (_1 . mapped %~ snd)
 
     case selectedColony of
       Just colony@Colony{ bodyUid, installations } -> do
         let minerals = bodyMinerals ^. at bodyUid . non mempty
-        Updating.childLayout "rightPanel" $ do
-          Updating.childLayout "installations" $ do
+        Updating.useWidget "rightPanel" $ do
+          Updating.useWidget "installations" $ do
             let mineQty = installations ^. at Installation.Mine . non 0
-            Updating.childBounds "mineCountLabel" $ \bounds ->
-              Widget.label bounds "Mines"
-            Updating.childBounds "mineCount" $ \bounds ->
-              Widget.label bounds (fromString (show mineQty))
+            Updating.widget "mineCountLabel" $
+              Widget.label "Mines"
+            Updating.widget "mineCount" $
+              Widget.label (fromString (show mineQty))
 
-          miningAction <- Updating.childLayout "mining" $
+          miningAction <- Updating.useWidget "mining" $
             miningPanel colony minerals
 
           pure $ case miningAction of
@@ -65,57 +64,51 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
 
 miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
 miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
-  Updating.childLayout "headingRow" $ do
+  Updating.useWidget "headingRow" $ do
     let totalMonthlyMined = Time.daysInMonth * Logic.Mining.dailyMinedAtFullAccessibility colony
-    Updating.childBounds "title" $ \bounds ->
-      Widget.label bounds "Mining"
-    Updating.childBounds "totalMined" $ \bounds ->
-      Widget.label bounds (fromString $ printf "Mined / mo at 100%% acc.: %.0f t" totalMonthlyMined)
-    view (#widgetTree . #bounds) >>= Widget.bottomLine
+    Updating.widget "title" $ Widget.label "Mining"
+    Updating.widget "totalMined" $
+      Widget.label (fromString $ printf "Mined / mo at 100%% acc.: %.0f t" totalMonthlyMined)
+    Updating.thisWidget Widget.bottomLine
 
-  Updating.childLayout "headerRow" $ do
-    Updating.childBounds "monthlyMined" $ \bounds ->
-      Widget.label bounds "Mined / mo"
-    Updating.childBounds "priority" $ \bounds ->
-      Widget.label bounds "Priority"
-    Updating.childBounds "mineable" $ \bounds ->
-      Widget.label bounds "Mineable"
-    Updating.childBounds "accessibility" $ \bounds ->
-      Widget.label bounds "Accessibility"
-    Updating.childBounds "stockpile" $ \bounds ->
-      Widget.label bounds "Stockpile"
+  Updating.useWidget "headerRow" $ do
+    Updating.widget "monthlyMined" $ Widget.label "Mined / mo"
+    Updating.widget "priority" $ Widget.label "Priority"
+    Updating.widget "mineable" $ Widget.label "Mineable"
+    Updating.widget "accessibility" $ Widget.label "Accessibility"
+    Updating.widget "stockpile" $ Widget.label "Stockpile"
 
-  Updating.childLayout "mineralRows" $ do
+  Updating.useWidget "mineralRows" $ do
     let allMonthlyMined = Time.daysInMonth *^ Logic.Mining.dailyMined colony minerals
     actions <- ifor Resource.minerals $ \i resource -> do
       let Mineral{ available, accessibility } = minerals ^. at resource . Mineral.nonEmpty
           monthlyMined = allMonthlyMined ^. at resource . non 0
           priority = miningPriorities ^. at resource . non 0
           inStockpile = stockpile ^. at resource . non 0
-      Updating.childLayout "row" $ do
+      Updating.useWidget "row" $ do
         rowHeight <- view (#widgetTree . #bounds . #wh . _y)
         let offsetRow bounds = bounds & #xy . _y +~ i * rowHeight
         local (#widgetTree %~ WidgetTree.mapTree (#bounds %~ offsetRow)) $ do
-          Updating.childBounds "name" $ \bounds ->
-            Widget.label bounds (fromString $ show resource)
-          Updating.childBounds "monthlyMined" $ \bounds ->
-            Widget.label bounds (fromString $ printf "%.0f t" monthlyMined)
-          Updating.childBounds "mineable" $ \bounds ->
-            Widget.label bounds (fromString $ printf "%.0f t" available)
-          Updating.childBounds "accessibility" $ \bounds ->
-            Widget.label bounds (fromString $ printf "%.0f%%" (100 * accessibility))
-          Updating.childBounds "stockpile" $ \bounds ->
-            Widget.label bounds (fromString $ printf "%.0f t" inStockpile)
-          Updating.childBounds "priority" $ \bounds ->
-            Widget.label bounds (fromString $ show priority)
+          Updating.widget "name" $
+            Widget.label (fromString $ show resource)
+          Updating.widget "monthlyMined" $
+            Widget.label (fromString $ printf "%.0f t" monthlyMined)
+          Updating.widget "mineable" $
+            Widget.label (fromString $ printf "%.0f t" available)
+          Updating.widget "accessibility" $
+            Widget.label (fromString $ printf "%.0f%%" (100 * accessibility))
+          Updating.widget "stockpile" $
+            Widget.label (fromString $ printf "%.0f t" inStockpile)
+          Updating.widget "priority" $
+            Widget.label (fromString $ show priority)
 
-          increasePriority <- Updating.childBounds "increasePriority" $ \bounds ->
-            Widget.button bounds "+"
-              <&> whenAlt (ChangePriority resource 1)
+          increasePriority <- Updating.widget "increasePriority"
+            (Widget.button "+")
+            <&> whenAlt (ChangePriority resource 1)
 
-          decreasePriority <- Updating.childBounds "decreasePriority" $ \bounds ->
-            Widget.button bounds "-"
-              <&> whenAlt (ChangePriority resource (-1))
+          decreasePriority <- Updating.widget "decreasePriority"
+            (Widget.button "-")
+            <&> whenAlt (ChangePriority resource (-1))
 
           pure (increasePriority <|> decreasePriority)
 

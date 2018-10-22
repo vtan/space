@@ -14,7 +14,6 @@ import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 import qualified Linear as Lin
 
-import App.Common.Rect (Rect)
 import App.Common.Uid (Uid)
 import App.Common.Util (whenAlt)
 import App.Model.Body (Body)
@@ -36,41 +35,39 @@ data Action
 
 update :: GameState -> Updating GameState
 update gs =
-  Updating.childLayout "shipWindow" $ do
-    Updating.childBounds "decoration" $ \bounds ->
-      Widget.window bounds 20 "Ships"
+  Updating.useWidget "shipWindow" $ do
+    Updating.widget "decoration" $
+      Widget.window 20 "Ships"
 
     (selectedShip, clickedShip) <-
-      Updating.childBounds "selectedShip" $ \bounds ->
+      Updating.widget "selectedShip" $
         Widget.listBox
-          bounds 20
-          (view #uid) (view #name)
+          20 (view #uid) (view #name)
           #selectedShip
           (gs ^.. #ships . folded)
     for_ clickedShip $ \ship -> #ui . #editedShipName .= (ship ^. #name)
 
-    gs' <- Updating.childLayout "rightPanel" $
+    gs' <- Updating.useWidget "rightPanel" $
       for selectedShip $ \ship@Ship{ uid } -> do
-        rename <- Updating.childLayout "renamePanel" renamePanel
-        Updating.childBounds "infoLabels" $ \bounds ->
-          infoLabels bounds ship gs
+        rename <- Updating.useWidget "renamePanel" renamePanel
+        infoLabels ship gs
 
-        moveTo <- Updating.childBounds "moveTo" $ \bounds ->
-          Widget.button bounds "Move to..."
-            <&> whenAlt ()
-        cancel <- Updating.childBounds "cancel" $ \bounds ->
-          Widget.button bounds "Cancel"
-            <&> whenAlt CancelOrder
+        moveTo <- Updating.widget "moveTo"
+          (Widget.button "Move to...")
+          <&> whenAlt ()
+        cancel <- Updating.widget "cancel"
+          (Widget.button "Cancel")
+          <&> whenAlt CancelOrder
 
-        selectedBody <- Updating.childBounds "selectedBody" $ \bounds ->
+        selectedBody <- Updating.widget "selectedBody" $
           Widget.closedDropdown
-            bounds 20 380
+            20 380
             (view #uid) (view #name)
             #selectedBody
             (gs ^.. #bodies . folded)
 
-        cargoAction <- Updating.childLayout "cargoPanel" (cargoPanel ship)
-        cabinAction <- Updating.childLayout "cabinPanel" (cabinPanel ship)
+        cargoAction <- Updating.useWidget "cargoPanel" (cargoPanel ship)
+        cabinAction <- Updating.useWidget "cabinPanel" (cabinPanel ship)
 
         let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
             action = rename <|> moveToSelected <|> cancel <|> cargoAction <|> cabinAction
@@ -95,14 +92,14 @@ update gs =
 
 renamePanel :: Updating (Maybe Action)
 renamePanel = do
-  ename <- Updating.childBounds "shipName" $ \bounds ->
-    Widget.textBox "shipName" bounds #editedShipName
-  Updating.childBounds "button" $ \bounds ->
-    Widget.button bounds "Rename"
-      <&> whenAlt (Rename ename)
+  ename <- Updating.widget "shipName" $
+    Widget.textBox "shipName" #editedShipName
+  Updating.widget "button"
+    (Widget.button "Rename")
+    <&> whenAlt (Rename ename)
 
-infoLabels :: Rect Int -> Ship -> GameState -> Updating ()
-infoLabels bounds Ship{ speed, order } gs =
+infoLabels :: Ship -> GameState -> Updating ()
+infoLabels Ship{ speed, order } gs = do
   let commonLabels = [fromString (printf "Speed: %s" (Speed.printKmPerSec speed))]
       orderLabels = case order of
         Just o ->
@@ -117,50 +114,51 @@ infoLabels bounds Ship{ speed, order } gs =
                   in (printf "move to %s (act. spd. %s)" bodyName (Speed.printKmPerSec actualSpeed), printf "%s, %s" etaDate etaDuration)
           in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
         Nothing -> ["No current order"]
-  in Widget.labels bounds 20 (commonLabels ++ orderLabels)
+  Updating.widget "infoLabels" $
+    Widget.labels 20 (commonLabels ++ orderLabels)
 
 cargoPanel :: Ship -> Updating (Maybe Action)
 cargoPanel Ship{ cargoCapacity, loadedCargo } = do
-  selectedResource <- Updating.childBounds "selectedResource" $ \bounds ->
+  selectedResource <- Updating.widget "selectedResource" $
     Widget.closedDropdown
-      bounds 20 380
+      20 380
       id (show >>> fromString)
       #selectedResource
       Resource.all
 
-  Updating.childBounds "qtyLabel" $ \bounds ->
-    Widget.label bounds "Qty:"
+  Updating.widget "qtyLabel" $
+    Widget.label "Qty:"
 
-  qty <- Updating.childBounds "qty" $ \bounds ->
-    Widget.textBox "cargoQty" bounds #editedResourceQty
-      <&> (Text.unpack >>> readMaybe @Double >>> mfilter (>= 0))
+  qty <- Updating.widget "qty"
+    (Widget.textBox "cargoQty" #editedResourceQty)
+    <&> (Text.unpack >>> readMaybe @Double >>> mfilter (>= 0))
 
-  load <- Updating.childBounds "load" $ \bounds ->
-    Widget.button bounds "Load"
-      <&> whenAlt (LoadResource <$> selectedResource <*> (fmap Just qty))
-      <&> join
+  load <- Updating.widget "load"
+    (Widget.button "Load")
+    <&> whenAlt (LoadResource <$> selectedResource <*> (fmap Just qty))
+    <&> join
 
-  loadAll <- Updating.childBounds "loadAll" $ \bounds ->
-    Widget.button bounds "Load all"
-      <&> whenAlt (LoadResource <$> selectedResource <*> Just Nothing)
-      <&> join
+  loadAll <- Updating.widget "loadAll"
+    (Widget.button "Load all")
+    <&> whenAlt (LoadResource <$> selectedResource <*> Just Nothing)
+    <&> join
 
-  unload <- Updating.childBounds "unload" $ \bounds ->
-    Widget.button bounds "Unload"
-      <&> whenAlt (UnloadResource <$> selectedResource <*> (fmap Just qty))
-      <&> join
+  unload <- Updating.widget "unload"
+    (Widget.button "Unload")
+    <&> whenAlt (UnloadResource <$> selectedResource <*> (fmap Just qty))
+    <&> join
 
-  unloadAll <- Updating.childBounds "unloadAll" $ \bounds ->
-    Widget.button bounds "Unload all"
-      <&> whenAlt (UnloadResource <$> selectedResource <*> Just Nothing)
-      <&> join
+  unloadAll <- Updating.widget "unloadAll"
+    (Widget.button "Unload all")
+    <&> whenAlt (UnloadResource <$> selectedResource <*> Just Nothing)
+    <&> join
 
-  Updating.childBounds "cargoCapacity" $ \bounds ->
-    Widget.label bounds $
+  Updating.widget "cargoCapacity" $
+    Widget.label $
       fromString (printf "Cargo capacity: %.0f t" cargoCapacity)
 
-  Updating.childBounds "loadedCargo" $ \bounds ->
-    Widget.labels bounds 20 $
+  Updating.widget "loadedCargo" $
+    Widget.labels 20 $
       loadedCargo
         & itoList
         & map (\(resource, loadedQty) ->
@@ -171,28 +169,28 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
 cabinPanel :: Ship -> Updating (Maybe Action)
 cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
-  Updating.childBounds "cabinCapacity" $ \bounds ->
-    Widget.label bounds $
+  Updating.widget "cabinCapacity" $
+    Widget.label $
       fromString (printf "Cabin capacity: %d / %d ppl" loadedPopulation cabinCapacity)
 
-  Updating.childBounds "popLabel" $ \bounds ->
-    Widget.label bounds "Pop:"
+  Updating.widget "popLabel" $
+    Widget.label "Pop:"
 
-  qty <- Updating.childBounds "pop" $ \bounds ->
-    Widget.textBox "popQty" bounds #editedPopulationQty
-      <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
+  qty <- Updating.widget "pop"
+    (Widget.textBox "popQty" #editedPopulationQty)
+    <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
 
   let (loadLabel, unloadLabel) = case qty of
         Just _ -> ("Load", "Unload")
         Nothing -> ("Load max", "Unload max")
 
-  load <- Updating.childBounds "load" $ \bounds ->
-    Widget.button bounds loadLabel
-      <&> whenAlt (LoadPopulation qty)
+  load <- Updating.widget "load"
+    (Widget.button loadLabel)
+    <&> whenAlt (LoadPopulation qty)
 
-  unload <- Updating.childBounds "unload" $ \bounds ->
-    Widget.button bounds unloadLabel
-      <&> whenAlt (UnloadPopulation qty)
+  unload <- Updating.widget "unload"
+    (Widget.button unloadLabel)
+    <&> whenAlt (UnloadPopulation qty)
 
   let action = load <|> unload
   when (action & has _Just) $

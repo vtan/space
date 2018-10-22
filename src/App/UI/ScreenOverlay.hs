@@ -52,20 +52,20 @@ handleKeyEvents gs = do
 
 handleUI :: GameState -> Updating GameState
 handleUI gs =
-  Updating.childLayout "overlay" $ do
-    toggleColonies <- Updating.childBounds "colonies" $ \bounds ->
-      Widget.button bounds "Colonies"
-        <&> whenAlt (ToggleWindow UIState.ColonyWindow)
+  Updating.useWidget "overlay" $ do
+    toggleColonies <- Updating.widget "colonies"
+      (Widget.button "Colonies")
+      <&> whenAlt (ToggleWindow UIState.ColonyWindow)
 
-    toggleShips <- Updating.childBounds "ships" $ \bounds ->
-      Widget.button bounds "Ships"
-        <&> whenAlt (ToggleWindow UIState.ShipWindow)
+    toggleShips <- Updating.widget "ships"
+      (Widget.button "Ships")
+      <&> whenAlt (ToggleWindow UIState.ShipWindow)
 
-    toggleProduction <- Updating.childBounds "production" $ \bounds ->
-      Widget.button bounds "Production"
-        <&> whenAlt (ToggleWindow UIState.ProductionWindow)
+    toggleProduction <- Updating.widget "production"
+      (Widget.button "Production")
+      <&> whenAlt (ToggleWindow UIState.ProductionWindow)
 
-    timeAction <- Updating.childLayout "timePanel" $
+    timeAction <- Updating.useWidget "timePanel" $
       timePanel gs
 
     activeWindow <- use (#ui . #activeWindow)
@@ -87,22 +87,28 @@ timePanel gs = do
   groupBounds <- view (#widgetTree . #bounds)
   let controlsOffset = screenWidth - 2 * (groupBounds ^. #xy . _x) - (groupBounds ^. #wh . _x)
 
-  nextMidnight <- Updating.childBounds "nextMidnight" $ \bounds ->
-    Widget.button (bounds & #xy . _x +~ controlsOffset) "next"
-      <&> whenAlt NextMidnight
+  nextMidnight <- Updating.widget "nextMidnight"
+    ( #bounds . #xy . _x +~ controlsOffset
+      >>> Widget.button "next"
+    ) <&> whenAlt NextMidnight
 
   setSpeed <- (["stop", "1min", "10min", "1h", "12h", "5d"] :: [Text])
     & itraverse (\speed label -> do
       let widget = fromString ("speed" ++ show speed)
-      Updating.childBounds widget $ \bounds ->
-        Widget.button (bounds & #xy . _x +~ controlsOffset) label
-          <&> whenAlt (SetSpeed speed)
+      Updating.widget widget
+        ( #bounds . #xy . _x +~ controlsOffset
+          >>> Widget.button label
+        ) <&> whenAlt (SetSpeed speed)
     )
     & fmap asum
 
-  Updating.childBounds "currentTime" $ \bounds -> do
-    let offset = screenWidth - 2 * (bounds ^. #xy . _x) - (bounds ^. #wh . _x)
-    Widget.label (bounds & #xy . _x +~ offset) (gs ^. #time & Time.printDate & fromString)
+  Updating.widget "currentTime"
+    ( ( #bounds %~ \bounds ->
+          let offset = screenWidth - 2 * (bounds ^. #xy . _x) - (bounds ^. #wh . _x)
+          in bounds & #xy . _x +~ offset
+      )
+      >>> Widget.label (gs ^. #time & Time.printDate & fromString)
+    )
 
   pure (nextMidnight <|> setSpeed)
 

@@ -16,23 +16,26 @@ import App.Update.ListBoxState (ListBoxState)
 import App.Update.SlotId (SlotId)
 import App.Update.UIState (UIState)
 import App.Update.Updating (Updating)
+import App.Update.WidgetTree (WidgetTree(..))
 import Control.Lens (Lens')
 import Control.Monad (mfilter)
 import Control.Monad.Zip (munzip)
 
-label :: Rect Int -> Text -> Updating ()
-label (Rect pos _) text =
-  Updating.render $ Rendering.text pos text
+type Widget a = WidgetTree -> Updating a
 
-labels :: Rect Int -> Int -> [Text] -> Updating ()
-labels (Rect firstPos _) verticalSpacing texts =
+label :: Text -> Widget ()
+label text WidgetTree{ bounds = Rect pos _ } =
+  Updating.render (Rendering.text pos text)
+
+labels :: Int -> [Text] -> Widget ()
+labels verticalSpacing texts WidgetTree{ bounds = Rect firstPos _ } =
   Updating.render $
     ifor_ texts $ \i text ->
       let pos = firstPos & _y +~ i * verticalSpacing
       in Rendering.text pos text
 
-bottomLine :: Rect Int -> Updating ()
-bottomLine bounds =
+bottomLine :: Widget ()
+bottomLine WidgetTree{ bounds } =
   Updating.render $ do
     let Rect (V2 x y) (V2 w h) = fromIntegral <$> bounds
         y' = y + h
@@ -40,8 +43,8 @@ bottomLine bounds =
     SDL.rendererDrawColor r $= shade3
     SDL.drawLine r (SDL.P (V2 x y')) (SDL.P (V2 (x + w) y'))
 
-button :: Rect Int -> Text -> Updating Bool
-button bounds text = do
+button :: Text -> Widget Bool
+button text WidgetTree{ bounds }= do
   clicked <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
       _ -> Nothing
@@ -55,11 +58,11 @@ button bounds text = do
   pure clicked
 
 listBox :: Eq i
-  => Rect Int -> Int
+  => Int
   -> (a -> i) -> (a -> Text)
   -> Lens' UIState (ListBoxState i)
-  -> [a] -> Updating (Maybe a, Maybe a)
-listBox bounds verticalSpacing toIx toText state items = do
+  -> [a] -> Widget (Maybe a, Maybe a)
+listBox verticalSpacing toIx toText state items WidgetTree{ bounds } = do
   let hiddenHeight = length items * verticalSpacing - bounds ^. #wh . _y
   mouseInside <- use #mousePosition <&> Rect.contains bounds
   scrollDiff <- if
@@ -122,18 +125,18 @@ listBox bounds verticalSpacing toIx toText state items = do
   pure (selectedItem, clickedItem)
 
 closedDropdown :: Eq i
-  => Rect Int -> Int -> Int
+  => Int -> Int
   -> (a -> i) -> (a -> Text)
   -> Lens' UIState (ListBoxState i)
-  -> [a] -> Updating (Maybe a)
-closedDropdown bounds verticalSpacing openHeight toIx toText state items = do
+  -> [a] -> Widget (Maybe a)
+closedDropdown verticalSpacing openHeight toIx toText state items wt@WidgetTree{ bounds } = do
   clickedOpen <- Updating.consumeEvents (\case
       MousePressEvent SDL.ButtonLeft pos
         | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
       _ -> Nothing
     ) <&> (not . null)
   when clickedOpen $ do
-    let this = () <$ openDropdown bounds verticalSpacing openHeight toIx toText state items
+    let this = () <$ openDropdown verticalSpacing openHeight toIx toText state items wt
     #activeDropdown .= Just this
   selectedIx <- use (#ui . state . #selectedIndex)
   let selectedItem = selectedIx >>= \i -> items & find (toIx >>> (== i))
@@ -142,19 +145,20 @@ closedDropdown bounds verticalSpacing openHeight toIx toText state items = do
   pure selectedItem
 
 openDropdown :: Eq i
-  => Rect Int -> Int -> Int
+  => Int -> Int
   -> (a -> i) -> (a -> Text)
   -> Lens' UIState (ListBoxState i)
-  -> [a] -> Updating (Maybe a)
-openDropdown bounds verticalSpacing openHeight toIx toText state items = do
+  -> [a] -> Widget (Maybe a)
+openDropdown verticalSpacing openHeight toIx toText state items wt@WidgetTree{ bounds } = do
   selectedIx <- use (#ui . state . #selectedIndex)
   let selectedItem = selectedIx >>= \i -> items & find (toIx >>> (== i))
       text = selectedItem & fmap toText & fromMaybe ""
   (selectedItem', clickedItem) <- do
-    let openListBounds = bounds
+    let listBounds = bounds
           & #xy . _y +~ verticalSpacing
           & #wh . _y .~ openHeight
-    listBox openListBounds verticalSpacing toIx toText state items
+        listWt = wt { bounds = listBounds }
+    listBox verticalSpacing toIx toText state items listWt
   clickedOutside <- Updating.consumeEvents (\case
       MousePressEvent{} -> Just ()
       _ -> Nothing
@@ -174,8 +178,8 @@ dropdownRendering bounds text = do
   let arrowPos = bounds ^. #xy & _x +~ (bounds ^. #wh . _x) - 20
   Rendering.text arrowPos "▼"
 
-window :: Rect Int -> Int -> Text -> Updating ()
-window bounds titleHeight title =
+window :: Int -> Text -> Widget ()
+window titleHeight title WidgetTree{ bounds } =
   Updating.render $ do
     let titleBounds = bounds & #wh . _y .~ titleHeight
         restBounds = bounds
@@ -188,8 +192,8 @@ window bounds titleHeight title =
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
     Rendering.text (bounds ^. #xy) title
 
-textBox :: SlotId -> Rect Int -> Lens' UIState Text -> Updating Text
-textBox slotId bounds state = do
+textBox :: SlotId -> Lens' UIState Text -> Widget Text
+textBox slotId state WidgetTree{ bounds } = do
   focused <- do
     clicked <- Updating.consumeEvents (\case
         MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()

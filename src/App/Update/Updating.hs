@@ -8,7 +8,6 @@ import qualified SDL
 import qualified SDL.Internal.Numbered
 
 import App.Common.HashedText (HashedText)
-import App.Common.Rect (Rect)
 import App.Dimension.Time (Time)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
@@ -83,14 +82,17 @@ pushRendering :: Updating ()
 pushRendering =
   #deferredRendering %= (pure () :)
 
-childLayout :: HashedText -> Updating a -> Updating a
-childLayout childName =
-  local (#widgetTree %~ WidgetTree.child childName)
+useWidget :: HashedText -> Updating a -> Updating a
+useWidget name =
+  local (#widgetTree %~ WidgetTree.child name)
 
-childBounds :: HashedText -> (Rect Int -> Updating a) -> Updating a
-childBounds childName f = do
-  child <- view (#widgetTree . to (WidgetTree.child childName))
-  f (child ^. #bounds)
+widget :: HashedText -> (WidgetTree -> Updating a) -> Updating a
+widget name w =
+  view (#widgetTree . to (WidgetTree.child name)) >>= w
+
+thisWidget :: (WidgetTree -> Updating a) -> Updating a
+thisWidget w =
+  view #widgetTree >>= w
 
 filterEvents :: (SDL.Event -> Maybe a) -> Updating [a]
 filterEvents p =
