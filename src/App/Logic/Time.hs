@@ -5,14 +5,13 @@ import App.Prelude
 import qualified App.Common.UidMap as UidMap
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Colony as Logic.Colony
+import qualified App.Logic.Mining as Logic.Mining
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
-import qualified App.Model.Mineral as Mineral
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
-import qualified Data.HashMap.Strict as HashMap
 
 import App.Common.Uid (Uid(..))
 import App.Dimension.Time (Time)
@@ -20,7 +19,6 @@ import App.Model.Body (Body(..))
 import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
-import App.Model.Mineral (Mineral(..))
 import App.Model.Ship (Ship(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 
@@ -72,7 +70,7 @@ productionTickOnColony :: Uid Body -> GameState -> GameState
 productionTickOnColony bodyUid =
   buildOnColony bodyUid
   >>> buildShipOnColony bodyUid
-  >>> mineOnColony bodyUid
+  >>> Logic.Mining.mine bodyUid
   >>> shrinkPopulation bodyUid
 
 buildOnColony :: Uid Body -> GameState -> GameState
@@ -100,25 +98,6 @@ buildShipOnColony bodyUid gs@GameState{ colonies, time } =
         & #ships . at shipUid .~ ship
     Just ShipBuildingTask{} -> gs
     Nothing -> gs
-
-mineOnColony :: Uid Body -> GameState -> GameState
-mineOnColony bodyUid gs@GameState{ colonies, bodyMinerals } =
-  fromMaybe gs $ do
-    colony <- colonies ^. at bodyUid
-    minerals <- bodyMinerals ^. at bodyUid
-    let mineralsMinedQty =
-          HashMap.intersectionWith (,)
-            minerals
-            (Logic.Colony.dailyMinedOnColony colony minerals)
-    pure $
-      mineralsMinedQty & ifoldl'
-        (\resource gs' (Mineral{ available }, minedQty) ->
-          let actualMinedQty = min minedQty available
-          in gs'
-            & #bodyMinerals . at bodyUid . _Just . at resource . Mineral.nonEmpty . #available -~ actualMinedQty
-            & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 +~ actualMinedQty
-        )
-        gs
 
 shrinkPopulation :: Uid Body -> GameState -> GameState
 shrinkPopulation bodyUid gs =

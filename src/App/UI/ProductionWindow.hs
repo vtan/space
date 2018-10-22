@@ -5,7 +5,8 @@ where
 import App.Prelude
 
 import qualified App.Common.UidMap as UidMap
-import qualified App.Logic.Colony as Logic.Colony
+import qualified App.Dimension.Time as Time
+import qualified App.Logic.Mining as Logic.Mining
 import qualified App.Model.Mineral as Mineral
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
@@ -57,15 +58,20 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
 
           pure $ case miningAction of
             Just (ChangePriority resource diff) ->
-              Logic.Colony.changeMiningPriority resource diff colony gs
+              Logic.Mining.changeMiningPriority resource diff colony gs
             Nothing -> gs
 
       Nothing -> pure gs
 
 miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
 miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
-  Updating.childBounds "heading" $ \bounds ->
-    Widget.label (bounds ^. #xy) "Mining"
+  Updating.childLayout "headingRow" $ do
+    let totalMonthlyMined = Time.daysInMonth * Logic.Mining.dailyMinedAtFullAccessibility colony
+    Updating.childBounds "title" $ \bounds ->
+      Widget.label (bounds ^. #xy) "Mining"
+    Updating.childBounds "totalMined" $ \bounds ->
+      Widget.label (bounds ^. #xy) (fromString $ printf "Mined / mo at 100%% acc.: %.0f t" totalMonthlyMined)
+    view (#widgetTree . #bounds) >>= Widget.bottomLine
 
   Updating.childLayout "headerRow" $ do
     Updating.childBounds "monthlyMined" $ \bounds ->
@@ -80,7 +86,7 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
       Widget.label (bounds ^. #xy) "Stockpile"
 
   Updating.childLayout "mineralRows" $ do
-    let allMonthlyMined = 30 *^ Logic.Colony.dailyMinedOnColony colony minerals
+    let allMonthlyMined = Time.daysInMonth *^ Logic.Mining.dailyMined colony minerals
     actions <- ifor Resource.minerals $ \i resource -> do
       let Mineral{ available, accessibility } = minerals ^. at resource . Mineral.nonEmpty
           monthlyMined = allMonthlyMined ^. at resource . non 0

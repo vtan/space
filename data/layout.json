@@ -205,7 +205,7 @@
           {
             "name": "rightPanel",
             "layout": "vertical",
-            "padding": 8,
+            "padding": 24,
             "children": [
               {
                 "name": "installations",
@@ -233,7 +233,14 @@
                 "layout": "vertical",
                 "padding": 4,
                 "children": [
-                  { "name": "heading", "wh": [80, 20] },
+                  {
+                    "name": "headingRow",
+                    "layout": "horizontal",
+                    "children": [
+                      { "name": "title", "wh": [120, 20] },
+                      { "name": "totalMined", "wh": [460, 20] }
+                    ]
+                  },
                   {
                     "name": "headerRow",
                     "xy": [120, 0],

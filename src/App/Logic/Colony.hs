@@ -18,7 +18,6 @@ import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
-import App.Model.Mineral (Mineral(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
@@ -112,11 +111,6 @@ uninstallInstallation installation qty colony@Colony{ bodyUid, installations } g
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
 
-changeMiningPriority :: Resource -> Int -> Colony -> GameState -> GameState
-changeMiningPriority resource diff Colony{ bodyUid } gs =
-  gs & #colonies . at bodyUid . _Just . #miningPriorities . at resource . non 0 %~ \prio ->
-    max 0 (prio + diff)
-
 colonyMaxPopulation :: Body -> Colony -> Maybe Int
 colonyMaxPopulation Body{ colonyCost } Colony{ isHomeworld, installations } =
   case colonyCost of
@@ -151,17 +145,3 @@ payResourceCost cost colony =
         else Nothing
     )
     colony
-
-dailyMinedOnColony :: Colony -> HashMap Resource Mineral -> HashMap Resource Double
-dailyMinedOnColony Colony{ installations, miningPriorities } minerals =
-  let totalPrio = fromIntegral (sum miningPriorities)
-  in minerals & imap (\resource Mineral{ accessibility } ->
-      let mines = installations ^. at Installation.Mine . non 0
-          prio = miningPriorities ^. at resource . non 0
-      in case prio of
-        0 -> 0
-        _ ->
-          let weight = fromIntegral prio / totalPrio
-              minedPerMineQty = 0.1 * weight * accessibility
-          in mines * minedPerMineQty
-    )

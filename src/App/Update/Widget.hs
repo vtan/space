@@ -8,7 +8,7 @@ import qualified App.Update.Updating as Updating
 import qualified Data.Text as Text
 import qualified SDL
 
-import App.Common.Rect (Rect)
+import App.Common.Rect (Rect(..))
 import App.Common.Util (clamp)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
@@ -29,6 +29,15 @@ labels firstPos verticalSpacing texts =
     ifor_ texts $ \i text ->
       let pos = firstPos & _y +~ i * verticalSpacing
       in Rendering.text pos text
+
+bottomLine :: Rect Int -> Updating ()
+bottomLine bounds =
+  Updating.render $ do
+    let Rect (V2 x y) (V2 w h) = fromIntegral <$> bounds
+        y' = y + h
+    r <- view #renderer
+    SDL.rendererDrawColor r $= shade3
+    SDL.drawLine r (SDL.P (V2 x y')) (SDL.P (V2 (x + w) y'))
 
 button :: Rect Int -> Text -> Updating Bool
 button bounds text = do
