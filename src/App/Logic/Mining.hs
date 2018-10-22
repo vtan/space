@@ -55,4 +55,4 @@ dailyMined colony@Colony{ miningPriorities } minerals =
 dailyMinedAtFullAccessibility :: Colony -> Double
 dailyMinedAtFullAccessibility Colony{ installations } =
   let mines = installations ^. at Installation.Mine . non 0
-  in mines * 0.1
+  in fromIntegral mines * 50

@@ -11,3 +11,6 @@ instance Hashable Installation
 
 all :: [Installation]
 all = [minBound .. maxBound]
+
+mass :: Num a => a
+mass = 500

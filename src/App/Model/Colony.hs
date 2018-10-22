@@ -14,7 +14,7 @@ data Colony = Colony
   , population :: Int
   , isHomeworld :: Bool
   , stockpile :: HashMap Resource Double
-  , installations :: HashMap Installation Double
+  , installations :: HashMap Installation Int
   , buildingTask :: Maybe BuildingTask
   , shipBuildingTask :: Maybe ShipBuildingTask
   , miningPriorities :: HashMap Resource Int

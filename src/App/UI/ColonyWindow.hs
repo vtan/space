@@ -29,8 +29,8 @@ data Action
   | BuildShip
   | CancelBuilding
   | CancelBuildingShip
-  | Install Installation Double Colony
-  | Uninstall Installation Double Colony
+  | Install Installation Int Colony
+  | Uninstall Installation Int Colony
   | FoundColony
 
 update :: GameState -> Updating GameState
@@ -118,9 +118,11 @@ mineralTable bounds bodyUid gs =
 stockpileTable :: Rect Int -> Colony -> Updating ()
 stockpileTable bounds Colony{ stockpile } =
   let p = bounds ^. #xy
-      (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(mineral, qty) ->
-        ( fromString $ show mineral
-        , fromString $ printf "%.0f t" qty
+      (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(resource, mass) ->
+        ( fromString $ show resource
+        , fromString $ if resource & has (_Ctor @"Installation")
+          then printf "%.0f t (%d buildings)" mass (floor (mass / Installation.mass) :: Int)
+          else printf "%.0f t" mass
         )
   in do
     Widget.label p "Resource stockpile"
@@ -132,7 +134,7 @@ installationTable bounds Colony{ installations } =
   let p = bounds ^. #xy
       (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
         ( fromString $ show installation
-        , fromString $ printf "%.0f t" qty
+        , fromString $ show qty
         )
   in do
     Widget.label p "Installations"
@@ -145,7 +147,7 @@ buildingPanel Colony{ buildingTask } = do
     let p = bounds ^. #xy
     case buildingTask of
       Just BuildingTask{ installation, quantity } ->
-        Widget.label p (fromString $ printf "Building: %s (%.0f t)" (show installation) quantity)
+        Widget.label p (fromString $ printf "Building: %s (%d)" (show installation) quantity)
       Nothing ->
         Widget.label p "Building: nothing"
 
@@ -199,7 +201,7 @@ installationPanel colony = do
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "installationQty" bounds #editedInstallationQty
-      <&> (Text.unpack >>> readMaybe @Double >>> mfilter (>= 0))
+      <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
 
   install <- Updating.childBounds "install" $ \bounds ->
     Widget.button bounds "Install"

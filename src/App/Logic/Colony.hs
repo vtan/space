@@ -42,10 +42,9 @@ startBuildingTask bodyUid installation gs =
   gs & #colonies . at bodyUid . _Just %~ \colony ->
     fromMaybe colony $ do
       guard (colony ^. #buildingTask & has _Nothing)
-      let quantity = 500
-          cost = buildCost installation
+      let cost = buildCost installation
           finishTime = (gs ^. #time) + buildTime installation
-          newTask = BuildingTask{ installation, quantity, BuildingTask.finishTime }
+          newTask = BuildingTask{ installation, quantity = 1, BuildingTask.finishTime }
       paidColony <- payResourceCost cost colony
       pure $
         paidColony & #buildingTask .~ Just newTask
@@ -89,25 +88,27 @@ cancelShipBuildingTask :: Uid Body -> GameState -> GameState
 cancelShipBuildingTask bodyUid gs =
   gs & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
 
-installInstallation :: Installation -> Double -> Colony -> GameState -> GameState
+installInstallation :: Installation -> Int -> Colony -> GameState -> GameState
 installInstallation installation qty colony@Colony{ bodyUid, stockpile } gs =
   fromMaybe gs $ do
-    availableQty <- stockpile ^. at (Resource.Installation installation)
-    let installedQty = min qty availableQty
+    availableMass <- stockpile ^. at (Resource.Installation installation)
+    let qtyToInstall = min qty (floor (availableMass / Installation.mass))
+        massToInstall = fromIntegral qtyToInstall * Installation.mass
         colony' = colony
-          & #installations . at installation . non 0 +~ installedQty
-          & #stockpile . at (Resource.Installation installation) . non 0 -~ installedQty
+          & #installations . at installation . non 0 +~ qtyToInstall
+          & #stockpile . at (Resource.Installation installation) . non 0 -~ massToInstall
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
 
-uninstallInstallation :: Installation -> Double -> Colony -> GameState -> GameState
+uninstallInstallation :: Installation -> Int -> Colony -> GameState -> GameState
 uninstallInstallation installation qty colony@Colony{ bodyUid, installations } gs =
   fromMaybe gs $ do
     installedQty <- installations ^. at installation
-    let uninstalledQty = min qty installedQty
+    let qtyToUninstall = min qty installedQty
+        massToUninstall = fromIntegral qtyToUninstall * Installation.mass
         colony' = colony
-          & #stockpile . at (Resource.Installation installation) . non 0 +~ uninstalledQty
-          & #installations . at installation . non 0 -~ uninstalledQty
+          & #stockpile . at (Resource.Installation installation) . non 0 +~ massToUninstall
+          & #installations . at installation . non 0 -~ qtyToUninstall
     pure $ gs
       & #colonies . at bodyUid .~ Just colony'
 
@@ -118,7 +119,7 @@ colonyMaxPopulation Body{ colonyCost } Colony{ isHomeworld, installations } =
     Nothing -> Just 0
     Just cc ->
       let installationQty = installations ^. at Installation.Infrastructure . non 0
-      in Just $ floor (10 / cc * installationQty)
+      in Just $ floor (5000 / cc * fromIntegral installationQty)
 
 shipBuiltAt :: Uid Body -> OrbitalState -> Uid Ship -> Ship
 shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =

@@ -8,6 +8,7 @@ import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Logic.Mining as Logic.Mining
 import qualified App.Model.Body as Body
 import qualified App.Model.BuildingTask as BuildingTask
+import qualified App.Model.Installation as Installation
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
@@ -79,7 +80,7 @@ buildOnColony bodyUid gs@GameState{ colonies, time } =
     Just BuildingTask{ installation, quantity, BuildingTask.finishTime } | finishTime <= time ->
       gs & #colonies . at bodyUid . _Just %~ (\col ->
           col
-            & #stockpile . at (Resource.Installation installation) . non 0 +~ quantity
+            & #stockpile . at (Resource.Installation installation) . non 0 +~ fromIntegral quantity * Installation.mass
             & #buildingTask .~ Nothing
         )
     Just BuildingTask{} -> gs

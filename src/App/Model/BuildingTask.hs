@@ -7,7 +7,7 @@ import App.Model.Installation (Installation)
 
 data BuildingTask = BuildingTask
   { installation :: Installation
-  , quantity :: Double
+  , quantity :: Int
   , finishTime :: Time Int
   }
   deriving (Show, Generic)

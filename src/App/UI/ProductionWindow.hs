@@ -51,7 +51,7 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
             Updating.childBounds "mineCountLabel" $ \bounds ->
               Widget.label (bounds ^. #xy) "Mines"
             Updating.childBounds "mineCount" $ \bounds ->
-              Widget.label (bounds ^. #xy) (fromString (show mineQty ++ " t"))
+              Widget.label (bounds ^. #xy) (fromString (show mineQty))
 
           miningAction <- Updating.childLayout "mining" $
             miningPanel colony minerals
