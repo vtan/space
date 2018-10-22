@@ -102,7 +102,7 @@ timePanel gs = do
 
   Updating.childBounds "currentTime" $ \bounds -> do
     let offset = screenWidth - 2 * (bounds ^. #xy . _x) - (bounds ^. #wh . _x)
-    Widget.label (bounds ^. #xy & _x +~ offset) (gs ^. #time & Time.printDate & fromString)
+    Widget.label (bounds & #xy . _x +~ offset) (gs ^. #time & Time.printDate & fromString)
 
   pure (nextMidnight <|> setSpeed)
 

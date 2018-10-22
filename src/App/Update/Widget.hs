@@ -20,11 +20,12 @@ import Control.Lens (Lens')
 import Control.Monad (mfilter)
 import Control.Monad.Zip (munzip)
 
-label :: V2 Int -> Text -> Updating ()
-label pos text = Updating.render $ Rendering.text pos text
+label :: Rect Int -> Text -> Updating ()
+label (Rect pos _) text =
+  Updating.render $ Rendering.text pos text
 
-labels :: V2 Int -> Int -> [Text] -> Updating ()
-labels firstPos verticalSpacing texts =
+labels :: Rect Int -> Int -> [Text] -> Updating ()
+labels (Rect firstPos _) verticalSpacing texts =
   Updating.render $
     ifor_ texts $ \i text ->
       let pos = firstPos & _y +~ i * verticalSpacing

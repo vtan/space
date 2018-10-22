@@ -14,6 +14,7 @@ import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 import qualified Linear as Lin
 
+import App.Common.Rect (Rect)
 import App.Common.Uid (Uid)
 import App.Common.Util (whenAlt)
 import App.Model.Body (Body)
@@ -52,7 +53,7 @@ update gs =
       for selectedShip $ \ship@Ship{ uid } -> do
         rename <- Updating.childLayout "renamePanel" renamePanel
         Updating.childBounds "infoLabels" $ \bounds ->
-          infoLabels (bounds ^. #xy) ship gs
+          infoLabels bounds ship gs
 
         moveTo <- Updating.childBounds "moveTo" $ \bounds ->
           Widget.button bounds "Move to..."
@@ -100,8 +101,8 @@ renamePanel = do
     Widget.button bounds "Rename"
       <&> whenAlt (Rename ename)
 
-infoLabels :: V2 Int -> Ship -> GameState -> Updating ()
-infoLabels p Ship{ speed, order } gs =
+infoLabels :: Rect Int -> Ship -> GameState -> Updating ()
+infoLabels bounds Ship{ speed, order } gs =
   let commonLabels = [fromString (printf "Speed: %s" (Speed.printKmPerSec speed))]
       orderLabels = case order of
         Just o ->
@@ -116,7 +117,7 @@ infoLabels p Ship{ speed, order } gs =
                   in (printf "move to %s (act. spd. %s)" bodyName (Speed.printKmPerSec actualSpeed), printf "%s, %s" etaDate etaDuration)
           in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
         Nothing -> ["No current order"]
-  in Widget.labels p 20 (commonLabels ++ orderLabels)
+  in Widget.labels bounds 20 (commonLabels ++ orderLabels)
 
 cargoPanel :: Ship -> Updating (Maybe Action)
 cargoPanel Ship{ cargoCapacity, loadedCargo } = do
@@ -128,7 +129,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
       Resource.all
 
   Updating.childBounds "qtyLabel" $ \bounds ->
-    Widget.label (bounds ^. #xy) "Qty:"
+    Widget.label bounds "Qty:"
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "cargoQty" bounds #editedResourceQty
@@ -155,11 +156,11 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
       <&> join
 
   Updating.childBounds "cargoCapacity" $ \bounds ->
-    Widget.label (bounds ^. #xy) $
+    Widget.label bounds $
       fromString (printf "Cargo capacity: %.0f t" cargoCapacity)
 
   Updating.childBounds "loadedCargo" $ \bounds ->
-    Widget.labels (bounds ^. #xy) 20 $
+    Widget.labels bounds 20 $
       loadedCargo
         & itoList
         & map (\(resource, loadedQty) ->
@@ -171,11 +172,11 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 cabinPanel :: Ship -> Updating (Maybe Action)
 cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
   Updating.childBounds "cabinCapacity" $ \bounds ->
-    Widget.label (bounds ^. #xy) $
+    Widget.label bounds $
       fromString (printf "Cabin capacity: %d / %d ppl" loadedPopulation cabinCapacity)
 
   Updating.childBounds "popLabel" $ \bounds ->
-    Widget.label (bounds ^. #xy) "Pop:"
+    Widget.label bounds "Pop:"
 
   qty <- Updating.childBounds "pop" $ \bounds ->
     Widget.textBox "popQty" bounds #editedPopulationQty

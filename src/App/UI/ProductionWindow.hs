@@ -49,9 +49,9 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
           Updating.childLayout "installations" $ do
             let mineQty = installations ^. at Installation.Mine . non 0
             Updating.childBounds "mineCountLabel" $ \bounds ->
-              Widget.label (bounds ^. #xy) "Mines"
+              Widget.label bounds "Mines"
             Updating.childBounds "mineCount" $ \bounds ->
-              Widget.label (bounds ^. #xy) (fromString (show mineQty))
+              Widget.label bounds (fromString (show mineQty))
 
           miningAction <- Updating.childLayout "mining" $
             miningPanel colony minerals
@@ -68,22 +68,22 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
   Updating.childLayout "headingRow" $ do
     let totalMonthlyMined = Time.daysInMonth * Logic.Mining.dailyMinedAtFullAccessibility colony
     Updating.childBounds "title" $ \bounds ->
-      Widget.label (bounds ^. #xy) "Mining"
+      Widget.label bounds "Mining"
     Updating.childBounds "totalMined" $ \bounds ->
-      Widget.label (bounds ^. #xy) (fromString $ printf "Mined / mo at 100%% acc.: %.0f t" totalMonthlyMined)
+      Widget.label bounds (fromString $ printf "Mined / mo at 100%% acc.: %.0f t" totalMonthlyMined)
     view (#widgetTree . #bounds) >>= Widget.bottomLine
 
   Updating.childLayout "headerRow" $ do
     Updating.childBounds "monthlyMined" $ \bounds ->
-      Widget.label (bounds ^. #xy) "Mined / mo"
+      Widget.label bounds "Mined / mo"
     Updating.childBounds "priority" $ \bounds ->
-      Widget.label (bounds ^. #xy) "Priority"
+      Widget.label bounds "Priority"
     Updating.childBounds "mineable" $ \bounds ->
-      Widget.label (bounds ^. #xy) "Mineable"
+      Widget.label bounds "Mineable"
     Updating.childBounds "accessibility" $ \bounds ->
-      Widget.label (bounds ^. #xy) "Accessibility"
+      Widget.label bounds "Accessibility"
     Updating.childBounds "stockpile" $ \bounds ->
-      Widget.label (bounds ^. #xy) "Stockpile"
+      Widget.label bounds "Stockpile"
 
   Updating.childLayout "mineralRows" $ do
     let allMonthlyMined = Time.daysInMonth *^ Logic.Mining.dailyMined colony minerals
@@ -97,17 +97,17 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
         let offsetRow bounds = bounds & #xy . _y +~ i * rowHeight
         local (#widgetTree %~ WidgetTree.mapTree (#bounds %~ offsetRow)) $ do
           Updating.childBounds "name" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ show resource)
+            Widget.label bounds (fromString $ show resource)
           Updating.childBounds "monthlyMined" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" monthlyMined)
+            Widget.label bounds (fromString $ printf "%.0f t" monthlyMined)
           Updating.childBounds "mineable" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" available)
+            Widget.label bounds (fromString $ printf "%.0f t" available)
           Updating.childBounds "accessibility" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f%%" (100 * accessibility))
+            Widget.label bounds (fromString $ printf "%.0f%%" (100 * accessibility))
           Updating.childBounds "stockpile" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" inStockpile)
+            Widget.label bounds (fromString $ printf "%.0f t" inStockpile)
           Updating.childBounds "priority" $ \bounds ->
-            Widget.label (bounds ^. #xy) (fromString $ show priority)
+            Widget.label bounds (fromString $ show priority)
 
           increasePriority <- Updating.childBounds "increasePriority" $ \bounds ->
             Widget.button bounds "+"

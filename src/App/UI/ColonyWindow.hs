@@ -10,7 +10,6 @@ import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 
-import App.Common.Rect (Rect(..))
 import App.Common.Uid (Uid)
 import App.Common.Util (whenAlt)
 import App.Model.Body (Body(..))
@@ -49,22 +48,22 @@ update gs = do
     gs' <- Updating.childLayout "rightPanel" $
       for selectedBody $ \body@Body{ uid, colonyCost } -> do
         Updating.childBounds "info" $ \bounds ->
-          Widget.labels (bounds ^. #xy) 20
+          Widget.labels bounds 20
             [ case colonyCost of
                 Just cc -> fromString $ printf "Colony cost: ×%.1f" cc
                 Nothing -> "Uncolonizable"
             ]
-        Updating.childBounds "mineralTable" $ \bounds ->
-          mineralTable bounds uid gs
+        Updating.childLayout "mineralTable" $
+          mineralTable uid gs
 
         action <- case gs ^. #colonies . at uid of
           Just colony@Colony{ population } -> do
-            Updating.childBounds "stockpileTable" $ \bounds ->
-              stockpileTable bounds colony
-            Updating.childBounds "installationTable" $ \bounds ->
-              installationTable bounds colony
+            Updating.childLayout "stockpileTable" $
+              stockpileTable colony
+            Updating.childLayout "installationTable" $
+              installationTable colony
             Updating.childBounds "populationInfo" $ \bounds ->
-              Widget.labels (bounds ^. #xy) 20
+              Widget.labels bounds 20
                 [ fromString $ printf "Population: %d" population
                 , case Logic.Colony.colonyMaxPopulation body colony of
                     Just mp -> fromString $ printf "Max. population: %d" mp
@@ -99,57 +98,60 @@ update gs = do
 
     pure (gs' & fromMaybe gs)
 
-mineralTable :: Rect Int -> Uid Body -> GameState -> Updating ()
-mineralTable bounds bodyUid gs =
-  let p = bounds ^. #xy
-      minerals = gs ^@.. #bodyMinerals . at bodyUid . _Just . ifolded
+mineralTable :: Uid Body -> GameState -> Updating ()
+mineralTable bodyUid gs = do
+  let minerals = gs ^@.. #bodyMinerals . at bodyUid . _Just . ifolded
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
           ( fromString $ show mineral
           , fromString $ printf "%.0f t" available
           , fromString $ printf "%.0f%%" (100 * accessibility)
           ) -- TODO table widget?
-  in do
-    Widget.label p "Mineable resources"
-    Widget.labels (p + V2 0 20) 20 mineralLabels
-    Widget.labels (p + V2 100 20) 20 availableLabels
-    Widget.labels (p + V2 180 20) 20 accessibilityLabels
+  Updating.childBounds "title" $ \bounds ->
+    Widget.label bounds "Mineable resources"
+  Updating.childBounds "minerals" $ \bounds ->
+    Widget.labels bounds 20 mineralLabels
+  Updating.childBounds "availables" $ \bounds ->
+    Widget.labels bounds 20 availableLabels
+  Updating.childBounds "accessibilities" $ \bounds ->
+    Widget.labels bounds 20 accessibilityLabels
 
-stockpileTable :: Rect Int -> Colony -> Updating ()
-stockpileTable bounds Colony{ stockpile } =
-  let p = bounds ^. #xy
-      (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(resource, mass) ->
+stockpileTable :: Colony -> Updating ()
+stockpileTable Colony{ stockpile } = do
+  let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(resource, mass) ->
         ( fromString $ show resource
         , fromString $ if resource & has (_Ctor @"Installation")
           then printf "%.0f t (%d buildings)" mass (floor (mass / Installation.mass) :: Int)
           else printf "%.0f t" mass
         )
-  in do
-    Widget.label p "Resource stockpile"
-    Widget.labels (p + V2 0 20) 20 itemLabels
-    Widget.labels (p + V2 180 20) 20 qtyLabels
+  Updating.childBounds "title" $ \bounds ->
+    Widget.label bounds "Resource stockpile"
+  Updating.childBounds "resources" $ \bounds ->
+    Widget.labels bounds 20 itemLabels
+  Updating.childBounds "quantities" $ \bounds ->
+    Widget.labels bounds 20 qtyLabels
 
-installationTable :: Rect Int -> Colony -> Updating ()
-installationTable bounds Colony{ installations } =
-  let p = bounds ^. #xy
-      (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
+installationTable :: Colony -> Updating ()
+installationTable Colony{ installations } = do
+  let (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
         ( fromString $ show installation
         , fromString $ show qty
         )
-  in do
-    Widget.label p "Installations"
-    Widget.labels (p + V2 0 20) 20 mineLabels
-    Widget.labels (p + V2 180 20) 20 mineQtyLabels
+  Updating.childBounds "title" $ \bounds ->
+    Widget.label bounds "Installations"
+  Updating.childBounds "installations" $ \bounds ->
+    Widget.labels bounds 20 mineLabels
+  Updating.childBounds "quantities" $ \bounds ->
+    Widget.labels bounds 20 mineQtyLabels
 
 buildingPanel :: Colony -> Updating (Maybe Action)
 buildingPanel Colony{ buildingTask } = do
   Updating.childBounds "label" $ \bounds -> do
-    let p = bounds ^. #xy
     case buildingTask of
       Just BuildingTask{ installation, quantity } ->
-        Widget.label p (fromString $ printf "Building: %s (%d)" (show installation) quantity)
+        Widget.label bounds (fromString $ printf "Building: %s (%d)" (show installation) quantity)
       Nothing ->
-        Widget.label p "Building: nothing"
+        Widget.label bounds "Building: nothing"
 
   selectedInstallation <- Updating.childBounds "selectedInstallation" $ \bounds ->
     Widget.closedDropdown
@@ -172,10 +174,9 @@ buildingPanel Colony{ buildingTask } = do
 shipBuildingPanel :: Colony -> Updating (Maybe Action)
 shipBuildingPanel Colony{ shipBuildingTask } = do
   Updating.childBounds "label" $ \bounds -> do
-    let p = bounds ^. #xy
     case shipBuildingTask of
-      Just ShipBuildingTask{} -> Widget.label p "Producing: Ship"
-      Nothing -> Widget.label p "Producing: nothing"
+      Just ShipBuildingTask{} -> Widget.label bounds "Producing: Ship"
+      Nothing -> Widget.label bounds "Producing: nothing"
 
   build <- Updating.childBounds "build" $ \bounds -> do
     Widget.button bounds "Produce ship"
@@ -197,7 +198,7 @@ installationPanel colony = do
       Installation.all
 
   Updating.childBounds "qtyLabel" $ \bounds ->
-    Widget.label (bounds ^. #xy) "Qty:"
+    Widget.label bounds "Qty:"
 
   qty <- Updating.childBounds "qty" $ \bounds ->
     Widget.textBox "installationQty" bounds #editedInstallationQty

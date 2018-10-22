@@ -16,7 +16,22 @@
             "padding": 8,
             "children": [
               { "name": "info", "wh": [0, 20] },
-              { "name": "mineralTable", "wh": [0, 80] },
+              {
+                "name": "mineralTable",
+                "layout": "vertical",
+                "children": [
+                  { "name": "title", "wh": [100, 20] },
+                  {
+                    "name": "_table",
+                    "layout": "horizontal",
+                    "children": [
+                      { "name": "minerals", "wh": [200, 60] },
+                      { "name": "availables", "wh": [100, 60] },
+                      { "name": "accessibilities", "wh": [100, 60] }
+                    ]
+                  }
+                ]
+              },
               {
                 "name": "_hasColony",
                 "children": [
@@ -29,8 +44,36 @@
                     "layout": "vertical",
                     "padding": 12,
                     "children": [
-                      { "name": "stockpileTable", "wh": [0, 120] },
-                      { "name": "installationTable", "wh": [0, 60] },
+                      {
+                        "name": "stockpileTable",
+                        "layout": "vertical",
+                        "children": [
+                          { "name": "title", "wh": [100, 20] },
+                          {
+                            "name": "_table",
+                            "layout": "horizontal",
+                            "children": [
+                              { "name": "resources", "wh": [200, 100] },
+                              { "name": "quantities", "wh": [200, 100] }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "installationTable",
+                        "layout": "vertical",
+                        "children": [
+                          { "name": "title", "wh": [100, 20] },
+                          {
+                            "name": "_table",
+                            "layout": "horizontal",
+                            "children": [
+                              { "name": "installations", "wh": [200, 40] },
+                              { "name": "quantities", "wh": [200, 40] }
+                            ]
+                          }
+                        ]
+                      },
                       { "name": "populationInfo", "wh": [0, 40] },
                       {
                         "name": "buildingPanel",
