@@ -39,7 +39,11 @@ changeMiningPriority resource diff Colony{ bodyUid } gs =
 
 dailyMined :: Colony -> HashMap Resource Mineral -> HashMap Resource Double
 dailyMined colony@Colony{ miningPriorities } minerals =
-  let totalPrio = fromIntegral (sum miningPriorities)
+  let totalPrio =
+        HashMap.intersectionWith
+          (\prio _nonZeroQty -> prio) miningPriorities minerals
+        & sum
+        & fromIntegral
   in minerals & imap (\resource Mineral{ accessibility } ->
     case miningPriorities ^. at resource of
       Nothing -> 0
