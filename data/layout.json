@@ -243,7 +243,8 @@
                       { "name": "monthlyMined", "wh": [100, 20] },
                       { "name": "priority", "wh": [88, 20] },
                       { "name": "mineable", "wh": [80, 20] },
-                      { "name": "accessibility", "wh": [80, 20] }
+                      { "name": "accessibility", "wh": [100, 20] },
+                      { "name": "stockpile", "wh": [80, 20] }
                     ]
                   },
                   {
@@ -262,7 +263,8 @@
                           { "name": "increasePriority", "wh": [20, 20] },
                           { "name": "_padding", "wh": [16, 20] },
                           { "name": "mineable", "wh": [80, 20] },
-                          { "name": "accessibility", "wh": [80, 20] }
+                          { "name": "accessibility", "wh": [100, 20] },
+                          { "name": "stockpile", "wh": [80, 20] }
                         ]
                       }
                     ]

@@ -63,7 +63,7 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
       Nothing -> pure gs
 
 miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
-miningPanel colony@Colony{ miningPriorities } minerals = do
+miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
   Updating.childBounds "heading" $ \bounds ->
     Widget.label (bounds ^. #xy) "Mining"
 
@@ -76,6 +76,8 @@ miningPanel colony@Colony{ miningPriorities } minerals = do
       Widget.label (bounds ^. #xy) "Mineable"
     Updating.childBounds "accessibility" $ \bounds ->
       Widget.label (bounds ^. #xy) "Accessibility"
+    Updating.childBounds "stockpile" $ \bounds ->
+      Widget.label (bounds ^. #xy) "Stockpile"
 
   Updating.childLayout "mineralRows" $ do
     let allMonthlyMined = 30 *^ Logic.Colony.dailyMinedOnColony colony minerals
@@ -83,6 +85,7 @@ miningPanel colony@Colony{ miningPriorities } minerals = do
       let Mineral{ available, accessibility } = minerals ^. at resource . Mineral.nonEmpty
           monthlyMined = allMonthlyMined ^. at resource . non 0
           priority = miningPriorities ^. at resource . non 0
+          inStockpile = stockpile ^. at resource . non 0
       Updating.childLayout "row" $ do
         rowHeight <- view (#widgetTree . #bounds . #wh . _y)
         let offsetRow bounds = bounds & #xy . _y +~ i * rowHeight
@@ -95,6 +98,8 @@ miningPanel colony@Colony{ miningPriorities } minerals = do
             Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" available)
           Updating.childBounds "accessibility" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ printf "%.0f%%" (100 * accessibility))
+          Updating.childBounds "stockpile" $ \bounds ->
+            Widget.label (bounds ^. #xy) (fromString $ printf "%.0f t" inStockpile)
           Updating.childBounds "priority" $ \bounds ->
             Widget.label (bounds ^. #xy) (fromString $ show priority)
 
@@ -108,7 +113,4 @@ miningPanel colony@Colony{ miningPriorities } minerals = do
 
           pure (increasePriority <|> decreasePriority)
 
-    actions
-      & catMaybes
-      & listToMaybe
-      & pure
+    pure (asum actions)
