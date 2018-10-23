@@ -4,20 +4,17 @@ import App.Prelude
 
 import qualified App.Common.UidMap as UidMap
 import qualified App.Dimension.Time as Time
+import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Logic.Mining as Logic.Mining
 import qualified App.Model.Body as Body
-import qualified App.Model.BuildingTask as BuildingTask
-import qualified App.Model.Installation as Installation
 import qualified App.Model.PlottedPath as PlottedPath
-import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 
 import App.Common.Uid (Uid(..))
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
-import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
@@ -69,22 +66,10 @@ productionTick gs@GameState{ colonies } =
 
 productionTickOnColony :: Uid Body -> GameState -> GameState
 productionTickOnColony bodyUid =
-  buildOnColony bodyUid
+  Logic.Building.build bodyUid
   >>> buildShipOnColony bodyUid
   >>> Logic.Mining.mine bodyUid
   >>> shrinkPopulation bodyUid
-
-buildOnColony :: Uid Body -> GameState -> GameState
-buildOnColony bodyUid gs@GameState{ colonies, time } =
-  case colonies ^? at bodyUid . _Just . #buildingTask . _Just of
-    Just BuildingTask{ installation, quantity, BuildingTask.finishTime } | finishTime <= time ->
-      gs & #colonies . at bodyUid . _Just %~ (\col ->
-          col
-            & #stockpile . at (Resource.Installation installation) . non 0 +~ fromIntegral quantity * Installation.mass
-            & #buildingTask .~ Nothing
-        )
-    Just BuildingTask{} -> gs
-    Nothing -> gs
 
 buildShipOnColony :: Uid Body -> GameState -> GameState
 buildShipOnColony bodyUid gs@GameState{ colonies, time } =

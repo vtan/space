@@ -4,7 +4,6 @@ import App.Prelude
 
 import qualified App.Dimension.Speed as Speed
 import qualified App.Dimension.Time as Time
-import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
@@ -14,7 +13,6 @@ import qualified Data.HashMap.Strict as HashMap
 import App.Common.Uid (Uid(..))
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
-import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
@@ -32,38 +30,10 @@ foundColony bodyUid gs =
     , isHomeworld = False
     , stockpile = mempty
     , installations = mempty
-    , buildingTask = Nothing
+    , buildQueue = []
     , shipBuildingTask = Nothing
     , miningPriorities = zip Resource.minerals (repeat 1) & HashMap.fromList
     }
-
-startBuildingTask :: Uid Body -> Installation -> GameState -> GameState
-startBuildingTask bodyUid installation gs =
-  gs & #colonies . at bodyUid . _Just %~ \colony ->
-    fromMaybe colony $ do
-      guard (colony ^. #buildingTask & has _Nothing)
-      let cost = buildCost installation
-          finishTime = (gs ^. #time) + buildTime installation
-          newTask = BuildingTask{ installation, quantity = 1, BuildingTask.finishTime }
-      paidColony <- payResourceCost cost colony
-      pure $
-        paidColony & #buildingTask .~ Just newTask
-
-buildCost :: Installation -> HashMap Resource Double
-buildCost = \case
-  Installation.Infrastructure ->
-    [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
-  Installation.Mine ->
-    [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
-
-buildTime :: Installation -> Time Int
-buildTime = \case
-  Installation.Infrastructure -> 10 & Time.days
-  Installation.Mine -> 20 & Time.days
-
-cancelBuildingTask :: Uid Body -> GameState -> GameState
-cancelBuildingTask bodyUid gs =
-  gs & #colonies . at bodyUid . _Just . #buildingTask .~ Nothing
 
 startShipBuildingTask :: Uid Body -> GameState -> GameState
 startShipBuildingTask bodyUid gs =

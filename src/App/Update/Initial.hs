@@ -44,7 +44,7 @@ gameState = GameState
         , isHomeworld = True
         , stockpile = [ (Resource.Cadrium, 2500), (Resource.Erchanite, 2500), (Resource.Tellerite, 2500) ]
         , installations = [(Installation.Mine, 1)]
-        , buildingTask = Nothing
+        , buildQueue = []
         , shipBuildingTask = Nothing
         , miningPriorities = zip Resource.minerals (repeat 1) & HashMap.fromList
         }

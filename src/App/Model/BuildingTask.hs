@@ -2,12 +2,14 @@ module App.Model.BuildingTask where
 
 import App.Prelude
 
-import App.Dimension.Time (Time)
 import App.Model.Installation (Installation)
+import App.Model.Resource (Resource)
 
 data BuildingTask = BuildingTask
   { installation :: Installation
   , quantity :: Int
-  , finishTime :: Time Int
+  , buildEffortSpent :: Int
+  , resourcesSpent :: HashMap Resource Double
+  , installWhenDone :: Bool
   }
   deriving (Show, Generic)

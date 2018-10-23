@@ -13,7 +13,6 @@ import qualified Data.Text as Text
 import App.Common.Uid (Uid)
 import App.Common.Util (whenAlt)
 import App.Model.Body (Body(..))
-import App.Model.BuildingTask (BuildingTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
@@ -24,9 +23,7 @@ import Data.String (fromString)
 import Text.Read (readMaybe)
 
 data Action
-  = Build Installation
-  | BuildShip
-  | CancelBuilding
+  = BuildShip
   | CancelBuildingShip
   | Install Installation Int Colony
   | Uninstall Installation Int Colony
@@ -69,14 +66,12 @@ update gs = do
                     Nothing -> "Max. population: ∞"
                 ]
 
-            buildMine <- Updating.useWidget "buildingPanel" $
-              buildingPanel colony
             buildShip <- Updating.useWidget "shipBuildingPanel" $
               shipBuildingPanel colony
             install <- Updating.useWidget "installationPanel" $
               installationPanel colony
 
-            pure (buildMine <|> buildShip <|> install)
+            pure (buildShip <|> install)
           Nothing ->
             case colonyCost of
               Just _ ->
@@ -86,9 +81,7 @@ update gs = do
               Nothing -> pure Nothing
 
         pure $ case action of
-          Just (Build installation) -> Logic.Colony.startBuildingTask uid installation gs
           Just BuildShip -> Logic.Colony.startShipBuildingTask uid gs
-          Just CancelBuilding -> Logic.Colony.cancelBuildingTask uid gs
           Just CancelBuildingShip -> Logic.Colony.cancelShipBuildingTask uid gs
           Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty colony gs
           Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty colony gs
@@ -132,33 +125,6 @@ installationTable Colony{ installations } = do
   Updating.widget "title" $ Widget.label "Installations"
   Updating.widget "installations" $ Widget.labels 20 mineLabels
   Updating.widget "quantities" $ Widget.labels 20 mineQtyLabels
-
-buildingPanel :: Colony -> Updating (Maybe Action)
-buildingPanel Colony{ buildingTask } = do
-  let label = case buildingTask of
-        Just BuildingTask{ installation, quantity } ->
-          fromString $ printf "Building: %s (%d)" (show installation) quantity
-        Nothing ->
-          "Building: nothing"
-  Updating.widget "label" $ Widget.label label
-
-  selectedInstallation <- Updating.widget "selectedInstallation" $
-    Widget.closedDropdown
-      20 380
-      id (show >>> fromString)
-      #selectedInstallation
-      Installation.all
-
-  build <- Updating.widget "build"
-    (Widget.button "Build")
-    <&> whenAlt (Build <$> selectedInstallation)
-    <&> join
-
-  cancel <- Updating.widget "cancel"
-    (Widget.button "Cancel")
-    <&> whenAlt CancelBuilding
-
-  pure (build <|> cancel)
 
 shipBuildingPanel :: Colony -> Updating (Maybe Action)
 shipBuildingPanel Colony{ shipBuildingTask } = do

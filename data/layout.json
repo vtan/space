@@ -76,24 +76,6 @@
                       },
                       { "name": "populationInfo", "wh": [0, 40] },
                       {
-                        "name": "buildingPanel",
-                        "layout": "vertical",
-                        "padding": 4,
-                        "children": [
-                          { "name": "label", "wh": [164, 20] },
-                          { "name": "selectedInstallation", "wh": [164, 20] },
-                          {
-                            "name": "_row",
-                            "layout": "horizontal",
-                            "padding": 4,
-                            "children": [
-                              { "name": "build", "wh": [80, 20] },
-                              { "name": "cancel", "wh": [80, 20] }
-                            ]
-                          }
-                        ]
-                      },
-                      {
                         "name": "shipBuildingPanel",
                         "layout": "vertical",
                         "padding": 4,
