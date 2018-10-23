@@ -2,10 +2,9 @@ module App.Logic.Building where
 
 import App.Prelude
 
-import qualified App.Common.UidMap as UidMap
+import qualified App.Common.Queue as Queue
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Util as Logic.Util
-import qualified App.Model.BuildTask as BuildTask
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 
@@ -79,11 +78,11 @@ finishTime now effortSpent installation colony =
     )
 
 enqueue :: Installation -> Uid Body -> GameState -> GameState
-enqueue installation bodyUid gs =
+enqueue installation bodyUid gs@GameState{ colonies } =
   fromMaybe gs $ do
     let cost = resourcesNeeded installation
     colonyWithCostPaid@Colony{ buildQueue } <-
-      gs ^. #colonies . at bodyUid
+      colonies ^. at bodyUid
       >>= Logic.Util.payResources cost
     let currentlyBuilt = buildQueue ^? _head . #installation
         colony' =
@@ -96,3 +95,33 @@ enqueue installation bodyUid gs =
     gs
       & #colonies . at bodyUid . _Just .~ colony'
       & Just
+
+changeQuantityInQueue :: Int -> Int -> Uid Body -> GameState -> GameState
+changeQuantityInQueue queueIndex diff bodyUid gs@GameState{ colonies } =
+  fromMaybe gs $ do
+    queue <- colonies ^? at bodyUid . _Just . #buildQueue
+    newQueue <-
+      queue & Queue.update queueIndex
+        ( \task@BuildTask{ quantity } ->
+            let newQuantity = quantity + diff
+            in if newQuantity > 0
+            then Just task{ quantity = newQuantity }
+            else Nothing
+        )
+    Just (gs & #colonies . at bodyUid . _Just . #buildQueue .~ newQueue)
+
+moveUpInQueue :: Int -> Uid Body -> GameState -> Maybe GameState
+moveUpInQueue queueIndex bodyUid gs@GameState{ colonies } = do
+  queue <- colonies ^? at bodyUid . _Just . #buildQueue
+  newQueue <- queue & Queue.moveUp queueIndex
+  Just (gs & #colonies . at bodyUid . _Just . #buildQueue .~ newQueue)
+
+moveDownInQueue :: Int -> Uid Body -> GameState -> Maybe GameState
+moveDownInQueue queueIndex bodyUid gs@GameState{ colonies } = do
+  queue <- colonies ^? at bodyUid . _Just . #buildQueue
+  newQueue <- queue & Queue.moveDown queueIndex
+  Just (gs & #colonies . at bodyUid . _Just . #buildQueue .~ newQueue)
+
+toggleInstallInQueue :: Int -> Uid Body -> GameState -> GameState
+toggleInstallInQueue queueIndex bodyUid gs =
+  gs & #colonies . at bodyUid . _Just . #buildQueue . ix queueIndex . #installWhenDone %~ not

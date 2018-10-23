@@ -326,7 +326,8 @@
                     "padding": 4,
                     "children": [
                       { "name": "selectedInstallation", "wh": [120, 20] },
-                      { "name": "enqueue", "wh": [88, 20] }
+                      { "name": "enqueue", "wh": [88, 20] },
+                      { "name": "reset", "wh": [88, 20] }
                     ]
                   },
                   {
@@ -346,15 +347,34 @@
                     "layout": "horizontal",
                     "padding": 4,
                     "children": [
-                      { "name": "buildQueue", "wh": [200, 80] },
+                      { "name": "buildQueue", "wh": [200, 100] },
                       {
-                        "name": "_enqueuedInfo",
+                        "name": "_queueControls",
                         "layout": "vertical",
-                        "padding": 0,
+                        "padding": 4,
                         "children": [
-                          { "name": "enqueuedBuildEffort", "wh": [140, 20] },
-                          { "name": "enqueuedDone", "wh": [140, 20] },
-                          { "name": "enqueuedCost", "wh": [140, 20] }
+                          {
+                            "name": "_row1",
+                            "layout": "horizontal",
+                            "padding": 4,
+                            "children": [
+                              { "name": "increaseQuantity", "wh": [20, 20] },
+                              { "name": "moveUp", "wh": [20, 20] },
+                              { "name": "enqueuedBuildEffort", "xy": [8, 0], "wh": [140, 20] }
+                            ]
+                          },
+                          {
+                            "name": "_row2",
+                            "layout": "horizontal",
+                            "padding": 4,
+                            "children": [
+                              { "name": "decreaseQuantity", "wh": [20, 20] },
+                              { "name": "moveDown", "wh": [20, 20] },
+                              { "name": "enqueuedDone", "xy": [8, 0], "wh": [140, 20] }
+                            ]
+                          },
+                          { "name": "enqueuedCost", "xy": [64, 0], "wh": [140, 20] },
+                          { "name": "toggleInstall", "xy": [0, 4], "wh": [120, 20] }
                         ]
                       }
                     ]

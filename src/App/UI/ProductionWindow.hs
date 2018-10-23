@@ -26,11 +26,16 @@ import App.Model.Mineral (Mineral(..))
 import App.Model.Resource (Resource)
 import App.Update.Updating (Updating)
 import Control.Monad.Reader.Class (local)
+import Control.Monad.Zip (munzip)
 import Data.String (fromString)
 
 data Action
-  = ChangePriority Resource Int
+  = ChangeMiningPriority Resource Int
   | EnqueueBuildingTask Installation
+  | ChangeBuildingQueueQuantity Int Int
+  | MoveUpInBuildingQueue Int
+  | MoveDownInBuildingQueue Int
+  | ToggleInstallInBuildingQueue Int
 
 update :: GameState -> Updating GameState
 update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
@@ -67,12 +72,30 @@ update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
           buildingAction <- Updating.useWidget "building" $
             buildingPanel time colony
 
-          pure $ case (miningAction <|> buildingAction) of
-            Just (ChangePriority resource diff) ->
-              Logic.Mining.changeMiningPriority resource diff colony gs
+          case miningAction <|> buildingAction of
+            Just (ChangeMiningPriority resource diff) ->
+              pure $ Logic.Mining.changeMiningPriority resource diff colony gs
+
             Just (EnqueueBuildingTask installation) ->
-              Logic.Building.enqueue installation bodyUid gs
-            Nothing -> gs
+              pure $ Logic.Building.enqueue installation bodyUid gs
+
+            Just (ChangeBuildingQueueQuantity i diff) ->
+              pure $ Logic.Building.changeQuantityInQueue i diff bodyUid gs
+
+            Just (MoveUpInBuildingQueue i) ->
+              case Logic.Building.moveUpInQueue i bodyUid gs of
+                Just gs' -> gs' <$ (#ui . #selectedBuildingTaskIndex . #selectedIndex . _Just -= 1)
+                Nothing -> pure gs
+
+            Just (MoveDownInBuildingQueue i) ->
+              case Logic.Building.moveDownInQueue i bodyUid gs of
+                Just gs' -> gs' <$ (#ui . #selectedBuildingTaskIndex . #selectedIndex . _Just += 1)
+                Nothing -> pure gs
+
+            Just (ToggleInstallInBuildingQueue i) ->
+              pure $ Logic.Building.toggleInstallInQueue i bodyUid gs
+
+            Nothing -> pure gs
 
       Nothing -> pure gs
 
@@ -118,11 +141,11 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
 
           increasePriority <- Updating.widget "increasePriority"
             (Widget.button "+")
-            <&> whenAlt (ChangePriority resource 1)
+            <&> whenAlt (ChangeMiningPriority resource 1)
 
           decreasePriority <- Updating.widget "decreasePriority"
-            (Widget.button "-")
-            <&> whenAlt (ChangePriority resource (-1))
+            (Widget.button "−")
+            <&> whenAlt (ChangeMiningPriority resource (-1))
 
           pure (increasePriority <|> decreasePriority)
 
@@ -149,6 +172,10 @@ buildingPanel now colony@Colony{ buildQueue } = do
     <&> whenAlt (EnqueueBuildingTask <$> selectedInstallation)
     <&> join
 
+  reset <- Updating.widget "reset" $
+    Widget.button "Reset"
+  when reset (#ui . #selectedInstallation . #selectedIndex .= Nothing)
+
   for_ selectedInstallation $ \installation -> do
     let buildEffort = Logic.Building.buildEffortNeeded installation
         done = Logic.Building.finishTime now 0 installation colony
@@ -160,22 +187,52 @@ buildingPanel now colony@Colony{ buildQueue } = do
     Updating.widget "newCost" $
       Widget.label ("Cost: " <> Resource.printCost cost)
 
-  selectedTask <- Updating.widget "buildQueue"
-    ( Widget.listBox
-        20 (view _1) (view (_2 . to BuildTask.print))
-        #selectedBuildingTaskIndex
-        (zip [0..] buildQueue)
-    ) <&> (fst >>> fmap snd)
+  (selectedTaskWithIndex, _) <- Updating.widget "buildQueue" $
+    Widget.listBox
+      20 (view _1) (view (_2 . to BuildTask.print))
+      #selectedBuildingTaskIndex
+      (zip [0..] buildQueue)
+  let (selectedTaskIndex, selectedTask) = munzip selectedTaskWithIndex
 
   for_ selectedTask $ \BuildTask{ installation, buildEffortSpent } -> do
     let buildEffort = Logic.Building.buildEffortNeeded installation
         done = Logic.Building.finishTime now buildEffortSpent installation colony
         cost = Logic.Building.resourcesNeeded installation
+        doneLabel = if 0 `elem` selectedTaskIndex then "Done: " else "Done if first: "
     Updating.widget "enqueuedBuildEffort" $
       Widget.label (fromString $ printf "Build effort: %d / %d" buildEffortSpent buildEffort)
     Updating.widget "enqueuedDone" $
-      Widget.label (fromString $ "Done: " ++ Time.printDate done)
+      Widget.label (fromString $ doneLabel ++ Time.printDate done)
     Updating.widget "enqueuedCost" $
       Widget.label ("Cost: " <> Resource.printCost cost)
 
-  pure enqueue
+  increaseQuantity <- Updating.widget "increaseQuantity"
+    (Widget.button "+")
+    <&> whenAlt (ChangeBuildingQueueQuantity <$> selectedTaskIndex <*> pure 1)
+    <&> join
+
+  decreaseQuantity <- Updating.widget "decreaseQuantity"
+    (Widget.button "−")
+    <&> whenAlt (ChangeBuildingQueueQuantity <$> selectedTaskIndex <*> pure (-1))
+    <&> join
+
+  moveUp <- Updating.widget "moveUp"
+    (Widget.button "▲")
+    <&> whenAlt (MoveUpInBuildingQueue <$> selectedTaskIndex)
+    <&> join
+
+  moveDown <- Updating.widget "moveDown"
+    (Widget.button "▼")
+    <&> whenAlt (MoveDownInBuildingQueue <$> selectedTaskIndex)
+    <&> join
+
+  let toggleInstallLabel =
+        case selectedTask ^? _Just . #installWhenDone of
+          Just False -> "Install after"
+          _ -> "Do not install"
+  toggleInstall <- Updating.widget "toggleInstall"
+    (Widget.button toggleInstallLabel)
+    <&> whenAlt (ToggleInstallInBuildingQueue <$> selectedTaskIndex)
+    <&> join
+
+  pure (enqueue <|> increaseQuantity <|> decreaseQuantity <|> moveUp <|> moveDown <|> toggleInstall)
