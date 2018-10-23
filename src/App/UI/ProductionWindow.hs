@@ -77,23 +77,23 @@ update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
               pure $ Logic.Mining.changeMiningPriority resource diff colony gs
 
             Just (EnqueueBuildingTask installation) ->
-              pure $ Logic.Building.enqueue installation bodyUid gs
+              pure $ Logic.Building.enqueue installation colony gs
 
             Just (ChangeBuildingQueueQuantity i diff) ->
-              pure $ Logic.Building.changeQuantityInQueue i diff bodyUid gs
+              pure $ Logic.Building.changeQuantityInQueue i diff colony gs
 
             Just (MoveUpInBuildingQueue i) ->
-              case Logic.Building.moveUpInQueue i bodyUid gs of
+              case Logic.Building.moveUpInQueue i colony gs of
                 Just gs' -> gs' <$ (#ui . #selectedBuildingTaskIndex . #selectedIndex . _Just -= 1)
                 Nothing -> pure gs
 
             Just (MoveDownInBuildingQueue i) ->
-              case Logic.Building.moveDownInQueue i bodyUid gs of
+              case Logic.Building.moveDownInQueue i colony gs of
                 Just gs' -> gs' <$ (#ui . #selectedBuildingTaskIndex . #selectedIndex . _Just += 1)
                 Nothing -> pure gs
 
             Just (ToggleInstallInBuildingQueue i) ->
-              pure $ Logic.Building.toggleInstallInQueue i bodyUid gs
+              pure $ Logic.Building.toggleInstallInQueue i colony gs
 
             Nothing -> pure gs
 
