@@ -320,7 +320,7 @@
                     ]
                   },
                   {
-                    "name": "_topRow",
+                    "name": "_row1",
                     "xy": [16, 0],
                     "layout": "horizontal",
                     "padding": 4,
@@ -330,12 +330,33 @@
                     ]
                   },
                   {
-                    "name": "_bottomRow",
+                    "name": "_row2",
                     "xy": [16, 0],
                     "layout": "horizontal",
                     "padding": 4,
                     "children": [
-                      { "name": "buildQueue", "wh": [200, 80] }
+                      { "name": "newBuildEffort", "wh": [140, 20] },
+                      { "name": "newDone", "wh": [140, 20] },
+                      { "name": "newCost", "wh": [140, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_row3",
+                    "xy": [16, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "buildQueue", "wh": [200, 80] },
+                      {
+                        "name": "_enqueuedInfo",
+                        "layout": "vertical",
+                        "padding": 0,
+                        "children": [
+                          { "name": "enqueuedBuildEffort", "wh": [140, 20] },
+                          { "name": "enqueuedDone", "wh": [140, 20] },
+                          { "name": "enqueuedCost", "wh": [140, 20] }
+                        ]
+                      }
                     ]
                   }
                 ]

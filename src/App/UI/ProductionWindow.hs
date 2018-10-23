@@ -17,6 +17,8 @@ import qualified App.Update.Widget as Widget
 import qualified App.Update.WidgetTree as WidgetTree
 
 import App.Common.Util (whenAlt)
+import App.Dimension.Time (Time)
+import App.Model.BuildTask (BuildTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
@@ -31,7 +33,7 @@ data Action
   | EnqueueBuildingTask Installation
 
 update :: GameState -> Updating GameState
-update gs@GameState{ bodies, colonies, bodyMinerals } = do
+update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
   Updating.useWidget "productionWindow" $ do
     Updating.widget "decoration" $
       Widget.window 20 "Production"
@@ -63,7 +65,7 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
           miningAction <- Updating.useWidget "mining" $
             miningPanel colony minerals
           buildingAction <- Updating.useWidget "building" $
-            buildingPanel colony
+            buildingPanel time colony
 
           pure $ case (miningAction <|> buildingAction) of
             Just (ChangePriority resource diff) ->
@@ -126,8 +128,8 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
 
     pure (asum actions)
 
-buildingPanel :: Colony -> Updating (Maybe Action)
-buildingPanel colony@Colony{ buildQueue } = do
+buildingPanel :: Time Int -> Colony -> Updating (Maybe Action)
+buildingPanel now colony@Colony{ buildQueue } = do
   Updating.useWidget "headingRow" $ do
     let monthlyBuildEffort = Time.daysInMonth * Logic.Building.dailyBuildEffort colony
     Updating.widget "title" $ Widget.label "Building"
@@ -147,10 +149,33 @@ buildingPanel colony@Colony{ buildQueue } = do
     <&> whenAlt (EnqueueBuildingTask <$> selectedInstallation)
     <&> join
 
-  _ <- Updating.widget "buildQueue" $
-    Widget.listBox
-      20 (view _1) (view (_2 . to BuildTask.print))
-      #selectedBuildingTaskIndex
-      (zip [0..] buildQueue)
+  for_ selectedInstallation $ \installation -> do
+    let buildEffort = Logic.Building.buildEffortNeeded installation
+        done = Logic.Building.finishTime now 0 installation colony
+        cost = Logic.Building.resourcesNeeded installation
+    Updating.widget "newBuildEffort" $
+      Widget.label (fromString $ "Build effort: " ++ show buildEffort)
+    Updating.widget "newDone" $
+      Widget.label (fromString $ "Done: " ++ Time.printDate done)
+    Updating.widget "newCost" $
+      Widget.label ("Cost: " <> Resource.printCost cost)
+
+  selectedTask <- Updating.widget "buildQueue"
+    ( Widget.listBox
+        20 (view _1) (view (_2 . to BuildTask.print))
+        #selectedBuildingTaskIndex
+        (zip [0..] buildQueue)
+    ) <&> (fst >>> fmap snd)
+
+  for_ selectedTask $ \BuildTask{ installation, buildEffortSpent } -> do
+    let buildEffort = Logic.Building.buildEffortNeeded installation
+        done = Logic.Building.finishTime now buildEffortSpent installation colony
+        cost = Logic.Building.resourcesNeeded installation
+    Updating.widget "enqueuedBuildEffort" $
+      Widget.label (fromString $ printf "Build effort: %d / %d" buildEffortSpent buildEffort)
+    Updating.widget "enqueuedDone" $
+      Widget.label (fromString $ "Done: " ++ Time.printDate done)
+    Updating.widget "enqueuedCost" $
+      Widget.label ("Cost: " <> Resource.printCost cost)
 
   pure enqueue

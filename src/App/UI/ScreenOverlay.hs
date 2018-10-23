@@ -107,7 +107,7 @@ timePanel gs = do
           let offset = screenWidth - 2 * (bounds ^. #xy . _x) - (bounds ^. #wh . _x)
           in bounds & #xy . _x +~ offset
       )
-      >>> Widget.label (gs ^. #time & Time.printDate & fromString)
+      >>> Widget.label (gs ^. #time & Time.printDateTime & fromString)
     )
 
   pure (nextMidnight <|> setSpeed)

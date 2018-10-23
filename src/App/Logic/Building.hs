@@ -68,6 +68,16 @@ dailyBuildEffort Colony{ installations } =
   let factories = installations ^. at Installation.Factory . non 0
   in 2 * factories
 
+finishTime :: Time Int -> Int -> Installation -> Colony -> Time Int
+finishTime now effortSpent installation colony =
+  now + Time.days
+    ( ceiling
+      ( fromIntegral (buildEffortNeeded installation - effortSpent)
+      / fromIntegral (dailyBuildEffort colony)
+      :: Double
+      )
+    )
+
 enqueue :: Installation -> Uid Body -> GameState -> GameState
 enqueue installation bodyUid gs =
   fromMaybe gs $ do
@@ -81,7 +91,7 @@ enqueue installation bodyUid gs =
           then colonyWithCostPaid & #buildQueue . _head . #quantity +~ 1
           else
             let task = BuildTask
-                  { installation, quantity = 1, buildEffortSpent = 0, installWhenDone = False }
+                  { installation, quantity = 1, buildEffortSpent = 0, installWhenDone = True }
             in colonyWithCostPaid & #buildQueue %~ (task :)
     gs
       & #colonies . at bodyUid . _Just .~ colony'

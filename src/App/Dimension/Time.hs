@@ -40,6 +40,13 @@ printDuration (Time secs)
 
 printDate :: Time Int -> String
 printDate (Time t) =
+  let day = 1 + t `quot` (24 * 3600) `rem` 30
+      month = 1 + t `quot` (daysInMonth * 24 * 3600) `rem` 12
+      year = 2100 + t `quot` (12 * 30 * 24 * 3600)
+  in printf "%d-%02d-%02d" year month day
+
+printDateTime :: Time Int -> String
+printDateTime (Time t) =
   let secs = t `rem` 60
       mins = t `quot` 60 `rem` 60
       hrs = t `quot` 3600 `rem` 24

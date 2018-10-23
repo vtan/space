@@ -106,7 +106,7 @@ infoLabels Ship{ speed, order } gs = do
           let (orderStr, etaStr) = case o of
                 Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
                   let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
-                      etaDate = Time.printDate (path ^. #endTime)
+                      etaDate = Time.printDateTime (path ^. #endTime)
                       etaDuration = Time.printDuration (path ^. #endTime - gs ^. #time)
                       actualSpeed = Speed.div
                         (Lin.distance (path ^. #endPos) (path ^. #startPos))
