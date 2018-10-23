@@ -4,7 +4,7 @@ import App.Prelude
 
 import qualified Control.Lens as Lens
 
-update :: Int -> (a -> Maybe a) -> [a] -> Maybe [a]
+update :: Int -> (a -> Maybe a) -> [a] -> Maybe ([a], a)
 update i f xs = do
   let (before, rest) = splitAt i xs
   (this, after) <- Lens.uncons rest
@@ -12,6 +12,7 @@ update i f xs = do
     ( case f this of
         Just newThis -> before ++ (newThis : after)
         Nothing -> before ++ after
+    , this
     )
 
 moveUp :: Int -> [a] -> Maybe [a]

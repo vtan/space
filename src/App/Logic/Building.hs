@@ -27,7 +27,7 @@ build bodyUid gs@GameState{ colonies } =
           buildEffortNeeded installation - buildEffortSpent - buildEffortNow
     Just $
       if remainingBuildEffort > 0
-      then (continueBuilding buildEffortNow)
+      then continueBuilding buildEffortNow
       else finishBuilding task
   where
     continueBuilding buildEffortNow =
@@ -94,10 +94,11 @@ enqueue installation colony@Colony{ bodyUid } gs =
       & #colonies . at bodyUid . _Just .~ colony'
       & Just
 
+-- Assumes diff is either -1 or 1.
 changeQuantityInQueue :: Int -> Int -> Colony -> GameState -> GameState
-changeQuantityInQueue queueIndex diff Colony{ bodyUid, buildQueue } gs =
+changeQuantityInQueue queueIndex diff colony@Colony{ bodyUid, buildQueue } gs =
   fromMaybe gs $ do
-    newQueue <-
+    (newQueue, BuildTask{ installation }) <-
       buildQueue & Queue.update queueIndex
         ( \task@BuildTask{ quantity } ->
             let newQuantity = quantity + diff
@@ -105,8 +106,10 @@ changeQuantityInQueue queueIndex diff Colony{ bodyUid, buildQueue } gs =
             then Just task{ quantity = newQuantity }
             else Nothing
         )
+    let cost = fromIntegral diff *^ resourcesNeeded installation
+    colonyWithCostPaid <- Logic.Util.payResources cost colony
     gs
-      & #colonies . at bodyUid . _Just . #buildQueue .~ newQueue
+      & #colonies . at bodyUid . _Just .~ colonyWithCostPaid{ buildQueue = newQueue }
       & Just
 
 moveUpInQueue :: Int -> Colony -> GameState -> Maybe GameState
