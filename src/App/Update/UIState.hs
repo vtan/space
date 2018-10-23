@@ -23,6 +23,7 @@ data UIState = UIState
   , selectedBody :: ListBoxState (Uid Body)
   , selectedResource :: ListBoxState Resource
   , selectedInstallation :: ListBoxState Installation
+  , selectedBuildingTaskIndex :: ListBoxState Int
   , editedShipName :: Text
   , editedResourceQty :: Text
   , editedInstallationQty :: Text
@@ -49,6 +50,7 @@ initial = UIState
   , selectedBody = ListBoxState.initial
   , selectedResource = ListBoxState.initial
   , selectedInstallation = ListBoxState.initial
+  , selectedBuildingTaskIndex = ListBoxState.initial
   , editedShipName = ""
   , editedResourceQty = ""
   , editedInstallationQty = ""

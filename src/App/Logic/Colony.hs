@@ -4,6 +4,7 @@ import App.Prelude
 
 import qualified App.Dimension.Speed as Speed
 import qualified App.Dimension.Time as Time
+import qualified App.Logic.Util as Logic.Util
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
@@ -43,7 +44,7 @@ startShipBuildingTask bodyUid gs =
       let cost = shipCost
           finishTime = (gs ^. #time) + shipBuildTime
           newTask = ShipBuildingTask{ ShipBuildingTask.finishTime }
-      paidColony <- payResourceCost cost colony
+      paidColony <- Logic.Util.payResources cost colony
       pure $
         paidColony & #shipBuildingTask .~ Just newTask
 
@@ -105,14 +106,3 @@ shipBuiltAt bodyUid OrbitalState{ position } shipUid@(Uid shipNo) =
     , Ship.order = Nothing
     , Ship.attachedToBody = Just bodyUid
     }
-
-payResourceCost :: HashMap Resource Double -> Colony -> Maybe Colony
-payResourceCost cost colony =
-  cost & ifoldlM
-    (\resource colonyAcc costQty ->
-      let (remainingQty, colony') = colonyAcc & #stockpile . at resource . non 0 <-~ costQty
-      in if remainingQty >= 0
-        then Just colony'
-        else Nothing
-    )
-    colony

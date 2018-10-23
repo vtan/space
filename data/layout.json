@@ -241,14 +241,16 @@
                     "name": "_row1",
                     "layout": "horizontal",
                     "children": [
-                      { "name": "mineCountLabel", "wh": [80, 20] }
+                      { "name": "mineCountLabel", "wh": [80, 20] },
+                      { "name": "factoryCountLabel", "wh": [80, 20] }
                     ]
                   },
                   {
                     "name": "_row2",
                     "layout": "horizontal",
                     "children": [
-                      { "name": "mineCount", "wh": [80, 20] }
+                      { "name": "mineCount", "wh": [80, 20] },
+                      { "name": "factoryCount", "wh": [80, 20] }
                     ]
                   }
                 ]
@@ -282,6 +284,7 @@
                   {
                     "name": "mineralRows",
                     "xy": [16, 0],
+                    "wh": [0, 68],
                     "children": [
                       {
                         "name": "row",
@@ -299,6 +302,40 @@
                           { "name": "stockpile", "wh": [80, 20] }
                         ]
                       }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "building",
+                "layout": "vertical",
+                "padding": 4,
+                "children": [
+                  {
+                    "name": "headingRow",
+                    "layout": "horizontal",
+                    "children": [
+                      { "name": "title", "wh": [120, 20] },
+                      { "name": "monthlyBuildEffort", "wh": [460, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_topRow",
+                    "xy": [16, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "selectedInstallation", "wh": [120, 20] },
+                      { "name": "enqueue", "wh": [88, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_bottomRow",
+                    "xy": [16, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "buildQueue", "wh": [200, 80] }
                     ]
                   }
                 ]

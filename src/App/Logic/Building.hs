@@ -4,6 +4,7 @@ import App.Prelude
 
 import qualified App.Common.UidMap as UidMap
 import qualified App.Dimension.Time as Time
+import qualified App.Logic.Util as Logic.Util
 import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
@@ -66,3 +67,22 @@ dailyBuildEffort :: Colony -> Int
 dailyBuildEffort Colony{ installations } =
   let factories = installations ^. at Installation.Factory . non 0
   in 2 * factories
+
+enqueue :: Installation -> Uid Body -> GameState -> GameState
+enqueue installation bodyUid gs =
+  fromMaybe gs $ do
+    let cost = resourcesNeeded installation
+    colonyWithCostPaid@Colony{ buildQueue } <-
+      gs ^. #colonies . at bodyUid
+      >>= Logic.Util.payResources cost
+    let currentlyBuilt = buildQueue ^? _head . #installation
+        colony' =
+          if installation `elem` currentlyBuilt
+          then colonyWithCostPaid & #buildQueue . _head . #quantity +~ 1
+          else
+            let task = BuildingTask
+                  { installation, quantity = 1, buildEffortSpent = 0, installWhenDone = False }
+            in colonyWithCostPaid & #buildQueue %~ (task :)
+    gs
+      & #colonies . at bodyUid . _Just .~ colony'
+      & Just

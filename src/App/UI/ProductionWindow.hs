@@ -6,7 +6,9 @@ import App.Prelude
 
 import qualified App.Common.UidMap as UidMap
 import qualified App.Dimension.Time as Time
+import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Mining as Logic.Mining
+import qualified App.Model.BuildingTask as BuildingTask
 import qualified App.Model.Mineral as Mineral
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
@@ -17,6 +19,7 @@ import qualified App.Update.WidgetTree as WidgetTree
 import App.Common.Util (whenAlt)
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
+import App.Model.Installation (Installation)
 import App.Model.Mineral (Mineral(..))
 import App.Model.Resource (Resource)
 import App.Update.Updating (Updating)
@@ -25,6 +28,7 @@ import Data.String (fromString)
 
 data Action
   = ChangePriority Resource Int
+  | EnqueueBuildingTask Installation
 
 update :: GameState -> Updating GameState
 update gs@GameState{ bodies, colonies, bodyMinerals } = do
@@ -46,18 +50,26 @@ update gs@GameState{ bodies, colonies, bodyMinerals } = do
         let minerals = bodyMinerals ^. at bodyUid . non mempty
         Updating.useWidget "rightPanel" $ do
           Updating.useWidget "installations" $ do
-            let mineQty = installations ^. at Installation.Mine . non 0
-            Updating.widget "mineCountLabel" $
-              Widget.label "Mines"
+            let mines = installations ^. at Installation.Mine . non 0
+            Updating.widget "mineCountLabel" $ Widget.label "Mines"
             Updating.widget "mineCount" $
-              Widget.label (fromString (show mineQty))
+              Widget.label (fromString (show mines))
+
+            let factories = installations ^. at Installation.Factory . non 0
+            Updating.widget "factoryCountLabel" $ Widget.label "Factories"
+            Updating.widget "factoryCount" $
+              Widget.label (fromString (show factories))
 
           miningAction <- Updating.useWidget "mining" $
             miningPanel colony minerals
+          buildingAction <- Updating.useWidget "building" $
+            buildingPanel colony
 
-          pure $ case miningAction of
+          pure $ case (miningAction <|> buildingAction) of
             Just (ChangePriority resource diff) ->
               Logic.Mining.changeMiningPriority resource diff colony gs
+            Just (EnqueueBuildingTask installation) ->
+              Logic.Building.enqueue installation bodyUid gs
             Nothing -> gs
 
       Nothing -> pure gs
@@ -113,3 +125,32 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
           pure (increasePriority <|> decreasePriority)
 
     pure (asum actions)
+
+buildingPanel :: Colony -> Updating (Maybe Action)
+buildingPanel colony@Colony{ buildQueue } = do
+  Updating.useWidget "headingRow" $ do
+    let monthlyBuildEffort = Time.daysInMonth * Logic.Building.dailyBuildEffort colony
+    Updating.widget "title" $ Widget.label "Building"
+    Updating.widget "monthlyBuildEffort" $
+      Widget.label (fromString $ printf "Build effort / mo: %d" monthlyBuildEffort)
+    Updating.thisWidget Widget.bottomLine
+
+  selectedInstallation <- Updating.widget "selectedInstallation" $
+    Widget.closedDropdown
+      20 380
+      id (show >>> fromString)
+      #selectedInstallation
+      Installation.all
+
+  enqueue <- Updating.widget "enqueue"
+    (Widget.button "Enqueue")
+    <&> whenAlt (EnqueueBuildingTask <$> selectedInstallation)
+    <&> join
+
+  _ <- Updating.widget "buildQueue" $
+    Widget.listBox
+      20 (view _1) (view (_2 . to BuildingTask.print))
+      #selectedBuildingTaskIndex
+      (zip [0..] buildQueue)
+
+  pure enqueue
