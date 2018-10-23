@@ -1,4 +1,4 @@
-module App.Logic.Time where
+module App.Logic.TimeStep where
 
 import App.Prelude
 

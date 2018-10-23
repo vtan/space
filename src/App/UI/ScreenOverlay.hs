@@ -5,7 +5,7 @@ where
 import App.Prelude
 
 import qualified App.Dimension.Time as Time
-import qualified App.Logic.Time as Logic.Time
+import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
@@ -47,7 +47,7 @@ handleKeyEvents gs = do
 
   for_ newGameSpeed setGameSpeed
   pure $ if nextMidnight
-    then Logic.Time.jumpToNextMidnight gs
+    then Logic.TimeStep.jumpToNextMidnight gs
     else gs
 
 handleUI :: GameState -> Updating GameState
@@ -75,7 +75,7 @@ handleUI gs =
       Just (ToggleWindow w) ->
         gs <$ (#ui . #activeWindow .= Just w)
       Just NextMidnight ->
-        pure $ Logic.Time.jumpToNextMidnight gs
+        pure $ Logic.TimeStep.jumpToNextMidnight gs
       Just (SetSpeed speed) ->
         gs <$ setGameSpeed speed
       Nothing -> pure gs

@@ -4,7 +4,7 @@ where
 
 import App.Prelude
 
-import qualified App.Logic.Time as Logic.Time
+import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.UI.ColonyWindow as ColonyWindow
 import qualified App.UI.ProductionWindow as ProductionWindow
 import qualified App.UI.ScreenOverlay as ScreenOverlay
@@ -59,7 +59,7 @@ update gs = do
 
   timeStep <- use #timeStepPerFrame
   pure $ case timeStep of
-    Just step -> gs' & Logic.Time.stepTime step
+    Just step -> gs' & Logic.TimeStep.stepTime step
     Nothing -> gs'
 
 handleUI :: GameState -> Updating GameState
