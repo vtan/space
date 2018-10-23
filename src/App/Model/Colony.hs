@@ -4,7 +4,7 @@ import App.Prelude
 
 import App.Common.Uid (Uid)
 import App.Model.Body (Body)
-import App.Model.BuildingTask (BuildingTask)
+import App.Model.BuildTask (BuildTask)
 import App.Model.Installation (Installation)
 import App.Model.Resource (Resource)
 import App.Model.ShipBuildingTask (ShipBuildingTask)
@@ -15,7 +15,7 @@ data Colony = Colony
   , isHomeworld :: Bool
   , stockpile :: HashMap Resource Double
   , installations :: HashMap Installation Int
-  , buildQueue :: [BuildingTask]
+  , buildQueue :: [BuildTask]
   , shipBuildingTask :: Maybe ShipBuildingTask
   , miningPriorities :: HashMap Resource Int
   }

@@ -5,14 +5,14 @@ import App.Prelude
 import qualified App.Common.UidMap as UidMap
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Util as Logic.Util
-import qualified App.Model.BuildingTask as BuildingTask
+import qualified App.Model.BuildTask as BuildTask
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 
 import App.Common.Uid (Uid(..))
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
-import App.Model.BuildingTask (BuildingTask(..))
+import App.Model.BuildTask (BuildTask(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
@@ -22,7 +22,7 @@ build :: Uid Body -> GameState -> GameState
 build bodyUid gs@GameState{ colonies } =
   fromMaybe gs $ do
     colony@Colony{ buildQueue } <- colonies ^. at bodyUid
-    task@BuildingTask{ installation, buildEffortSpent } <- listToMaybe buildQueue
+    task@BuildTask{ installation, buildEffortSpent } <- listToMaybe buildQueue
     let buildEffortNow = dailyBuildEffort colony
         remainingBuildEffort =
           buildEffortNeeded installation - buildEffortSpent - buildEffortNow
@@ -35,7 +35,7 @@ build bodyUid gs@GameState{ colonies } =
       gs & #colonies . at bodyUid . _Just . #buildQueue . _head . #buildEffortSpent
           +~ buildEffortNow
 
-    finishBuilding task@BuildingTask{ installation, quantity, installWhenDone } =
+    finishBuilding task@BuildTask{ installation, quantity, installWhenDone } =
       gs & #colonies . at bodyUid . _Just %~ (removeOneTask >>> installOrStore)
       where
         removeOneTask =
@@ -80,7 +80,7 @@ enqueue installation bodyUid gs =
           if installation `elem` currentlyBuilt
           then colonyWithCostPaid & #buildQueue . _head . #quantity +~ 1
           else
-            let task = BuildingTask
+            let task = BuildTask
                   { installation, quantity = 1, buildEffortSpent = 0, installWhenDone = False }
             in colonyWithCostPaid & #buildQueue %~ (task :)
     gs

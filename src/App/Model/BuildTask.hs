@@ -1,11 +1,11 @@
-module App.Model.BuildingTask where
+module App.Model.BuildTask where
 
 import App.Prelude
 
 import App.Model.Installation (Installation)
 import Data.String (fromString)
 
-data BuildingTask = BuildingTask
+data BuildTask = BuildTask
   { installation :: Installation
   , quantity :: Int
   , buildEffortSpent :: Int
@@ -13,8 +13,8 @@ data BuildingTask = BuildingTask
   }
   deriving (Show, Generic)
 
-print :: BuildingTask -> Text
-print BuildingTask{..} =
+print :: BuildTask -> Text
+print BuildTask{..} =
   fromString $
     printf "%s (%d)" (show installation) quantity
       ++ (if installWhenDone then " (install)" else "")

@@ -8,7 +8,7 @@ import qualified App.Common.UidMap as UidMap
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Mining as Logic.Mining
-import qualified App.Model.BuildingTask as BuildingTask
+import qualified App.Model.BuildTask as BuildTask
 import qualified App.Model.Mineral as Mineral
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
@@ -149,7 +149,7 @@ buildingPanel colony@Colony{ buildQueue } = do
 
   _ <- Updating.widget "buildQueue" $
     Widget.listBox
-      20 (view _1) (view (_2 . to BuildingTask.print))
+      20 (view _1) (view (_2 . to BuildTask.print))
       #selectedBuildingTaskIndex
       (zip [0..] buildQueue)
 
