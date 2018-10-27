@@ -5,17 +5,15 @@ where
 import App.Prelude
 
 import qualified App.Common.Camera as Camera
-import qualified App.Common.UidMap as UidMap
 import qualified App.Model.Body as Body
-import qualified App.Model.OrbitalState as OrbitalState
 import qualified App.Model.Ship as Ship
 import qualified App.Render.Rendering as Rendering
 import qualified Data.Vector.Storable as Vector
-import qualified Linear.Affine as Lin
+import qualified Linear as Linear
 import qualified SDL
 
 import App.Common.Camera (Camera(..))
-import App.Common.Util (toMap)
+import App.Common.UidMap (UidMap)
 import App.Dimension.Local (Local(..))
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
@@ -27,39 +25,57 @@ import Data.Vector.Storable (Vector)
 import SDL (($=))
 
 render :: Camera (Local Double) Double -> GameState -> Rendering ()
-render camera gs@GameState{ rootBody, bodyOrbitalStates, ships } = do
+render camera GameState{ rootBody, bodyOrbitalStates, ships } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
   SDL.clear renderer
-
-  for_ (Body.allChildren rootBody) $ \body ->
-    for_ (bodyOrbitalStates ^. at (body ^. #uid)) $ \st ->
-      renderOrbit camera body st
+  _ <- renderBody camera bodyOrbitalStates Nothing rootBody
   for_ ships $ renderShip camera
-  ifor_ (collectLabels camera gs & toMap) $ \anchor labels ->
-    ifor_ labels $ \row label ->
-      let pos = anchor & _y +~ 8 + row * 16
-      in Rendering.text pos label
 
-renderOrbit :: Camera (Local Double) Double -> Body -> OrbitalState -> Rendering ()
-renderOrbit camera Body{ orbitRadius } OrbitalState{ OrbitalState.position, orbitCenter } =
-  let orbitPoints = circlePoints
-        & Vector.map (fmap Local >>> (orbitRadius *^) >>> (orbitCenter +) >>> Camera.pointToScreen camera >>> fmap round >>> Lin.P)
-      bodyCenter = Camera.pointToScreen camera position
-      bodyPoints = circlePoints
-        & Vector.map ((Body.drawnRadius *^) >>> (bodyCenter +) >>> fmap round >>> Lin.P)
-  in do
-    renderer <- view #renderer
-    SDL.rendererDrawColor renderer $= V4 0 255 255 255
-    SDL.drawLines renderer orbitPoints
-    SDL.rendererDrawColor renderer $= V4 255 255 255 255
-    SDL.drawLines renderer bodyPoints
+renderBody :: Camera (Local Double) Double -> UidMap Body OrbitalState -> Maybe (V2 Double) -> Body -> Rendering Bool
+renderBody camera orbitalStates parentDrawnCenter Body{ uid = bodyUid, name = bodyName, orbitRadius, children } =
+  case orbitalStates ^. at bodyUid of
+    Just OrbitalState{ position, orbitCenter } -> do
+      let camCenter = Camera.screenToPoint camera (camera ^. #eyeTo)
+          camRadiusSq = Camera.boundingCircleRadiusSq camera
+          bodyCenter = Camera.pointToScreen camera position
+          bodyVisible = True -- TODO cull invisible bodies
+          orbitVisible = Linear.distance orbitCenter camCenter < orbitRadius + sqrt camRadiusSq
+          drawOrbit =
+            orbitVisible
+            && case parentDrawnCenter of
+              Just parentCenter -> Linear.qd bodyCenter parentCenter > 8 * 8
+              Nothing -> True
+          drawBody =
+            bodyVisible
+            && case parentDrawnCenter of
+              Just parentCenter -> Linear.qd bodyCenter parentCenter > 16 * 16
+              Nothing -> True
+      renderer <- view #renderer
+      when drawOrbit $ do
+        let orbitPoints = orbitCircle
+              & Vector.map (fmap Local >>> (orbitRadius *^) >>> (orbitCenter +) >>> Camera.pointToScreen camera >>> fmap round >>> SDL.P)
+        SDL.rendererDrawColor renderer $= V4 0 255 255 255
+        SDL.drawLines renderer orbitPoints
+      when drawBody $ do
+        let bodyPoints = bodyCircle
+              & Vector.map ((Body.drawnRadius *^) >>> (bodyCenter +) >>> fmap round >>> SDL.P)
+        SDL.rendererDrawColor renderer $= V4 255 255 255 255
+        SDL.drawLines renderer bodyPoints
+        childrenVisible <- for children (renderBody camera orbitalStates (Just bodyCenter))
+        let label
+              | all id childrenVisible = bodyName
+              | otherwise = bodyName <> "..."
+            labelPos = bodyCenter & _y +~ 8
+        Rendering.text (fmap floor labelPos) label
+      pure drawBody
+    Nothing -> pure False
 
 renderShip :: Camera (Local Double) Double -> Ship -> Rendering ()
 renderShip camera Ship{ Ship.position, order } =
   let center = Camera.pointToScreen camera position
-      points = circlePoints
-        & Vector.map ((Ship.drawnRadius *^) >>> (center +) >>> fmap round >>> Lin.P)
+      points = shipCircle
+        & Vector.map ((Ship.drawnRadius *^) >>> (center +) >>> fmap round >>> SDL.P)
   in do
     renderer <- view #renderer
     SDL.rendererDrawColor renderer $= V4 255 255 0 255
@@ -67,27 +83,19 @@ renderShip camera Ship{ Ship.position, order } =
     case order of
       Just Ship.MoveToBody{ Ship.path = PlottedPath{ startPos, endPos } } -> do
         SDL.rendererDrawColor renderer $= V4 255 255 255 255
-        let startPos' = startPos & (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
-            endPos' = endPos & (Camera.pointToScreen camera >>> fmap round >>> Lin.P)
+        let startPos' = startPos & (Camera.pointToScreen camera >>> fmap round >>> SDL.P)
+            endPos' = endPos & (Camera.pointToScreen camera >>> fmap round >>> SDL.P)
         SDL.drawLine renderer startPos' endPos'
       Nothing -> pure ()
 
-collectLabels :: Camera (Local Double) Double -> GameState -> [(V2 Int, [Text])]
-collectLabels camera GameState{ bodies, bodyOrbitalStates, ships } = bodyLabels ++ shipLabels
-  where
-    bodyLabels = (UidMap.zip bodies bodyOrbitalStates) & foldMap (\(Body{ Body.name }, OrbitalState{ OrbitalState.position }) ->
-        let pos = position & Camera.pointToScreen camera & fmap round
-        in [(pos, [name])]
-      )
-    shipLabels = ships & foldMap (\Ship{ Ship.position, Ship.name } ->
-        let pos = position & Camera.pointToScreen camera & fmap round
-        in [(pos, [name])]
-      )
+bodyCircle, shipCircle, orbitCircle :: Vector (V2 Double)
+bodyCircle = circle 16
+shipCircle = circle 4
+orbitCircle = circle 64
 
-circlePoints :: Vector (V2 Double)
-circlePoints =
-  let size = 64
-  in Vector.fromListN (size + 1) $ do
+circle :: Int -> Vector (V2 Double)
+circle size =
+  Vector.fromListN (size + 1) $ do
     n <- [0 .. size] :: [Int]
-    let t = fromIntegral n / size * 2 * pi
+    let t = fromIntegral n / fromIntegral size * 2 * pi
     pure $ V2 (cos t) (sin t)

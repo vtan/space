@@ -7,6 +7,7 @@ import App.Common.Rect (Rect(..))
 data Camera a b = Camera
   { conversion :: AnIso' a b
   , eyeFrom :: V2 a
+  -- TODO should be center
   , eyeTo :: V2 b
   , scale :: V2 b
   }
@@ -38,3 +39,8 @@ rectToScreen cam (Rect xy wh) =
 unscale :: Fractional b => Camera a b -> b -> a
 unscale Camera{ conversion, scale } x =
   view (from conversion) (x / (scale ^. _x)) -- hacky, but scale.y should be -scale.x
+
+boundingCircleRadiusSq :: (Num a, Fractional b) => Camera a b -> a
+boundingCircleRadiusSq camera@Camera{ eyeTo } =
+  let V2 halfW halfH = unscale camera <$> eyeTo
+  in halfW * halfW + halfH * halfH
