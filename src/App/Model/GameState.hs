@@ -2,7 +2,7 @@ module App.Model.GameState where
 
 import App.Prelude
 
-import App.Common.UidMap (UidMap)
+import App.Common.IdMap (IdMap)
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
@@ -13,11 +13,11 @@ import App.Model.Ship (Ship(..))
 
 data GameState = GameState
   { rootBody :: Body
-  , bodies :: UidMap Body Body
-  , bodyOrbitalStates :: UidMap Body OrbitalState
-  , bodyMinerals :: UidMap Body (HashMap Resource Mineral)
-  , colonies :: UidMap Body Colony
-  , ships :: UidMap Ship Ship
+  , bodies :: IdMap Body Body
+  , bodyOrbitalStates :: IdMap Body OrbitalState
+  , bodyMinerals :: IdMap Body (HashMap Resource Mineral)
+  , colonies :: IdMap Body Colony
+  , ships :: IdMap Ship Ship
   , time :: Time Int
   }
   deriving (Show, Generic)

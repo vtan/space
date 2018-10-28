@@ -8,7 +8,7 @@ import qualified App.Logic.Util as Logic.Util
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 
-import App.Common.Uid (Uid(..))
+import App.Common.Id (Id(..))
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.BuildTask (BuildTask(..))
@@ -17,10 +17,10 @@ import App.Model.GameState (GameState(..))
 import App.Model.Installation (Installation)
 import App.Model.Resource (Resource)
 
-build :: Uid Body -> GameState -> GameState
-build bodyUid gs@GameState{ colonies } =
+build :: Id Body -> GameState -> GameState
+build bodyId gs@GameState{ colonies } =
   fromMaybe gs $ do
-    colony@Colony{ buildQueue } <- colonies ^. at bodyUid
+    colony@Colony{ buildQueue } <- colonies ^. at bodyId
     task@BuildTask{ installation, buildEffortSpent } <- listToMaybe buildQueue
     let buildEffortNow = dailyBuildEffort colony
         remainingBuildEffort =
@@ -31,11 +31,11 @@ build bodyUid gs@GameState{ colonies } =
       else finishBuilding task
   where
     continueBuilding buildEffortNow =
-      gs & #colonies . at bodyUid . _Just . #buildQueue . _head . #buildEffortSpent
+      gs & #colonies . at bodyId . _Just . #buildQueue . _head . #buildEffortSpent
           +~ buildEffortNow
 
     finishBuilding task@BuildTask{ installation, quantity, installWhenDone } =
-      gs & #colonies . at bodyUid . _Just %~ (removeOneTask >>> installOrStore)
+      gs & #colonies . at bodyId . _Just %~ (removeOneTask >>> installOrStore)
       where
         removeOneTask =
           if quantity == 1
@@ -78,7 +78,7 @@ finishTime now effortSpent installation colony =
     )
 
 enqueue :: Installation -> Colony -> GameState -> GameState
-enqueue installation colony@Colony{ bodyUid } gs =
+enqueue installation colony@Colony{ bodyId } gs =
   fromMaybe gs $ do
     let cost = resourcesNeeded installation
     colonyWithCostPaid@Colony{ buildQueue } <- Logic.Util.payResources cost colony
@@ -91,12 +91,12 @@ enqueue installation colony@Colony{ bodyUid } gs =
                   { installation, quantity = 1, buildEffortSpent = 0, installWhenDone = True }
             in colonyWithCostPaid & #buildQueue %~ (task :)
     gs
-      & #colonies . at bodyUid . _Just .~ colony'
+      & #colonies . at bodyId . _Just .~ colony'
       & Just
 
 -- Assumes diff is either -1 or 1.
 changeQuantityInQueue :: Int -> Int -> Colony -> GameState -> GameState
-changeQuantityInQueue queueIndex diff colony@Colony{ bodyUid, buildQueue } gs =
+changeQuantityInQueue queueIndex diff colony@Colony{ bodyId, buildQueue } gs =
   fromMaybe gs $ do
     (newQueue, BuildTask{ installation }) <-
       buildQueue & Queue.update queueIndex
@@ -109,23 +109,23 @@ changeQuantityInQueue queueIndex diff colony@Colony{ bodyUid, buildQueue } gs =
     let cost = fromIntegral diff *^ resourcesNeeded installation
     colonyWithCostPaid <- Logic.Util.payResources cost colony
     gs
-      & #colonies . at bodyUid . _Just .~ colonyWithCostPaid{ buildQueue = newQueue }
+      & #colonies . at bodyId . _Just .~ colonyWithCostPaid{ buildQueue = newQueue }
       & Just
 
 moveUpInQueue :: Int -> Colony -> GameState -> Maybe GameState
-moveUpInQueue queueIndex Colony{ bodyUid, buildQueue } gs = do
+moveUpInQueue queueIndex Colony{ bodyId, buildQueue } gs = do
   newQueue <- buildQueue & Queue.moveUp queueIndex
   gs
-    & #colonies . at bodyUid . _Just . #buildQueue .~ newQueue
+    & #colonies . at bodyId . _Just . #buildQueue .~ newQueue
     & Just
 
 moveDownInQueue :: Int -> Colony -> GameState -> Maybe GameState
-moveDownInQueue queueIndex Colony{ bodyUid, buildQueue } gs = do
+moveDownInQueue queueIndex Colony{ bodyId, buildQueue } gs = do
   newQueue <- buildQueue & Queue.moveDown queueIndex
   gs
-    & #colonies . at bodyUid . _Just . #buildQueue .~ newQueue
+    & #colonies . at bodyId . _Just . #buildQueue .~ newQueue
     & Just
 
 toggleInstallInQueue :: Int -> Colony -> GameState -> GameState
-toggleInstallInQueue queueIndex Colony{ bodyUid } gs =
-  gs & #colonies . at bodyUid . _Just . #buildQueue . ix queueIndex . #installWhenDone %~ not
+toggleInstallInQueue queueIndex Colony{ bodyId } gs =
+  gs & #colonies . at bodyId . _Just . #buildQueue . ix queueIndex . #installWhenDone %~ not

@@ -2,7 +2,7 @@ module App.Logic.TimeStep where
 
 import App.Prelude
 
-import qualified App.Common.UidMap as UidMap
+import qualified App.Common.IdMap as IdMap
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Colony as Logic.Colony
@@ -12,7 +12,7 @@ import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 
-import App.Common.Uid (Uid(..))
+import App.Common.Id (Id(..))
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
@@ -46,13 +46,13 @@ jumpTimeTo time gs =
 updateShip :: GameState -> Ship -> Ship
 updateShip gs ship =
   case ship ^. #order of
-    Just Ship.MoveToBody{ Ship.path, Ship.bodyUid } ->
+    Just Ship.MoveToBody{ Ship.path, Ship.bodyId } ->
       let now = gs ^. #time
           arrived = now >= path ^. #endTime
       in ship
         & #position .~ (path & PlottedPath.atTime now)
         & (if arrived then #order .~ Nothing else id)
-        & #attachedToBody .~ (if arrived then Just bodyUid else Nothing)
+        & #attachedToBody .~ (if arrived then Just bodyId else Nothing)
     Nothing ->
       case ship ^. #attachedToBody >>= (\b -> gs ^? #bodyOrbitalStates . at b . _Just . #position) of
         Just position ->
@@ -61,37 +61,37 @@ updateShip gs ship =
 
 productionTick :: GameState -> GameState
 productionTick gs@GameState{ colonies } =
-  UidMap.keys colonies
+  IdMap.keys colonies
     & foldl' (flip productionTickOnColony) gs
 
-productionTickOnColony :: Uid Body -> GameState -> GameState
-productionTickOnColony bodyUid =
-  Logic.Building.build bodyUid
-  >>> buildShipOnColony bodyUid
-  >>> Logic.Mining.mine bodyUid
-  >>> shrinkPopulation bodyUid
+productionTickOnColony :: Id Body -> GameState -> GameState
+productionTickOnColony bodyId =
+  Logic.Building.build bodyId
+  >>> buildShipOnColony bodyId
+  >>> Logic.Mining.mine bodyId
+  >>> shrinkPopulation bodyId
 
-buildShipOnColony :: Uid Body -> GameState -> GameState
-buildShipOnColony bodyUid gs@GameState{ colonies, time } =
-  case colonies ^? at bodyUid . _Just . #shipBuildingTask . _Just of
+buildShipOnColony :: Id Body -> GameState -> GameState
+buildShipOnColony bodyId gs@GameState{ colonies, time } =
+  case colonies ^? at bodyId . _Just . #shipBuildingTask . _Just of
     Just ShipBuildingTask{ ShipBuildingTask.finishTime } | finishTime <= time ->
-      let shipUid = gs ^. #ships & UidMap.nextUid
+      let shipId = gs ^. #ships & IdMap.nextId
           ship = do
-            orbitalState <- gs ^. #bodyOrbitalStates . at bodyUid
-            pure $ Logic.Colony.shipBuiltAt bodyUid orbitalState shipUid
+            orbitalState <- gs ^. #bodyOrbitalStates . at bodyId
+            pure $ Logic.Colony.shipBuiltAt bodyId orbitalState shipId
       in gs
-        & #colonies . at bodyUid . _Just . #shipBuildingTask .~ Nothing
-        & #ships . at shipUid .~ ship
+        & #colonies . at bodyId . _Just . #shipBuildingTask .~ Nothing
+        & #ships . at shipId .~ ship
     Just ShipBuildingTask{} -> gs
     Nothing -> gs
 
-shrinkPopulation :: Uid Body -> GameState -> GameState
-shrinkPopulation bodyUid gs =
+shrinkPopulation :: Id Body -> GameState -> GameState
+shrinkPopulation bodyId gs =
   fromMaybe gs $ do
-    body <- gs ^. #bodies . at bodyUid
-    colony@Colony{ population } <- gs ^. #colonies . at bodyUid
+    body <- gs ^. #bodies . at bodyId
+    colony@Colony{ population } <- gs ^. #colonies . at bodyId
     maxPopulation <- Logic.Colony.colonyMaxPopulation body colony
     pure $
       if population > maxPopulation
-      then gs & #colonies . at bodyUid . _Just . #population .~ (population + maxPopulation) `div` 2
+      then gs & #colonies . at bodyId . _Just . #population .~ (population + maxPopulation) `div` 2
       else gs

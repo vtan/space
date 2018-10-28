@@ -4,15 +4,15 @@ import App.Prelude
 
 import qualified Linear as Lin
 
-import App.Common.Uid (Uid)
-import App.Common.UidMap (UidMap)
+import App.Common.Id (Id)
+import App.Common.IdMap (IdMap)
 import App.Dimension.Local (Local(..))
 import App.Dimension.Time (Time)
 import App.Model.OrbitalState (OrbitalState(..))
 import Numeric.Extras (fmod)
 
 data Body = Body
-  { uid :: Uid Body
+  { bodyId :: Id Body
   , name :: Text
   , orbitRadius :: Local Double
   , phaseAtEpoch :: Double
@@ -29,11 +29,11 @@ allChildren :: Body -> [Body]
 allChildren body@Body{ children } =
   body : concatMap allChildren children
 
-statesAtTime :: Time Int -> Body -> UidMap Body OrbitalState
+statesAtTime :: Time Int -> Body -> IdMap Body OrbitalState
 statesAtTime = relStatesAtTime 0
 
-relStatesAtTime :: V2 (Local Double) -> Time Int -> Body -> UidMap Body OrbitalState
-relStatesAtTime origin time Body{ uid, orbitRadius, phaseAtEpoch, angularVelocity, children } =
+relStatesAtTime :: V2 (Local Double) -> Time Int -> Body -> IdMap Body OrbitalState
+relStatesAtTime origin time Body{ bodyId, orbitRadius, phaseAtEpoch, angularVelocity, children } =
   let phase = (phaseAtEpoch + fromIntegral time * angularVelocity) `fmod` (2 * pi)
       pos = origin + orbitRadius *^ (Local <$> Lin.angle phase)
       state = OrbitalState
@@ -41,4 +41,4 @@ relStatesAtTime origin time Body{ uid, orbitRadius, phaseAtEpoch, angularVelocit
         , orbitCenter = origin
         }
       childStates = children & foldMap (relStatesAtTime pos time)
-  in childStates & at uid .~ Just state
+  in childStates & at bodyId .~ Just state

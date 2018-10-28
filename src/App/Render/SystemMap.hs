@@ -13,7 +13,7 @@ import qualified Linear as Linear
 import qualified SDL
 
 import App.Common.Camera (Camera(..))
-import App.Common.UidMap (UidMap)
+import App.Common.IdMap (IdMap)
 import App.Dimension.Local (Local(..))
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
@@ -37,10 +37,10 @@ data RenderBodyEnv = RenderBodyEnv
   , cameraCenter :: V2 (Local Double)
   , cameraRadiusSq :: Local Double
   , cameraRadius :: Local Double
-  , orbitalStates :: UidMap Body OrbitalState
+  , orbitalStates :: IdMap Body OrbitalState
   }
 
-renderBodyEnv :: Camera (Local Double) Double -> UidMap Body OrbitalState -> Rendering RenderBodyEnv
+renderBodyEnv :: Camera (Local Double) Double -> IdMap Body OrbitalState -> Rendering RenderBodyEnv
 renderBodyEnv camera orbitalStates = do
   renderer <- view #renderer
   let cameraRadiusSq = Camera.boundingCircleRadiusSq camera
@@ -57,8 +57,8 @@ renderBody :: RenderBodyEnv -> Maybe (V2 Double) -> Body -> Rendering Bool
 renderBody
     env@RenderBodyEnv{ renderer, camera, cameraCenter, cameraRadiusSq, cameraRadius, orbitalStates }
     parentDrawnCenter
-    Body{ uid = bodyUid, name = bodyName, orbitRadius, children } =
-  case orbitalStates ^. at bodyUid of
+    Body{ bodyId, name = bodyName, orbitRadius, children } =
+  case orbitalStates ^. at bodyId of
     Just OrbitalState{ position, orbitCenter } -> do
       let !bodyCenter = Camera.pointToScreen camera position
           (!drawOrbit, !drawBody) =

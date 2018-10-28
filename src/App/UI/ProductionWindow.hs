@@ -4,7 +4,7 @@ where
 
 import App.Prelude
 
-import qualified App.Common.UidMap as UidMap
+import qualified App.Common.IdMap as IdMap
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Mining as Logic.Mining
@@ -43,18 +43,18 @@ update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
     Updating.widget "decoration" $
       Widget.window 20 "Production"
 
-    let bodiesWithColony = toList (UidMap.zip bodies colonies)
+    let bodiesWithColony = toList (IdMap.zip bodies colonies)
     (selectedColony, _) <-
       Updating.widget "selectedBody"
         ( Widget.listBox
-            20 (view (_1 . #uid)) (view (_1 . #name))
+            20 (view (_1 . #bodyId)) (view (_1 . #name))
             #selectedBody
             bodiesWithColony
         ) <&> (_1 . mapped %~ snd)
 
     case selectedColony of
-      Just colony@Colony{ bodyUid, installations } -> do
-        let minerals = bodyMinerals ^. at bodyUid . non mempty
+      Just colony@Colony{ bodyId, installations } -> do
+        let minerals = bodyMinerals ^. at bodyId . non mempty
         Updating.useWidget "rightPanel" $ do
           Updating.useWidget "installations" $ do
             let mines = installations ^. at Installation.Mine . non 0

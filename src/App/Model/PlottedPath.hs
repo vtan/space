@@ -11,7 +11,7 @@ import qualified App.Dimension.Time as Time
 import qualified App.Model.Body as Body
 import qualified Linear as Lin
 
-import App.Common.Uid (Uid)
+import App.Common.Id (Id)
 import App.Dimension.Local (Local)
 import App.Dimension.Speed (Speed)
 import App.Dimension.Time (Time)
@@ -25,14 +25,14 @@ data PlottedPath = PlottedPath
   }
   deriving (Generic, Show)
 
-plot :: Time Int -> V2 (Local Double) -> Speed Double -> Uid Body -> Body -> Maybe PlottedPath
-plot startTime startPos speed bodyUid rootBody = do
+plot :: Time Int -> V2 (Local Double) -> Speed Double -> Id Body -> Body -> Maybe PlottedPath
+plot startTime startPos speed bodyId rootBody = do
   (beforeCrudeApprox, _) <- approxArrival (16 & Time.hours) 0
   (beforeFinerApprox, _) <- approxArrival (30 & Time.minutes) beforeCrudeApprox
   (_, endDtime) <- approxArrival Time.oneSecond beforeFinerApprox
   let
     endTime = startTime + endDtime
-    endPos = Body.statesAtTime endTime rootBody ^?! at bodyUid . _Just . #position
+    endPos = Body.statesAtTime endTime rootBody ^?! at bodyId . _Just . #position
   pure PlottedPath{ startTime, startPos, endTime, endPos }
   where
     approxArrival :: Time Int -> Time Int -> Maybe (Time Int, Time Int)
@@ -42,7 +42,7 @@ plot startTime startPos speed bodyUid rootBody = do
             in reach * reach
           !distSq =
             let time = startTime + dtime
-                pos = Body.statesAtTime time rootBody ^?! at bodyUid . _Just . #position
+                pos = Body.statesAtTime time rootBody ^?! at bodyId . _Just . #position
             in Lin.qd startPos pos
           !dtime' = dtime + timeStep
           approxTime =

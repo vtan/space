@@ -6,7 +6,7 @@ import qualified App.Dimension.Local as Local
 import qualified App.Update.ListBoxState as ListBoxState
 
 import App.Common.Camera (Camera(..))
-import App.Common.Uid (Uid)
+import App.Common.Id (Id)
 import App.Dimension.Local (Local)
 import App.Model.Body (Body)
 import App.Model.Installation (Installation)
@@ -18,9 +18,9 @@ data UIState = UIState
   { camera :: Camera (Local Double) Double
   , activeWindow :: Maybe Window
   -- TODO put these into window-specific substates?
-  , selectedShip :: ListBoxState (Uid Ship)
+  , selectedShip :: ListBoxState (Id Ship)
   -- TODO the body lists on the colony and ship screen are both tied to this
-  , selectedBody :: ListBoxState (Uid Body)
+  , selectedBody :: ListBoxState (Id Body)
   , selectedResource :: ListBoxState Resource
   , selectedInstallation :: ListBoxState Installation
   , selectedBuildingTaskIndex :: ListBoxState Int

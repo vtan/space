@@ -6,18 +6,18 @@ import qualified App.Model.Installation as Installation
 import qualified App.Model.Mineral as Mineral
 import qualified Data.HashMap.Strict as HashMap
 
-import App.Common.Uid (Uid(..))
+import App.Common.Id (Id(..))
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
 import App.Model.Resource (Resource)
 
-mine :: Uid Body -> GameState -> GameState
-mine bodyUid gs@GameState{ colonies, bodyMinerals } =
+mine :: Id Body -> GameState -> GameState
+mine bodyId gs@GameState{ colonies, bodyMinerals } =
   fromMaybe gs $ do
-    colony <- colonies ^. at bodyUid
-    minerals <- bodyMinerals ^. at bodyUid
+    colony <- colonies ^. at bodyId
+    minerals <- bodyMinerals ^. at bodyId
     let mineralsMinedQty =
           HashMap.intersectionWith (,)
             minerals
@@ -27,14 +27,14 @@ mine bodyUid gs@GameState{ colonies, bodyMinerals } =
         (\resource gs' (Mineral{ available }, minedQty) ->
           let actualMinedQty = min minedQty available
           in gs'
-            & #bodyMinerals . at bodyUid . _Just . at resource . Mineral.nonEmpty . #available -~ actualMinedQty
-            & #colonies . at bodyUid . _Just . #stockpile . at resource . non 0 +~ actualMinedQty
+            & #bodyMinerals . at bodyId . _Just . at resource . Mineral.nonEmpty . #available -~ actualMinedQty
+            & #colonies . at bodyId . _Just . #stockpile . at resource . non 0 +~ actualMinedQty
         )
         gs
 
 changeMiningPriority :: Resource -> Int -> Colony -> GameState -> GameState
-changeMiningPriority resource diff Colony{ bodyUid } gs =
-  gs & #colonies . at bodyUid . _Just . #miningPriorities . at resource . non 0 %~ \prio ->
+changeMiningPriority resource diff Colony{ bodyId } gs =
+  gs & #colonies . at bodyId . _Just . #miningPriorities . at resource . non 0 %~ \prio ->
     max 0 (prio + diff)
 
 dailyMined :: Colony -> HashMap Resource Mineral -> HashMap Resource Double

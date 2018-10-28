@@ -14,7 +14,7 @@ import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 import qualified Linear as Lin
 
-import App.Common.Uid (Uid)
+import App.Common.Id (Id)
 import App.Common.Util (whenAlt)
 import App.Model.Body (Body)
 import App.Model.GameState (GameState(..))
@@ -26,7 +26,7 @@ import Text.Read (readMaybe)
 
 data Action
   = Rename Text
-  | MoveToBody (Uid Body)
+  | MoveToBody (Id Body)
   | CancelOrder
   | LoadResource Resource (Maybe Double)
   | UnloadResource Resource (Maybe Double)
@@ -42,13 +42,13 @@ update gs =
     (selectedShip, clickedShip) <-
       Updating.widget "selectedShip" $
         Widget.listBox
-          20 (view #uid) (view #name)
+          20 (view #shipId) (view #name)
           #selectedShip
           (gs ^.. #ships . folded)
     for_ clickedShip $ \ship -> #ui . #editedShipName .= (ship ^. #name)
 
     gs' <- Updating.useWidget "rightPanel" $
-      for selectedShip $ \ship@Ship{ uid } -> do
+      for selectedShip $ \ship@Ship{ shipId } -> do
         rename <- Updating.useWidget "renamePanel" renamePanel
         infoLabels ship gs
 
@@ -62,20 +62,20 @@ update gs =
         selectedBody <- Updating.widget "selectedBody" $
           Widget.closedDropdown
             20 380
-            (view #uid) (view #name)
+            (view #bodyId) (view #name)
             #selectedBody
             (gs ^.. #bodies . folded)
 
         cargoAction <- Updating.useWidget "cargoPanel" (cargoPanel ship)
         cabinAction <- Updating.useWidget "cabinPanel" (cabinPanel ship)
 
-        let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #uid)
+        let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #bodyId)
             action = rename <|> moveToSelected <|> cancel <|> cargoAction <|> cabinAction
         pure $ case action of
           Just (Rename name) ->
-            gs & #ships . at uid . _Just . #name .~ name
-          Just (MoveToBody bodyUid) ->
-            Logic.Ship.moveShipToBody ship bodyUid gs
+            gs & #ships . at shipId . _Just . #name .~ name
+          Just (MoveToBody bodyId) ->
+            Logic.Ship.moveShipToBody ship bodyId gs
           Just CancelOrder ->
             Logic.Ship.cancelShipOrder ship gs
           Just (LoadResource resource qtyOrAll) ->
@@ -104,8 +104,8 @@ infoLabels Ship{ speed, order } gs = do
       orderLabels = case order of
         Just o ->
           let (orderStr, etaStr) = case o of
-                Ship.MoveToBody{ Ship.bodyUid, Ship.path } ->
-                  let bodyName = gs ^? #bodies . at bodyUid . _Just . #name & fromMaybe "???"
+                Ship.MoveToBody{ Ship.bodyId, Ship.path } ->
+                  let bodyName = gs ^? #bodies . at bodyId . _Just . #name & fromMaybe "???"
                       etaDate = Time.printDateTime (path ^. #endTime)
                       etaDuration = Time.printDuration (path ^. #endTime - gs ^. #time)
                       actualSpeed = Speed.div

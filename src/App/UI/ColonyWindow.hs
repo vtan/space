@@ -10,7 +10,7 @@ import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 
-import App.Common.Uid (Uid)
+import App.Common.Id (Id)
 import App.Common.Util (whenAlt)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
@@ -38,11 +38,11 @@ update gs = do
     (selectedBody, _) <-
       Updating.widget "selectedBody" $
         Widget.listBox
-          20 (view #uid) (view #name)
+          20 (view #bodyId) (view #name)
           #selectedBody
           (gs ^.. #bodies . folded)
     gs' <- Updating.useWidget "rightPanel" $
-      for selectedBody $ \body@Body{ uid, colonyCost } -> do
+      for selectedBody $ \body@Body{ bodyId, colonyCost } -> do
         Updating.widget "info" $
           Widget.labels 20
             [ case colonyCost of
@@ -50,9 +50,9 @@ update gs = do
                 Nothing -> "Uncolonizable"
             ]
         Updating.useWidget "mineralTable" $
-          mineralTable uid gs
+          mineralTable bodyId gs
 
-        action <- case gs ^. #colonies . at uid of
+        action <- case gs ^. #colonies . at bodyId of
           Just colony@Colony{ population } -> do
             Updating.useWidget "stockpileTable" $
               stockpileTable colony
@@ -81,18 +81,18 @@ update gs = do
               Nothing -> pure Nothing
 
         pure $ case action of
-          Just BuildShip -> Logic.Colony.startShipBuildingTask uid gs
-          Just CancelBuildingShip -> Logic.Colony.cancelShipBuildingTask uid gs
+          Just BuildShip -> Logic.Colony.startShipBuildingTask bodyId gs
+          Just CancelBuildingShip -> Logic.Colony.cancelShipBuildingTask bodyId gs
           Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty colony gs
           Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty colony gs
-          Just FoundColony -> Logic.Colony.foundColony uid gs
+          Just FoundColony -> Logic.Colony.foundColony bodyId gs
           Nothing -> gs
 
     pure (gs' & fromMaybe gs)
 
-mineralTable :: Uid Body -> GameState -> Updating ()
-mineralTable bodyUid gs = do
-  let minerals = gs ^@.. #bodyMinerals . at bodyUid . _Just . ifolded
+mineralTable :: Id Body -> GameState -> Updating ()
+mineralTable bodyId gs = do
+  let minerals = gs ^@.. #bodyMinerals . at bodyId . _Just . ifolded
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
           ( fromString $ show mineral
