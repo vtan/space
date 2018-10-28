@@ -1,4 +1,8 @@
-module App.Prelude (module X) where
+module App.Prelude
+  ( module X
+  , TextBuilder
+  )
+where
 
 import Prelude as X
 import App.Prelude.Labels as X ()
@@ -65,3 +69,7 @@ import Linear as X
   (V2(..), V4(..), (*^), (^/), _x, _y)
 import Text.Printf as X
   (printf)
+
+import qualified Data.Text.Lazy.Builder
+
+type TextBuilder = Data.Text.Lazy.Builder.Builder

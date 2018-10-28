@@ -6,6 +6,8 @@ import qualified App.Common.Rect as Rect
 import qualified App.Render.Rendering as Rendering
 import qualified App.Update.Updating as Updating
 import qualified Data.Text as Text
+import qualified Data.Text.Lazy as LazyText
+import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified SDL
 
 import App.Common.Rect (Rect(..))
@@ -22,16 +24,27 @@ import Control.Monad.Zip (munzip)
 
 type Widget a = WidgetTree -> Updating a
 
-label :: Text -> Widget ()
-label text WidgetTree{ bounds = Rect pos _ } =
+label :: TextBuilder -> Widget ()
+label builder WidgetTree{ bounds = Rect pos _ } =
+  builder
+    & TextBuilder.toLazyText
+    & LazyText.toStrict
+    & Rendering.text pos
+    & Updating.render
+
+label' :: Text -> Widget ()
+label' text WidgetTree{ bounds = Rect pos _ } =
   Updating.render (Rendering.text pos text)
 
-labels :: Int -> [Text] -> Widget ()
-labels verticalSpacing texts WidgetTree{ bounds = Rect firstPos _ } =
+labels :: Int -> [TextBuilder] -> Widget ()
+labels verticalSpacing builders WidgetTree{ bounds = Rect firstPos _ } =
   Updating.render $
-    ifor_ texts $ \i text ->
+    ifor_ builders $ \i builder ->
       let pos = firstPos & _y +~ i * verticalSpacing
-      in Rendering.text pos text
+      in builder
+        & TextBuilder.toLazyText
+        & LazyText.toStrict
+        & Rendering.text pos
 
 bottomLine :: Widget ()
 bottomLine WidgetTree{ bounds } =

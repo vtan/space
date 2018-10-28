@@ -5,6 +5,7 @@ where
 import App.Prelude
 
 import qualified App.Common.IdMap as IdMap
+import qualified App.Common.Print as Print
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Mining as Logic.Mining
@@ -58,14 +59,14 @@ update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
         Updating.useWidget "rightPanel" $ do
           Updating.useWidget "installations" $ do
             let mines = installations ^. at Installation.Mine . non 0
-            Updating.widget "mineCountLabel" $ Widget.label "Mines"
+            Updating.widget "mineCountLabel" $ Widget.label' "Mines"
             Updating.widget "mineCount" $
-              Widget.label (fromString (show mines))
+              Widget.label (Print.int mines)
 
             let factories = installations ^. at Installation.Factory . non 0
-            Updating.widget "factoryCountLabel" $ Widget.label "Factories"
+            Updating.widget "factoryCountLabel" $ Widget.label' "Factories"
             Updating.widget "factoryCount" $
-              Widget.label (fromString (show factories))
+              Widget.label (Print.int factories)
 
           miningAction <- Updating.useWidget "mining" $
             miningPanel colony minerals
@@ -103,17 +104,17 @@ miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
 miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
   Updating.useWidget "headingRow" $ do
     let totalMonthlyMined = Time.daysInMonth * Logic.Mining.dailyMinedAtFullAccessibility colony
-    Updating.widget "title" $ Widget.label "Mining"
+    Updating.widget "title" $ Widget.label' "Mining"
     Updating.widget "totalMined" $
-      Widget.label (fromString $ printf "Mined / mo at 100%% acc.: %.0f t" totalMonthlyMined)
+      Widget.label ("Mined / mo at 100% acc.: " <> Print.float0 totalMonthlyMined <> " t")
     Updating.thisWidget Widget.bottomLine
 
   Updating.useWidget "headerRow" $ do
-    Updating.widget "monthlyMined" $ Widget.label "Mined / mo"
-    Updating.widget "priority" $ Widget.label "Priority"
-    Updating.widget "mineable" $ Widget.label "Mineable"
-    Updating.widget "accessibility" $ Widget.label "Accessibility"
-    Updating.widget "stockpile" $ Widget.label "Stockpile"
+    Updating.widget "monthlyMined" $ Widget.label' "Mined / mo"
+    Updating.widget "priority" $ Widget.label' "Priority"
+    Updating.widget "mineable" $ Widget.label' "Mineable"
+    Updating.widget "accessibility" $ Widget.label' "Accessibility"
+    Updating.widget "stockpile" $ Widget.label' "Stockpile"
 
   Updating.useWidget "mineralRows" $ do
     let allMonthlyMined = Time.daysInMonth *^ Logic.Mining.dailyMined colony minerals
@@ -129,15 +130,15 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
           Updating.widget "name" $
             Widget.label (fromString $ show resource)
           Updating.widget "monthlyMined" $
-            Widget.label (fromString $ printf "%.0f t" monthlyMined)
+            Widget.label (Print.float0 monthlyMined <> " t")
           Updating.widget "mineable" $
-            Widget.label (fromString $ printf "%.0f t" available)
+            Widget.label (Print.float0 available <> " t")
           Updating.widget "accessibility" $
-            Widget.label (fromString $ printf "%.0f%%" (100 * accessibility))
+            Widget.label (Print.float0 (100 * accessibility) <> "%")
           Updating.widget "stockpile" $
-            Widget.label (fromString $ printf "%.0f t" inStockpile)
+            Widget.label (Print.float0 inStockpile)
           Updating.widget "priority" $
-            Widget.label (fromString $ show priority)
+            Widget.label (Print.int priority)
 
           increasePriority <- Updating.widget "increasePriority"
             (Widget.button "+")
@@ -155,9 +156,9 @@ buildingPanel :: Time Int -> Colony -> Updating (Maybe Action)
 buildingPanel now colony@Colony{ buildQueue } = do
   Updating.useWidget "headingRow" $ do
     let monthlyBuildEffort = Time.daysInMonth * Logic.Building.dailyBuildEffort colony
-    Updating.widget "title" $ Widget.label "Building"
+    Updating.widget "title" $ Widget.label' "Building"
     Updating.widget "monthlyBuildEffort" $
-      Widget.label (fromString $ printf "Build effort / mo: %d" monthlyBuildEffort)
+      Widget.label ("Build effort / mo: " <> Print.int monthlyBuildEffort)
     Updating.thisWidget Widget.bottomLine
 
   selectedInstallation <- Updating.widget "selectedInstallation" $
@@ -181,7 +182,7 @@ buildingPanel now colony@Colony{ buildQueue } = do
         done = Logic.Building.finishTime now 0 installation colony
         cost = Logic.Building.resourcesNeeded installation
     Updating.widget "newBuildEffort" $
-      Widget.label (fromString $ "Build effort: " ++ show buildEffort)
+      Widget.label ("Build effort: " <> Print.int buildEffort)
     Updating.widget "newDone" $
       Widget.label (fromString $ "Done: " ++ Time.printDate done)
     Updating.widget "newCost" $
@@ -200,7 +201,7 @@ buildingPanel now colony@Colony{ buildQueue } = do
         cost = Logic.Building.resourcesNeeded installation
         doneLabel = if 0 `elem` selectedTaskIndex then "Done: " else "Done if first: "
     Updating.widget "enqueuedBuildEffort" $
-      Widget.label (fromString $ printf "Build effort: %d / %d" buildEffortSpent buildEffort)
+      Widget.label ("Build effort: " <> Print.int buildEffortSpent <> " / " <> Print.int buildEffort)
     Updating.widget "enqueuedDone" $
       Widget.label (fromString $ doneLabel ++ Time.printDate done)
     Updating.widget "enqueuedCost" $

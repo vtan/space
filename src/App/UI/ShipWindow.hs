@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Common.Print as Print
 import qualified App.Dimension.Speed as Speed
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Ship as Logic.Ship
@@ -100,7 +101,7 @@ renamePanel = do
 
 infoLabels :: Ship -> GameState -> Updating ()
 infoLabels Ship{ speed, order } gs = do
-  let commonLabels = [fromString (printf "Speed: %s" (Speed.printKmPerSec speed))]
+  let commonLabels = [fromString ("Speed: " <> Speed.printKmPerSec speed)]
       orderLabels = case order of
         Just o ->
           let (orderStr, etaStr) = case o of
@@ -127,7 +128,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
       Resource.all
 
   Updating.widget "qtyLabel" $
-    Widget.label "Qty:"
+    Widget.label' "Qty:"
 
   qty <- Updating.widget "qty"
     (Widget.textBox #editedResourceQty)
@@ -155,7 +156,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
   Updating.widget "cargoCapacity" $
     Widget.label $
-      fromString (printf "Cargo capacity: %.0f t" cargoCapacity)
+      "Cargo capacity: " <> Print.float0 cargoCapacity <> " t"
 
   Updating.widget "loadedCargo" $
     Widget.labels 20 $
@@ -171,10 +172,10 @@ cabinPanel :: Ship -> Updating (Maybe Action)
 cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
   Updating.widget "cabinCapacity" $
     Widget.label $
-      fromString (printf "Cabin capacity: %d / %d ppl" loadedPopulation cabinCapacity)
+      "Cabin capacity: " <> Print.int loadedPopulation <> " / " <> Print.int cabinCapacity <> " ppl"
 
   Updating.widget "popLabel" $
-    Widget.label "Pop:"
+    Widget.label' "Pop:"
 
   qty <- Updating.widget "pop"
     (Widget.textBox #editedPopulationQty)

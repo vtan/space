@@ -74,7 +74,8 @@
                           }
                         ]
                       },
-                      { "name": "populationInfo", "wh": [0, 40] },
+                      { "name": "population", "wh": [0, 20] },
+                      { "name": "maxPopulation", "wh": [0, 20] },
                       {
                         "name": "shipBuildingPanel",
                         "layout": "vertical",

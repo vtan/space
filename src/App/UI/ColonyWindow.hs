@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Common.Print as Print
 import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Model.Installation as Installation
 import qualified App.Update.Updating as Updating
@@ -44,11 +45,10 @@ update gs = do
     gs' <- Updating.useWidget "rightPanel" $
       for selectedBody $ \body@Body{ bodyId, colonyCost } -> do
         Updating.widget "info" $
-          Widget.labels 20
-            [ case colonyCost of
-                Just cc -> fromString $ printf "Colony cost: ×%.1f" cc
-                Nothing -> "Uncolonizable"
-            ]
+          Widget.label $
+            case colonyCost of
+              Just cc -> "Colony cost: ×" <> Print.float2 cc
+              Nothing -> "Uncolonizable"
         Updating.useWidget "mineralTable" $
           mineralTable bodyId gs
 
@@ -58,13 +58,13 @@ update gs = do
               stockpileTable colony
             Updating.useWidget "installationTable" $
               installationTable colony
-            Updating.widget "populationInfo" $
-              Widget.labels 20
-                [ fromString $ printf "Population: %d" population
-                , case Logic.Colony.colonyMaxPopulation body colony of
-                    Just mp -> fromString $ printf "Max. population: %d" mp
-                    Nothing -> "Max. population: ∞"
-                ]
+            Updating.widget "population" $
+              Widget.label ("Population: " <> Print.int population)
+            Updating.widget "maxPopulation" $
+              Widget.label $
+                case Logic.Colony.colonyMaxPopulation body colony of
+                  Just mp -> "Max. population: " <> Print.int mp
+                  Nothing -> "Max. population: ∞"
 
             buildShip <- Updating.useWidget "shipBuildingPanel" $
               shipBuildingPanel colony
@@ -96,10 +96,10 @@ mineralTable bodyId gs = do
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
           ( fromString $ show mineral
-          , fromString $ printf "%.0f t" available
-          , fromString $ printf "%.0f%%" (100 * accessibility)
+          , Print.float0 available <> " t"
+          , Print.float0 (100 * accessibility) <> "%"
           ) -- TODO table widget?
-  Updating.widget "title" $ Widget.label "Mineable resources"
+  Updating.widget "title" $ Widget.label' "Mineable resources"
   Updating.widget "minerals" $ Widget.labels 20 mineralLabels
   Updating.widget "availables" $ Widget.labels 20 availableLabels
   Updating.widget "accessibilities" $ Widget.labels 20 accessibilityLabels
@@ -108,11 +108,11 @@ stockpileTable :: Colony -> Updating ()
 stockpileTable Colony{ stockpile } = do
   let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(resource, mass) ->
         ( fromString $ show resource
-        , fromString $ if resource & has (_Ctor @"Installation")
-          then printf "%.0f t (%d buildings)" mass (floor (mass / Installation.mass) :: Int)
-          else printf "%.0f t" mass
+        , if resource & has (_Ctor @"Installation")
+          then Print.float0 mass <> " t" <> Print.brackets (Print.int (floor (mass / Installation.mass) :: Int) <> " buildings")
+          else Print.float0 mass <> " t"
         )
-  Updating.widget "title" $ Widget.label "Resource stockpile"
+  Updating.widget "title" $ Widget.label' "Resource stockpile"
   Updating.widget "resources" $ Widget.labels 20 itemLabels
   Updating.widget "quantities" $ Widget.labels 20 qtyLabels
 
@@ -120,9 +120,9 @@ installationTable :: Colony -> Updating ()
 installationTable Colony{ installations } = do
   let (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
         ( fromString $ show installation
-        , fromString $ show qty
+        , Print.int qty
         )
-  Updating.widget "title" $ Widget.label "Installations"
+  Updating.widget "title" $ Widget.label' "Installations"
   Updating.widget "installations" $ Widget.labels 20 mineLabels
   Updating.widget "quantities" $ Widget.labels 20 mineQtyLabels
 
@@ -131,7 +131,7 @@ shipBuildingPanel Colony{ shipBuildingTask } = do
   let label = case shipBuildingTask of
         Just ShipBuildingTask{} -> "Producing: Ship"
         Nothing -> "Producing: nothing"
-  Updating.widget "label" $ Widget.label label
+  Updating.widget "label" $ Widget.label' label
 
   build <- Updating.widget "build"
     (Widget.button "Produce ship")
@@ -152,7 +152,7 @@ installationPanel colony = do
       #selectedInstallation
       Installation.all
 
-  Updating.widget "qtyLabel" $ Widget.label "Qty:"
+  Updating.widget "qtyLabel" $ Widget.label' "Qty:"
 
   qty <- Updating.widget "qty"
     (Widget.textBox #editedInstallationQty)

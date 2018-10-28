@@ -2,11 +2,11 @@ module App.Model.Resource where
 
 import App.Prelude
 
+import qualified App.Common.Print as Print
 import qualified App.Model.Installation as Installation
 import qualified Data.List as List
 
 import App.Model.Installation (Installation(..))
-import Data.String (fromString)
 
 data Resource
   = Cadrium
@@ -32,16 +32,16 @@ all =
 minerals :: [Resource]
 minerals = [Cadrium, Erchanite, Tellerite]
 
-shortName :: Resource -> String
+shortName :: Resource -> TextBuilder
 shortName = \case
-    Cadrium -> "Cad"
-    Erchanite -> "Ern"
-    Tellerite -> "Tlr"
-    Installation _ -> "Inst"
+  Cadrium -> "Cad"
+  Erchanite -> "Ern"
+  Tellerite -> "Tlr"
+  Installation _ -> "Inst"
 
-printCost :: HashMap Resource Double -> Text
+printCost :: HashMap Resource Double -> TextBuilder
 printCost =
   itoList
-  >>> map (\(resource, mass) -> printf "%.0f %s" mass (shortName resource))
-  >>> List.intercalate ", "
-  >>> fromString
+  >>> map (\(resource, mass) -> Print.float0 mass <> " " <> shortName resource)
+  >>> List.intersperse ", "
+  >>> fold
