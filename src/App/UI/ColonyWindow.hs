@@ -155,7 +155,7 @@ installationPanel colony = do
   Updating.widget "qtyLabel" $ Widget.label "Qty:"
 
   qty <- Updating.widget "qty"
-    (Widget.textBox "installationQty" #editedInstallationQty)
+    (Widget.textBox #editedInstallationQty)
     <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
 
   install <- Updating.widget "install"

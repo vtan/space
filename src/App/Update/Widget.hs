@@ -13,7 +13,6 @@ import App.Common.Util (clamp)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
 import App.Update.ListBoxState (ListBoxState)
-import App.Update.SlotId (SlotId)
 import App.Update.UIState (UIState)
 import App.Update.Updating (Updating)
 import App.Update.WidgetTree (WidgetTree(..))
@@ -192,16 +191,16 @@ window titleHeight title WidgetTree{ bounds } =
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
     Rendering.text (bounds ^. #xy) title
 
-textBox :: SlotId -> Lens' UIState Text -> Widget Text
-textBox slotId state WidgetTree{ bounds } = do
+textBox :: Lens' UIState Text -> Widget Text
+textBox state WidgetTree{ name, bounds } = do
   focused <- do
     clicked <- Updating.consumeEvents (\case
         MousePressEvent SDL.ButtonLeft pos | Rect.contains bounds (fromIntegral <$> pos) -> Just ()
         _ -> Nothing
       ) <&> (not . null)
     if clicked
-    then True <$ (#focusedWidget .= Just slotId)
-    else elem slotId <$> use #focusedWidget
+    then True <$ (#focusedWidget .= Just name)
+    else elem name <$> use #focusedWidget
   text <- use (#ui . state)
   text' <- if focused
     then do

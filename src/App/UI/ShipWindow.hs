@@ -93,7 +93,7 @@ update gs =
 renamePanel :: Updating (Maybe Action)
 renamePanel = do
   ename <- Updating.widget "shipName" $
-    Widget.textBox "shipName" #editedShipName
+    Widget.textBox  #editedShipName
   Updating.widget "button"
     (Widget.button "Rename")
     <&> whenAlt (Rename ename)
@@ -130,7 +130,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
     Widget.label "Qty:"
 
   qty <- Updating.widget "qty"
-    (Widget.textBox "cargoQty" #editedResourceQty)
+    (Widget.textBox #editedResourceQty)
     <&> (Text.unpack >>> readMaybe @Double >>> mfilter (>= 0))
 
   load <- Updating.widget "load"
@@ -177,7 +177,7 @@ cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
     Widget.label "Pop:"
 
   qty <- Updating.widget "pop"
-    (Widget.textBox "popQty" #editedPopulationQty)
+    (Widget.textBox #editedPopulationQty)
     <&> (Text.unpack >>> readMaybe @Int >>> mfilter (>= 0))
 
   let (loadLabel, unloadLabel) = case qty of

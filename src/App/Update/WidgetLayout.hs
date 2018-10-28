@@ -56,7 +56,7 @@ instance Aeson.FromJSON WidgetLayout where
     Aeson.Array values -> do
       children <- values & toList & traverse Aeson.parseJSON
       pure WidgetLayout
-        { name = ""
+        { name = "[]"
         , xy = Nothing
         , wh = Nothing
         , layout = Fixed

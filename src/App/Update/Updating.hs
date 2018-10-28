@@ -12,7 +12,6 @@ import App.Dimension.Time (Time)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
 import App.Update.UIState (UIState)
-import App.Update.SlotId (SlotId)
 import App.Update.WidgetTree (WidgetTree)
 import Control.Monad.Reader (local, runReaderT)
 import Control.Monad.State.Strict (runStateT)
@@ -33,7 +32,7 @@ data State = State
   , screenSize :: V2 Int
   , quit :: Bool
   , reloadResources :: Bool
-  , focusedWidget :: Maybe SlotId
+  , focusedWidget :: Maybe HashedText
   , activeDropdown :: Maybe (Updating ())
   , ui :: UIState
   , deferredRendering :: [Rendering ()]

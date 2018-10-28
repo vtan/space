@@ -1,4 +1,10 @@
-module App.Update.WidgetTree where
+module App.Update.WidgetTree
+  ( WidgetTree(..)
+  , child
+  , fromWidgetLayout
+  , mapTree
+  )
+where
 
 import App.Prelude
 
@@ -14,42 +20,52 @@ import App.Update.WidgetLayout (WidgetLayout(..))
 import Control.Lens (Lens')
 
 data WidgetTree = WidgetTree
-  { bounds :: Rect Int
+  { name :: HashedText
+  , bounds :: Rect Int
   , children :: HashMap HashedText WidgetTree
   }
   deriving (Show, Generic)
-
-empty :: WidgetTree
-empty = WidgetTree
-  { bounds = Rect.zero
-  , children = mempty
-  }
 
 child :: HashedText -> WidgetTree -> WidgetTree
 child childName WidgetTree{ children } =
   case children ^. at childName of
     Just foundChild -> foundChild
-    Nothing -> App.Update.WidgetTree.empty
+    Nothing ->
+      WidgetTree
+        { name = HashedText.new ""
+        , bounds = Rect.zero
+        , children = mempty
+        }
+
+mapTree :: (WidgetTree -> WidgetTree) -> WidgetTree -> WidgetTree
+mapTree f =
+  over #children (fmap (mapTree f)) >>> f
 
 fromWidgetLayout :: WidgetLayout -> WidgetTree
-fromWidgetLayout WidgetLayout{ children = layoutChildren, xy, wh, layout } =
-  let position = xy & fromMaybe 0
-      children = layoutChildren
-        & map (\ch@WidgetLayout{ name } -> (name, fromWidgetLayout ch))
-        & unzip
-        & over _1 (map HashedText.new)
-        & over _2 (packChildren position layout)
-        & uncurry zip
-        & HashMap.fromList
-        & unpackUnderscoreChildren
-      size = wh & fromMaybe (
-          foldl' Rect.union Rect.zero (children ^.. folded . #bounds)
-            & view #wh
-        )
-  in WidgetTree
-    { bounds = Rect.fromMinSize position size
-    , children = children
-    }
+fromWidgetLayout = fromWidgetLayout' ""
+  where
+    fromWidgetLayout' parentName WidgetLayout{ children = layoutChildren, name, xy, wh, layout } =
+      let absoluteName = parentName <> "." <> name
+          position = xy & fromMaybe 0
+          children = layoutChildren
+            & map (\ch@WidgetLayout{ name = childName } ->
+                (childName, fromWidgetLayout' absoluteName ch)
+              )
+            & unzip
+            & over _1 (map HashedText.new)
+            & over _2 (packChildren position layout)
+            & uncurry zip
+            & HashMap.fromList
+            & unpackUnderscoreChildren
+          size = wh & fromMaybe (
+              foldl' Rect.union Rect.zero (children ^.. folded . #bounds)
+                & view #wh
+            )
+      in WidgetTree
+        { name = HashedText.new absoluteName
+        , bounds = Rect.fromMinSize position size
+        , children = children
+        }
 
 packChildren :: V2 Int -> WidgetLayout.Layout -> [WidgetTree] -> [WidgetTree]
 packChildren origin layout children =
@@ -83,7 +99,3 @@ unpackUnderscoreChildren children =
   let cond = HashedText.toText >>> Text.isPrefixOf "_"
       unpackedChildren = children ^. ifolded . ifiltered (\i _ -> cond i) . #children
   in (children & HashMap.filterWithKey (\i _ -> not (cond i))) <> unpackedChildren
-
-mapTree :: (WidgetTree -> WidgetTree) -> WidgetTree -> WidgetTree
-mapTree f =
-  over #children (fmap (mapTree f)) >>> f
