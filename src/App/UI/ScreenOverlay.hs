@@ -4,6 +4,8 @@ where
 
 import App.Prelude
 
+import qualified App.Common.HashedText as HashedText
+import qualified App.Common.Print as Print
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.Update.UIState as UIState
@@ -15,7 +17,6 @@ import App.Common.Util (whenAlt)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import Data.String (fromString)
 
 data Action
   = ToggleWindow UIState.Window
@@ -94,7 +95,7 @@ timePanel gs = do
 
   setSpeed <- (["stop", "1min", "10min", "1h", "12h", "5d"] :: [Text])
     & itraverse (\speed label -> do
-      let widget = fromString ("speed" ++ show speed)
+      let widget = HashedText.new (Print.toText ("speed" <> Print.int speed))
       Updating.widget widget
         ( #bounds . #xy . _x +~ controlsOffset
           >>> Widget.button label
@@ -107,7 +108,7 @@ timePanel gs = do
           let offset = screenWidth - 2 * (bounds ^. #xy . _x) - (bounds ^. #wh . _x)
           in bounds & #xy . _x +~ offset
       )
-      >>> Widget.label (gs ^. #time & Time.printDateTime & fromString)
+      >>> Widget.label (gs ^. #time & Time.printDateTime)
     )
 
   pure (nextMidnight <|> setSpeed)

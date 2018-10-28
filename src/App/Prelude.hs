@@ -67,8 +67,6 @@ import GHC.Generics as X
   (Generic)
 import Linear as X
   (V2(..), V4(..), (*^), (^/), _x, _y)
-import Text.Printf as X
-  (printf)
 
 import qualified Data.Text.Lazy.Builder
 

@@ -2,7 +2,7 @@ module App.Dimension.Time where
 
 import App.Prelude
 
-import Text.Printf (printf)
+import qualified App.Common.Print as Print
 
 newtype Time a = Time { toSeconds :: a }
   deriving (Generic, Show, Eq, Ord, Enum, Num, Integral, Real, Functor)
@@ -31,21 +31,21 @@ nextMidnight time = (time `quot` oneDay + 1) * oneDay
 daysInMonth :: Num a => a
 daysInMonth = 30
 
-printDuration :: Time Int -> String
+printDuration :: Time Int -> TextBuilder
 printDuration (Time secs)
-  | secs < 60 = printf "%d secs" secs
-  | secs < 3600 = printf "%.2f minutes" (fromIntegral secs / 60 :: Double)
-  | secs < 24 * 3600 = printf "%.2f hours" (fromIntegral secs / 3600 :: Double)
-  | otherwise = printf "%.2f days" (fromIntegral secs / 24 / 3600 :: Double)
+  | secs < 60 = Print.int secs <> " secs"
+  | secs < 3600 = Print.float2 (fromIntegral secs / 60 :: Double) <> " minutes"
+  | secs < 24 * 3600 = Print.float2 (fromIntegral secs / 3600 :: Double) <> " hours"
+  | otherwise = Print.float2 (fromIntegral secs / 24 / 3600 :: Double) <> " days"
 
-printDate :: Time Int -> String
+printDate :: Time Int -> TextBuilder
 printDate (Time t) =
   let day = 1 + t `quot` (24 * 3600) `rem` 30
       month = 1 + t `quot` (daysInMonth * 24 * 3600) `rem` 12
       year = 2100 + t `quot` (12 * 30 * 24 * 3600)
-  in printf "%d-%02d-%02d" year month day
+  in Print.int year <> "-" <> Print.int02 month <> "-" <> Print.int02 day
 
-printDateTime :: Time Int -> String
+printDateTime :: Time Int -> TextBuilder
 printDateTime (Time t) =
   let secs = t `rem` 60
       mins = t `quot` 60 `rem` 60
@@ -53,4 +53,5 @@ printDateTime (Time t) =
       day = 1 + t `quot` (24 * 3600) `rem` 30
       month = 1 + t `quot` (daysInMonth * 24 * 3600) `rem` 12
       year = 2100 + t `quot` (12 * 30 * 24 * 3600)
-  in printf "%d-%02d-%02d %02d:%02d:%02d" year month day hrs mins secs
+  in Print.int year <> "-" <> Print.int02 month <> "-" <> Print.int02 day
+    <> " " <> Print.int02 hrs <> ":" <> Print.int02 mins <> ":" <> Print.int02 secs

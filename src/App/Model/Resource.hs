@@ -13,14 +13,7 @@ data Resource
   | Erchanite
   | Tellerite
   | Installation Installation
-  deriving (Generic, Eq)
-
-instance Show Resource where
-  show = \case
-    Cadrium -> "Cadrium"
-    Erchanite -> "Erchanite"
-    Tellerite -> "Tellerite"
-    Installation i -> show i ++ " Installation"
+  deriving (Show, Generic, Eq)
 
 instance Hashable Resource
 
@@ -32,8 +25,15 @@ all =
 minerals :: [Resource]
 minerals = [Cadrium, Erchanite, Tellerite]
 
-shortName :: Resource -> TextBuilder
-shortName = \case
+print :: Resource -> TextBuilder
+print = \case
+  Cadrium -> "Cadrium"
+  Erchanite -> "Erchanite"
+  Tellerite -> "Tellerite"
+  Installation i -> Installation.print i <> " Installation"
+
+printShort :: Resource -> TextBuilder
+printShort = \case
   Cadrium -> "Cad"
   Erchanite -> "Ern"
   Tellerite -> "Tlr"
@@ -42,6 +42,6 @@ shortName = \case
 printCost :: HashMap Resource Double -> TextBuilder
 printCost =
   itoList
-  >>> map (\(resource, mass) -> Print.float0 mass <> " " <> shortName resource)
+  >>> map (\(resource, mass) -> Print.float0 mass <> " " <> printShort resource)
   >>> List.intersperse ", "
   >>> fold

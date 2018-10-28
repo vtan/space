@@ -13,7 +13,6 @@ import qualified App.Model.Ship as Ship
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
-import qualified Linear as Lin
 
 import App.Common.Id (Id)
 import App.Common.Util (whenAlt)
@@ -22,7 +21,6 @@ import App.Model.GameState (GameState(..))
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
 import App.Update.Updating (Updating)
-import Data.String (fromString)
 import Text.Read (readMaybe)
 
 data Action
@@ -101,7 +99,7 @@ renamePanel = do
 
 infoLabels :: Ship -> GameState -> Updating ()
 infoLabels Ship{ speed, order } gs = do
-  let commonLabels = [fromString ("Speed: " <> Speed.printKmPerSec speed)]
+  let commonLabels = ["Speed: " <> Speed.printKmPerSec speed]
       orderLabels = case order of
         Just o ->
           let (orderStr, etaStr) = case o of
@@ -109,11 +107,8 @@ infoLabels Ship{ speed, order } gs = do
                   let bodyName = gs ^? #bodies . at bodyId . _Just . #name & fromMaybe "???"
                       etaDate = Time.printDateTime (path ^. #endTime)
                       etaDuration = Time.printDuration (path ^. #endTime - gs ^. #time)
-                      actualSpeed = Speed.div
-                        (Lin.distance (path ^. #endPos) (path ^. #startPos))
-                        (path ^. #endTime - path ^. #startTime)
-                  in (printf "move to %s (act. spd. %s)" bodyName (Speed.printKmPerSec actualSpeed), printf "%s, %s" etaDate etaDuration)
-          in fromString <$> ["Current order: " ++ orderStr, "ETA: " ++ etaStr]
+                  in ("move to " <> Print.text bodyName, etaDate <> ", " <> etaDuration)
+          in ["Current order: " <> orderStr, "ETA: " <> etaStr]
         Nothing -> ["No current order"]
   Updating.widget "infoLabels" $
     Widget.labels 20 (commonLabels ++ orderLabels)
@@ -123,7 +118,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
   selectedResource <- Updating.widget "selectedResource" $
     Widget.closedDropdown
       20 380
-      id (show >>> fromString)
+      id (Resource.print >>> Print.toText)
       #selectedResource
       Resource.all
 
@@ -163,7 +158,7 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
       loadedCargo
         & itoList
         & map (\(resource, loadedQty) ->
-          fromString (printf "Stored %s: %.0f t" (show resource) loadedQty)
+          "Stored " <> Resource.print resource <> ": " <> Print.float0 loadedQty <> " t"
         )
 
   pure $ load <|> loadAll <|> unload <|> unloadAll

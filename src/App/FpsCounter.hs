@@ -1,4 +1,4 @@
-module App.FpsCounter 
+module App.FpsCounter
   ( Counter
   , new, record
   )
@@ -11,6 +11,7 @@ import qualified SDL.Raw
 
 import Data.String (fromString)
 import Data.Word (Word64)
+import Text.Printf (printf)
 
 sampledFrameCount :: Num a => a
 sampledFrameCount = 60
@@ -101,7 +102,7 @@ printStats Counter{ totalFrameTime, frameCount, counterFrequency } rtsStats =
   in case rtsStats of
     Just RTSStats{ gcSec, allocPerFrame, usedMemory } ->
       let gcPerc = gcSec / totalFrameSec * 100
-      in fromString $ printf "FPS: %d | GC: %.2f%% | alloc: %s | in use: %d MB" 
+      in fromString $ printf "FPS: %d | GC: %.2f%% | alloc: %s | in use: %d MB"
         fps' gcPerc (memToString allocPerFrame) (quot usedMemory (1024 * 1024))
     Nothing ->
       fromString $ printf "FPS: %.2f" fps

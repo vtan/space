@@ -7,6 +7,7 @@ import App.Prelude
 import qualified App.Common.Print as Print
 import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Model.Installation as Installation
+import qualified App.Model.Resource as Resource
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
@@ -20,7 +21,6 @@ import App.Model.Installation (Installation)
 import App.Model.Mineral (Mineral(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Update.Updating (Updating)
-import Data.String (fromString)
 import Text.Read (readMaybe)
 
 data Action
@@ -95,7 +95,7 @@ mineralTable bodyId gs = do
   let minerals = gs ^@.. #bodyMinerals . at bodyId . _Just . ifolded
       (mineralLabels, availableLabels, accessibilityLabels) = unzip3 $
         minerals <&> \(mineral, Mineral{ available, accessibility }) ->
-          ( fromString $ show mineral
+          ( Resource.print mineral
           , Print.float0 available <> " t"
           , Print.float0 (100 * accessibility) <> "%"
           ) -- TODO table widget?
@@ -107,7 +107,7 @@ mineralTable bodyId gs = do
 stockpileTable :: Colony -> Updating ()
 stockpileTable Colony{ stockpile } = do
   let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(resource, mass) ->
-        ( fromString $ show resource
+        ( Resource.print resource
         , if resource & has (_Ctor @"Installation")
           then Print.float0 mass <> " t" <> Print.brackets (Print.int (floor (mass / Installation.mass) :: Int) <> " buildings")
           else Print.float0 mass <> " t"
@@ -119,7 +119,7 @@ stockpileTable Colony{ stockpile } = do
 installationTable :: Colony -> Updating ()
 installationTable Colony{ installations } = do
   let (mineLabels, mineQtyLabels) = unzip $ itoList installations <&> \(installation, qty) ->
-        ( fromString $ show installation
+        ( Installation.print installation
         , Print.int qty
         )
   Updating.widget "title" $ Widget.label' "Installations"
@@ -148,7 +148,7 @@ installationPanel colony = do
   selectedInstallation <- Updating.widget "selectedInstallation" $
     Widget.closedDropdown
       20 380
-      id (show >>> fromString)
+      id (Installation.print >>> Print.toText)
       #selectedInstallation
       Installation.all
 

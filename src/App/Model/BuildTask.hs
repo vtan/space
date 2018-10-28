@@ -2,8 +2,10 @@ module App.Model.BuildTask where
 
 import App.Prelude
 
+import qualified App.Common.Print as Print
+import qualified App.Model.Installation as Installation
+
 import App.Model.Installation (Installation)
-import Data.String (fromString)
 
 data BuildTask = BuildTask
   { installation :: Installation
@@ -13,8 +15,7 @@ data BuildTask = BuildTask
   }
   deriving (Show, Generic)
 
-print :: BuildTask -> Text
+print :: BuildTask -> TextBuilder
 print BuildTask{..} =
-  fromString $
-    printf "%s (%d)" (show installation) quantity
-      ++ (if installWhenDone then " (install)" else "")
+  Installation.print installation <> " " <> Print.brackets (Print.int quantity)
+    <> (if installWhenDone then " (install)" else " (store)")

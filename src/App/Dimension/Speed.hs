@@ -2,6 +2,7 @@ module App.Dimension.Speed where
 
 import App.Prelude
 
+import qualified App.Common.Print as Print
 import qualified App.Dimension.Local as Local
 import qualified App.Dimension.Time as Time
 
@@ -22,9 +23,9 @@ mul :: (Num a, Integral b) => Time b -> Speed a -> Local a
 mul time (Speed auPerSec) =
   Local.au (fromIntegral (Time.toSeconds time) * auPerSec)
 
-printKmPerSec :: Speed Double -> String
+printKmPerSec :: Speed Double -> TextBuilder
 printKmPerSec (Speed auPerSec) =
-  printf "%.0f km/s" (auPerSec * auToKm)
+  Print.float0 (auPerSec * auToKm) <> " km/s"
 
 auToKm :: Num a => a
 auToKm = 149597000

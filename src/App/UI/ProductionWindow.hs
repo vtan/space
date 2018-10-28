@@ -28,7 +28,6 @@ import App.Model.Resource (Resource)
 import App.Update.Updating (Updating)
 import Control.Monad.Reader.Class (local)
 import Control.Monad.Zip (munzip)
-import Data.String (fromString)
 
 data Action
   = ChangeMiningPriority Resource Int
@@ -128,7 +127,7 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
         let offsetRow bounds = bounds & #xy . _y +~ i * rowHeight
         local (#widgetTree %~ WidgetTree.mapTree (#bounds %~ offsetRow)) $ do
           Updating.widget "name" $
-            Widget.label (fromString $ show resource)
+            Widget.label (Resource.print resource)
           Updating.widget "monthlyMined" $
             Widget.label (Print.float0 monthlyMined <> " t")
           Updating.widget "mineable" $
@@ -164,7 +163,7 @@ buildingPanel now colony@Colony{ buildQueue } = do
   selectedInstallation <- Updating.widget "selectedInstallation" $
     Widget.closedDropdown
       20 380
-      id (show >>> fromString)
+      id (Installation.print >>> Print.toText)
       #selectedInstallation
       Installation.all
 
@@ -184,13 +183,13 @@ buildingPanel now colony@Colony{ buildQueue } = do
     Updating.widget "newBuildEffort" $
       Widget.label ("Build effort: " <> Print.int buildEffort)
     Updating.widget "newDone" $
-      Widget.label (fromString $ "Done: " ++ Time.printDate done)
+      Widget.label ("Done: " <> Time.printDate done)
     Updating.widget "newCost" $
       Widget.label ("Cost: " <> Resource.printCost cost)
 
   (selectedTaskWithIndex, _) <- Updating.widget "buildQueue" $
     Widget.listBox
-      20 (view _1) (view (_2 . to BuildTask.print))
+      20 (view _1) (view (_2 . to BuildTask.print . to Print.toText))
       #selectedBuildingTaskIndex
       (zip [0..] buildQueue)
   let (selectedTaskIndex, selectedTask) = munzip selectedTaskWithIndex
@@ -203,7 +202,7 @@ buildingPanel now colony@Colony{ buildQueue } = do
     Updating.widget "enqueuedBuildEffort" $
       Widget.label ("Build effort: " <> Print.int buildEffortSpent <> " / " <> Print.int buildEffort)
     Updating.widget "enqueuedDone" $
-      Widget.label (fromString $ doneLabel ++ Time.printDate done)
+      Widget.label (doneLabel <> Time.printDate done)
     Updating.widget "enqueuedCost" $
       Widget.label ("Cost: " <> Resource.printCost cost)
 
