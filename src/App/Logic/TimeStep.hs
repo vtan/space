@@ -7,10 +7,10 @@ import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Logic.Mining as Logic.Mining
+import qualified App.Logic.ShipBuilding as Logic.ShipBuilding
 import qualified App.Model.Body as Body
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
-import qualified App.Model.ShipBuildingTask as ShipBuildingTask
 
 import App.Common.Id (Id(..))
 import App.Dimension.Time (Time)
@@ -18,7 +18,6 @@ import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
-import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 
 stepTime :: Time Int -> GameState -> GameState
 stepTime dt gs =
@@ -67,23 +66,9 @@ productionTick gs@GameState{ colonies } =
 productionTickOnColony :: Id Body -> GameState -> GameState
 productionTickOnColony bodyId =
   Logic.Building.build bodyId
-  >>> buildShipOnColony bodyId
+  >>> Logic.ShipBuilding.build bodyId
   >>> Logic.Mining.mine bodyId
   >>> shrinkPopulation bodyId
-
-buildShipOnColony :: Id Body -> GameState -> GameState
-buildShipOnColony bodyId gs@GameState{ colonies, time } =
-  case colonies ^? at bodyId . _Just . #shipBuildingTask . _Just of
-    Just ShipBuildingTask{ ShipBuildingTask.finishTime } | finishTime <= time ->
-      let shipId = gs ^. #ships & IdMap.nextId
-          ship = do
-            orbitalState <- gs ^. #bodyOrbitalStates . at bodyId
-            pure $ Logic.Colony.shipBuiltAt bodyId orbitalState shipId
-      in gs
-        & #colonies . at bodyId . _Just . #shipBuildingTask .~ Nothing
-        & #ships . at shipId .~ ship
-    Just ShipBuildingTask{} -> gs
-    Nothing -> gs
 
 shrinkPopulation :: Id Body -> GameState -> GameState
 shrinkPopulation bodyId gs =

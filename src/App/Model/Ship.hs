@@ -12,14 +12,34 @@ import App.Model.Resource (Resource)
 data Ship = Ship
   { shipId :: Id Ship
   , name :: Text
+  , size :: Int
+  , capability :: Capability
   , position :: V2 (Local Double)
   , speed :: Speed Double
-  , cargoCapacity :: Double
-  , loadedCargo :: HashMap Resource Double
-  , cabinCapacity :: Int
-  , loadedPopulation :: Int
   , order :: Maybe Order
   , attachedToBody :: Maybe (Id Body)
+  }
+  deriving (Show, Generic)
+
+data Type
+  = FreighterType
+  | ColonyShipType
+  deriving (Show, Generic)
+
+data Capability
+  = Freighter FreighterCapability
+  | ColonyShip ColonyShipCapability
+  deriving (Show, Generic)
+
+data FreighterCapability = FreighterCapability
+  { cargoCapacity :: Double
+  , loadedCargo :: HashMap Resource Double
+  }
+  deriving (Show, Generic)
+
+data ColonyShipCapability = ColonyShipCapability
+  { cabinCapacity :: Int
+  , loadedPopulation :: Int
   }
   deriving (Show, Generic)
 

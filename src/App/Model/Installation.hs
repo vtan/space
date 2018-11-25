@@ -6,6 +6,7 @@ data Installation
   = Infrastructure
   | Mine
   | Factory
+  | Shipyard
   deriving (Show, Generic, Eq, Enum, Bounded)
 
 instance Hashable Installation
@@ -21,3 +22,4 @@ print = \case
   Infrastructure -> "Infrastructure"
   Mine -> "Mine"
   Factory -> "Factory"
+  Shipyard -> "Shipyard"

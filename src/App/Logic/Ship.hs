@@ -22,44 +22,53 @@ cancelShipOrder Ship{ shipId } gs =
   gs & #ships . at shipId . _Just . #order .~ Nothing
 
 loadResourceToShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
-loadResourceToShip qtyOrAll resource Ship{ shipId, attachedToBody, cargoCapacity, loadedCargo } gs =
+loadResourceToShip qtyOrAll resource Ship{ shipId, attachedToBody, capability } gs =
   fromMaybe gs $ do
     bodyId <- attachedToBody
+    Ship.FreighterCapability{ cargoCapacity, loadedCargo } <-
+      capability ^? _Ctor @"Freighter"
     availableOnColony <- gs ^? #colonies . at bodyId . _Just . #stockpile . at resource . _Just
     let remainingCargoSpace = cargoCapacity - sum loadedCargo
     let loadedQty = minimum (toList qtyOrAll ++ [availableOnColony, remainingCargoSpace])
     pure $ gs
-      & #ships . at shipId . _Just . #loadedCargo . at resource . non 0 +~ loadedQty
+      & #ships . at shipId . _Just . #capability . _Ctor @"Freighter"
+        . #loadedCargo . at resource . non 0 +~ loadedQty
       & #colonies . at bodyId . _Just . #stockpile . at resource . non 0 -~ loadedQty
 
 unloadResourceFromShip :: Maybe Double -> Resource -> Ship -> GameState -> GameState
-unloadResourceFromShip qtyOrAll resource Ship{ shipId, attachedToBody, loadedCargo } gs =
+unloadResourceFromShip qtyOrAll resource Ship{ shipId, attachedToBody, capability } gs =
   fromMaybe gs $ do
     bodyId <- attachedToBody
+    Ship.FreighterCapability{ loadedCargo } <- capability ^? _Ctor @"Freighter"
     _ <- gs ^. #colonies . at bodyId
     availableOnShip <- loadedCargo ^. at resource
     let unloadedQty = minimum (toList qtyOrAll ++ [availableOnShip])
     pure $ gs
-      & #ships . at shipId . _Just . #loadedCargo . at resource . non 0 -~ unloadedQty
+      & #ships . at shipId . _Just . #capability . _Ctor @"Freighter"
+        . #loadedCargo . at resource . non 0 -~ unloadedQty
       & #colonies . at bodyId . _Just . #stockpile . at resource . non 0 +~ unloadedQty
 
 loadPopulationToShip :: Maybe Int -> Ship -> GameState -> GameState
-loadPopulationToShip qtyOrAll Ship{ shipId, attachedToBody, cabinCapacity, loadedPopulation } gs =
+loadPopulationToShip qtyOrAll Ship{ shipId, attachedToBody, capability } gs =
   fromMaybe gs $ do
     bodyId <- attachedToBody
+    Ship.ColonyShipCapability{ cabinCapacity, loadedPopulation } <-
+      capability ^? _Ctor @"ColonyShip"
     populationOnColony <- gs ^? #colonies . at bodyId . _Just . #population
     let remainingCabinSpace = cabinCapacity - loadedPopulation
     let loadedQty = minimum (toList qtyOrAll ++ [populationOnColony, remainingCabinSpace])
     pure $ gs
-      & #ships . at shipId . _Just . #loadedPopulation +~ loadedQty
+      & #ships . at shipId . _Just . #capability . _Ctor @"ColonyShip" . #loadedPopulation +~ loadedQty
       & #colonies . at bodyId . _Just . #population -~ loadedQty
 
 unloadPopulationFromShip :: Maybe Int -> Ship -> GameState -> GameState
-unloadPopulationFromShip qtyOrAll Ship{ shipId, attachedToBody, loadedPopulation } gs =
+unloadPopulationFromShip qtyOrAll Ship{ shipId, attachedToBody, capability } gs =
   fromMaybe gs $ do
     bodyId <- attachedToBody
+    Ship.ColonyShipCapability{ loadedPopulation } <-
+      capability ^? _Ctor @"ColonyShip"
     _ <- gs ^. #colonies . at bodyId
     let unloadedQty = minimum (toList qtyOrAll ++ [loadedPopulation])
     pure $ gs
-      & #ships . at shipId . _Just . #loadedPopulation -~ unloadedQty
+      & #ships . at shipId . _Just . #capability . _Ctor @"ColonyShip" . #loadedPopulation -~ unloadedQty
       & #colonies . at bodyId . _Just . #population +~ unloadedQty

@@ -3,10 +3,11 @@ module App.Update.Initial where
 import App.Prelude
 
 import qualified App.Common.IdMap as IdMap
-import qualified App.Logic.Colony as Logic.Colony
+import qualified App.Logic.ShipBuilding as Logic.ShipBuilding
 import qualified App.Model.Body as Body
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
+import qualified App.Model.Ship as Ship
 import qualified Data.HashMap.Strict as HashMap
 
 import App.Common.Id (Id(..))
@@ -52,7 +53,7 @@ gameState = GameState
     ]
   , ships = IdMap.fromEntities (view #shipId)
       ( Body.statesAtTime 0 theRootBody ^.. at (Id 2) . _Just <&> \orbitalState ->
-          Logic.Colony.shipBuiltAt (Id 2) orbitalState (Id 0)
+          Logic.ShipBuilding.shipBuiltAt (Id 2) orbitalState (Id 0) Ship.FreighterType 1
       )
   , time = 0
   }

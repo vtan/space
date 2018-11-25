@@ -47,7 +47,7 @@ update gs =
     for_ clickedShip $ \ship -> #ui . #editedShipName .= (ship ^. #name)
 
     gs' <- Updating.useWidget "rightPanel" $
-      for selectedShip $ \ship@Ship{ shipId } -> do
+      for selectedShip $ \ship@Ship{ shipId, capability } -> do
         rename <- Updating.useWidget "renamePanel" renamePanel
         infoLabels ship gs
 
@@ -65,8 +65,15 @@ update gs =
             #selectedBody
             (gs ^.. #bodies . folded)
 
-        cargoAction <- Updating.useWidget "cargoPanel" (cargoPanel ship)
-        cabinAction <- Updating.useWidget "cabinPanel" (cabinPanel ship)
+        cargoAction <-
+          case capability of
+            Ship.Freighter cap -> Updating.useWidget "cargoPanel" (cargoPanel cap)
+            _ -> pure Nothing
+
+        cabinAction <-
+          case capability of
+            Ship.ColonyShip cap -> Updating.useWidget "cabinPanel" (cabinPanel cap)
+            _ -> pure Nothing
 
         let moveToSelected = (moveTo *> selectedBody) <&> \b -> MoveToBody (b ^. #bodyId)
             action = rename <|> moveToSelected <|> cancel <|> cargoAction <|> cabinAction
@@ -113,8 +120,8 @@ infoLabels Ship{ speed, order } gs = do
   Updating.widget "infoLabels" $
     Widget.labels 20 (commonLabels ++ orderLabels)
 
-cargoPanel :: Ship -> Updating (Maybe Action)
-cargoPanel Ship{ cargoCapacity, loadedCargo } = do
+cargoPanel :: Ship.FreighterCapability -> Updating (Maybe Action)
+cargoPanel Ship.FreighterCapability{ cargoCapacity, loadedCargo } = do
   selectedResource <- Updating.widget "selectedResource" $
     Widget.closedDropdown
       20 380
@@ -163,8 +170,8 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
   pure $ load <|> loadAll <|> unload <|> unloadAll
 
-cabinPanel :: Ship -> Updating (Maybe Action)
-cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
+cabinPanel :: Ship.ColonyShipCapability -> Updating (Maybe Action)
+cabinPanel Ship.ColonyShipCapability{ cabinCapacity, loadedPopulation } = do
   Updating.widget "cabinCapacity" $
     Widget.label $
       "Cabin capacity: " <> Print.int loadedPopulation <> " / " <> Print.int cabinCapacity <> " ppl"

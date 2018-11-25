@@ -6,8 +6,10 @@ import App.Prelude
 
 import qualified App.Common.Print as Print
 import qualified App.Logic.Colony as Logic.Colony
+import qualified App.Logic.ShipBuilding as Logic.ShipBuilding
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
+import qualified App.Model.Ship as Ship
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
@@ -24,7 +26,7 @@ import App.Update.Updating (Updating)
 import Text.Read (readMaybe)
 
 data Action
-  = BuildShip
+  = BuildShip Colony
   | CancelBuildingShip
   | Install Installation Int Colony
   | Uninstall Installation Int Colony
@@ -81,8 +83,8 @@ update gs = do
               Nothing -> pure Nothing
 
         pure $ case action of
-          Just BuildShip -> Logic.Colony.startShipBuildingTask bodyId gs
-          Just CancelBuildingShip -> Logic.Colony.cancelShipBuildingTask bodyId gs
+          Just (BuildShip colony) -> Logic.ShipBuilding.startBuilding Ship.FreighterType 1 colony gs
+          Just CancelBuildingShip -> Logic.ShipBuilding.cancel bodyId gs
           Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty colony gs
           Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty colony gs
           Just FoundColony -> Logic.Colony.foundColony bodyId gs
@@ -127,7 +129,7 @@ installationTable Colony{ installations } = do
   Updating.widget "quantities" $ Widget.labels 20 mineQtyLabels
 
 shipBuildingPanel :: Colony -> Updating (Maybe Action)
-shipBuildingPanel Colony{ shipBuildingTask } = do
+shipBuildingPanel colony@Colony{ shipBuildingTask } = do
   let label = case shipBuildingTask of
         Just ShipBuildingTask{} -> "Producing: Ship"
         Nothing -> "Producing: nothing"
@@ -135,7 +137,7 @@ shipBuildingPanel Colony{ shipBuildingTask } = do
 
   build <- Updating.widget "build"
     (Widget.button "Produce ship")
-    <&> boolToMaybe BuildShip
+    <&> boolToMaybe (BuildShip colony)
 
   cancel <- Updating.widget "cancel"
     (Widget.button "Cancel")

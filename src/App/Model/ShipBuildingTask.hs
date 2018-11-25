@@ -2,8 +2,11 @@ module App.Model.ShipBuildingTask where
 
 import App.Prelude
 
-import App.Dimension.Time (Time)
+import qualified App.Model.Ship as Ship
 
 data ShipBuildingTask = ShipBuildingTask
-  { finishTime :: Time Int }
+  { typ :: Ship.Type
+  , size :: Int
+  , buildEffortSpent :: Int
+  }
   deriving (Show, Generic)

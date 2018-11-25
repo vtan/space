@@ -5,6 +5,7 @@ import App.Prelude
 import App.Model.Colony (Colony)
 import App.Model.Resource (Resource)
 
+-- TODO this could consume/produce resource maps instead of colonies
 payResources :: HashMap Resource Double -> Colony -> Maybe Colony
 payResources cost colony =
   cost & ifoldlM

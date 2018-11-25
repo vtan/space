@@ -52,6 +52,7 @@ buildEffortNeeded = \case
   Installation.Infrastructure -> 100
   Installation.Mine -> 200
   Installation.Factory -> 200
+  Installation.Shipyard -> 300
 
 resourcesNeeded :: Installation -> HashMap Resource Double
 resourcesNeeded = \case
@@ -60,6 +61,8 @@ resourcesNeeded = \case
   Installation.Mine ->
     [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
   Installation.Factory ->
+    [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
+  Installation.Shipyard ->
     [ (Resource.Cadrium, 200), (Resource.Erchanite, 50) ]
 
 dailyBuildEffort :: Colony -> Int
