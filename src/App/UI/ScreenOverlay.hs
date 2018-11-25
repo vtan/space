@@ -13,7 +13,7 @@ import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified SDL
 
-import App.Common.Util (whenAlt)
+import App.Common.Util (boolToMaybe)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
@@ -56,15 +56,15 @@ handleUI gs =
   Updating.useWidget "overlay" $ do
     toggleColonies <- Updating.widget "colonies"
       (Widget.button "Colonies")
-      <&> whenAlt (ToggleWindow UIState.ColonyWindow)
+      <&> boolToMaybe (ToggleWindow UIState.ColonyWindow)
 
     toggleShips <- Updating.widget "ships"
       (Widget.button "Ships")
-      <&> whenAlt (ToggleWindow UIState.ShipWindow)
+      <&> boolToMaybe (ToggleWindow UIState.ShipWindow)
 
     toggleProduction <- Updating.widget "production"
       (Widget.button "Production")
-      <&> whenAlt (ToggleWindow UIState.ProductionWindow)
+      <&> boolToMaybe (ToggleWindow UIState.ProductionWindow)
 
     timeAction <- Updating.useWidget "timePanel" $
       timePanel gs
@@ -91,7 +91,7 @@ timePanel gs = do
   nextMidnight <- Updating.widget "nextMidnight"
     ( #bounds . #xy . _x +~ controlsOffset
       >>> Widget.button "next"
-    ) <&> whenAlt NextMidnight
+    ) <&> boolToMaybe NextMidnight
 
   setSpeed <- (["stop", "1min", "10min", "1h", "12h", "5d"] :: [Text])
     & itraverse (\speed label -> do
@@ -99,7 +99,7 @@ timePanel gs = do
       Updating.widget widget
         ( #bounds . #xy . _x +~ controlsOffset
           >>> Widget.button label
-        ) <&> whenAlt (SetSpeed speed)
+        ) <&> boolToMaybe (SetSpeed speed)
     )
     & fmap asum
 

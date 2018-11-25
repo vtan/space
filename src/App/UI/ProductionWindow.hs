@@ -17,7 +17,7 @@ import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified App.Update.WidgetTree as WidgetTree
 
-import App.Common.Util (whenAlt)
+import App.Common.Util (boolToMaybe)
 import App.Dimension.Time (Time)
 import App.Model.BuildTask (BuildTask(..))
 import App.Model.Colony (Colony(..))
@@ -141,11 +141,11 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
 
           increasePriority <- Updating.widget "increasePriority"
             (Widget.button "+")
-            <&> whenAlt (ChangeMiningPriority resource 1)
+            <&> boolToMaybe (ChangeMiningPriority resource 1)
 
           decreasePriority <- Updating.widget "decreasePriority"
             (Widget.button "−")
-            <&> whenAlt (ChangeMiningPriority resource (-1))
+            <&> boolToMaybe (ChangeMiningPriority resource (-1))
 
           pure (increasePriority <|> decreasePriority)
 
@@ -169,7 +169,7 @@ buildingPanel now colony@Colony{ buildQueue } = do
 
   enqueue <- Updating.widget "enqueue"
     (Widget.button "Enqueue")
-    <&> whenAlt (EnqueueBuildingTask <$> selectedInstallation)
+    <&> boolToMaybe (EnqueueBuildingTask <$> selectedInstallation)
     <&> join
 
   reset <- Updating.widget "reset" $
@@ -208,22 +208,22 @@ buildingPanel now colony@Colony{ buildQueue } = do
 
   increaseQuantity <- Updating.widget "increaseQuantity"
     (Widget.button "+")
-    <&> whenAlt (ChangeBuildingQueueQuantity <$> selectedTaskIndex <*> pure 1)
+    <&> boolToMaybe (ChangeBuildingQueueQuantity <$> selectedTaskIndex <*> pure 1)
     <&> join
 
   decreaseQuantity <- Updating.widget "decreaseQuantity"
     (Widget.button "−")
-    <&> whenAlt (ChangeBuildingQueueQuantity <$> selectedTaskIndex <*> pure (-1))
+    <&> boolToMaybe (ChangeBuildingQueueQuantity <$> selectedTaskIndex <*> pure (-1))
     <&> join
 
   moveUp <- Updating.widget "moveUp"
     (Widget.button "▲")
-    <&> whenAlt (MoveUpInBuildingQueue <$> selectedTaskIndex)
+    <&> boolToMaybe (MoveUpInBuildingQueue <$> selectedTaskIndex)
     <&> join
 
   moveDown <- Updating.widget "moveDown"
     (Widget.button "▼")
-    <&> whenAlt (MoveDownInBuildingQueue <$> selectedTaskIndex)
+    <&> boolToMaybe (MoveDownInBuildingQueue <$> selectedTaskIndex)
     <&> join
 
   let toggleInstallLabel =
@@ -232,7 +232,7 @@ buildingPanel now colony@Colony{ buildQueue } = do
           _ -> "Do not install"
   toggleInstall <- Updating.widget "toggleInstall"
     (Widget.button toggleInstallLabel)
-    <&> whenAlt (ToggleInstallInBuildingQueue <$> selectedTaskIndex)
+    <&> boolToMaybe (ToggleInstallInBuildingQueue <$> selectedTaskIndex)
     <&> join
 
   pure (enqueue <|> increaseQuantity <|> decreaseQuantity <|> moveUp <|> moveDown <|> toggleInstall)

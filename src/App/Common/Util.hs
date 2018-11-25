@@ -8,6 +8,6 @@ clamp mi x ma
   | x > ma = ma
   | otherwise = x
 
-whenAlt :: Alternative f => a -> Bool -> f a
-whenAlt x b =
-  if b then pure x else empty
+boolToMaybe :: a -> Bool -> Maybe a
+boolToMaybe x b =
+  if b then Just x else Nothing

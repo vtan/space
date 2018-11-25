@@ -15,7 +15,7 @@ import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 
 import App.Common.Id (Id)
-import App.Common.Util (whenAlt)
+import App.Common.Util (boolToMaybe)
 import App.Model.Body (Body)
 import App.Model.GameState (GameState(..))
 import App.Model.Resource (Resource)
@@ -53,10 +53,10 @@ update gs =
 
         moveTo <- Updating.widget "moveTo"
           (Widget.button "Move to...")
-          <&> whenAlt ()
+          <&> boolToMaybe ()
         cancel <- Updating.widget "cancel"
           (Widget.button "Cancel")
-          <&> whenAlt CancelOrder
+          <&> boolToMaybe CancelOrder
 
         selectedBody <- Updating.widget "selectedBody" $
           Widget.closedDropdown
@@ -95,7 +95,7 @@ renamePanel = do
     Widget.textBox  #editedShipName
   Updating.widget "button"
     (Widget.button "Rename")
-    <&> whenAlt (Rename ename)
+    <&> boolToMaybe (Rename ename)
 
 infoLabels :: Ship -> GameState -> Updating ()
 infoLabels Ship{ speed, order } gs = do
@@ -131,22 +131,22 @@ cargoPanel Ship{ cargoCapacity, loadedCargo } = do
 
   load <- Updating.widget "load"
     (Widget.button "Load")
-    <&> whenAlt (LoadResource <$> selectedResource <*> (fmap Just qty))
+    <&> boolToMaybe (LoadResource <$> selectedResource <*> (fmap Just qty))
     <&> join
 
   loadAll <- Updating.widget "loadAll"
     (Widget.button "Load all")
-    <&> whenAlt (LoadResource <$> selectedResource <*> Just Nothing)
+    <&> boolToMaybe (LoadResource <$> selectedResource <*> Just Nothing)
     <&> join
 
   unload <- Updating.widget "unload"
     (Widget.button "Unload")
-    <&> whenAlt (UnloadResource <$> selectedResource <*> (fmap Just qty))
+    <&> boolToMaybe (UnloadResource <$> selectedResource <*> (fmap Just qty))
     <&> join
 
   unloadAll <- Updating.widget "unloadAll"
     (Widget.button "Unload all")
-    <&> whenAlt (UnloadResource <$> selectedResource <*> Just Nothing)
+    <&> boolToMaybe (UnloadResource <$> selectedResource <*> Just Nothing)
     <&> join
 
   Updating.widget "cargoCapacity" $
@@ -182,11 +182,11 @@ cabinPanel Ship{ cabinCapacity, loadedPopulation } = do
 
   load <- Updating.widget "load"
     (Widget.button loadLabel)
-    <&> whenAlt (LoadPopulation qty)
+    <&> boolToMaybe (LoadPopulation qty)
 
   unload <- Updating.widget "unload"
     (Widget.button unloadLabel)
-    <&> whenAlt (UnloadPopulation qty)
+    <&> boolToMaybe (UnloadPopulation qty)
 
   let action = load <|> unload
   when (action & has _Just) $

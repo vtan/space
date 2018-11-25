@@ -13,7 +13,7 @@ import qualified App.Update.Widget as Widget
 import qualified Data.Text as Text
 
 import App.Common.Id (Id)
-import App.Common.Util (whenAlt)
+import App.Common.Util (boolToMaybe)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
@@ -77,7 +77,7 @@ update gs = do
               Just _ ->
                 Updating.widget "foundColony"
                   (Widget.button "Found colony")
-                  <&> whenAlt FoundColony
+                  <&> boolToMaybe FoundColony
               Nothing -> pure Nothing
 
         pure $ case action of
@@ -135,11 +135,11 @@ shipBuildingPanel Colony{ shipBuildingTask } = do
 
   build <- Updating.widget "build"
     (Widget.button "Produce ship")
-    <&> whenAlt BuildShip
+    <&> boolToMaybe BuildShip
 
   cancel <- Updating.widget "cancel"
     (Widget.button "Cancel")
-    <&> whenAlt CancelBuildingShip
+    <&> boolToMaybe CancelBuildingShip
 
   pure (build <|> cancel)
 
@@ -160,12 +160,12 @@ installationPanel colony = do
 
   install <- Updating.widget "install"
     (Widget.button "Install")
-    <&> whenAlt (Install <$> selectedInstallation <*> qty <*> pure colony)
+    <&> boolToMaybe (Install <$> selectedInstallation <*> qty <*> pure colony)
     <&> join
 
   uninstall <- Updating.widget "uninstall"
     (Widget.button "Uninstall")
-    <&> whenAlt (Uninstall <$> selectedInstallation <*> qty <*> pure colony)
+    <&> boolToMaybe (Uninstall <$> selectedInstallation <*> qty <*> pure colony)
     <&> join
 
   pure (install <|> uninstall)
