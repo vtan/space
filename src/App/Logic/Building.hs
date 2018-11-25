@@ -81,25 +81,26 @@ finishTime now effortSpent installation colony =
     )
 
 enqueue :: Installation -> Colony -> GameState -> GameState
-enqueue installation colony@Colony{ bodyId } gs =
+enqueue installation colony@Colony{ bodyId, stockpile, buildQueue } gs =
   fromMaybe gs $ do
     let cost = resourcesNeeded installation
-    colonyWithCostPaid@Colony{ buildQueue } <- Logic.Util.payResources cost colony
-    let currentlyBuilt = buildQueue ^? _head . #installation
+    stockpileAfterCost <- Logic.Util.payResources stockpile cost
+    let colonyAfterCost = colony{ stockpile = stockpileAfterCost }
+        currentlyBuilt = buildQueue ^? _head . #installation
         colony' =
           if installation `elem` currentlyBuilt
-          then colonyWithCostPaid & #buildQueue . _head . #quantity +~ 1
+          then colonyAfterCost & #buildQueue . _head . #quantity +~ 1
           else
             let task = BuildTask
                   { installation, quantity = 1, buildEffortSpent = 0, installWhenDone = True }
-            in colonyWithCostPaid & #buildQueue %~ (task :)
+            in colonyAfterCost & #buildQueue %~ (task :)
     gs
       & #colonies . at bodyId . _Just .~ colony'
       & Just
 
 -- Assumes diff is either -1 or 1.
 changeQuantityInQueue :: Int -> Int -> Colony -> GameState -> GameState
-changeQuantityInQueue queueIndex diff colony@Colony{ bodyId, buildQueue } gs =
+changeQuantityInQueue queueIndex diff colony@Colony{ bodyId, buildQueue, stockpile } gs =
   fromMaybe gs $ do
     (newQueue, BuildTask{ installation }) <-
       buildQueue & Queue.update queueIndex
@@ -110,9 +111,12 @@ changeQuantityInQueue queueIndex diff colony@Colony{ bodyId, buildQueue } gs =
             else Nothing
         )
     let cost = fromIntegral diff *^ resourcesNeeded installation
-    colonyWithCostPaid <- Logic.Util.payResources cost colony
+    stockpileAfterCost <- Logic.Util.payResources stockpile cost
     gs
-      & #colonies . at bodyId . _Just .~ colonyWithCostPaid{ buildQueue = newQueue }
+      & #colonies . at bodyId . _Just .~ colony
+        { buildQueue = newQueue
+        , stockpile = stockpileAfterCost
+        }
       & Just
 
 moveUpInQueue :: Int -> Colony -> GameState -> Maybe GameState

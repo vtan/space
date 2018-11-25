@@ -2,17 +2,14 @@ module App.Logic.Util where
 
 import App.Prelude
 
-import App.Model.Colony (Colony)
-import App.Model.Resource (Resource)
+import qualified Data.HashMap.Strict as HashMap
 
--- TODO this could consume/produce resource maps instead of colonies
-payResources :: HashMap Resource Double -> Colony -> Maybe Colony
-payResources cost colony =
-  cost & ifoldlM
-    (\resource colonyAcc costQty ->
-      let (remainingQty, colony') = colonyAcc & #stockpile . at resource . non 0 <-~ costQty
-      in if remainingQty >= 0
-        then Just colony'
-        else Nothing
-    )
-    colony
+import App.Model.Resource (Resource)
+import Linear ((^-^))
+
+payResources :: HashMap Resource Double -> HashMap Resource Double -> Maybe (HashMap Resource Double)
+payResources resources cost =
+  let candidate = HashMap.filter (/= 0) (resources ^-^ cost)
+  in if all (> 0) candidate
+  then Just candidate
+  else Nothing

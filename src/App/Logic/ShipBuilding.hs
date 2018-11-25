@@ -47,18 +47,22 @@ build bodyId gs@GameState{ colonies, bodyOrbitalStates } =
         )
 
 startBuilding :: Ship.Type -> Int -> Colony -> GameState -> GameState
-startBuilding typ size colony@Colony{ bodyId, shipBuildingTask } gs =
+startBuilding typ size colony@Colony{ bodyId, shipBuildingTask, stockpile } gs =
   fromMaybe gs $ do
     _ <- shipBuildingTask ^? _Nothing
     let cost = resourcesNeeded size
-    colonyWithCostPaid <- Logic.Util.payResources cost colony
+    stockpileAfterCost <- Logic.Util.payResources stockpile cost
     let task = ShipBuildingTask { typ, size, buildEffortSpent = 0 }
-        colony' = colonyWithCostPaid & #shipBuildingTask .~ Just task
+        colony' = colony
+          { stockpile = stockpileAfterCost
+          , shipBuildingTask = Just task
+          }
     Just (gs & #colonies . at bodyId . _Just .~ colony')
 
 cancel :: Id Body -> GameState -> GameState
 cancel bodyId gs =
   gs & #colonies . at bodyId . _Just . #shipBuildingTask .~ Nothing
+-- TODO give cost back
 
 buildEffortNeeded :: Int -> Int
 buildEffortNeeded size = 100 * size
