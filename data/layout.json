@@ -243,7 +243,8 @@
                     "layout": "horizontal",
                     "children": [
                       { "name": "mineCountLabel", "wh": [80, 20] },
-                      { "name": "factoryCountLabel", "wh": [80, 20] }
+                      { "name": "factoryCountLabel", "wh": [80, 20] },
+                      { "name": "shipyardCountLabel", "wh": [80, 20] }
                     ]
                   },
                   {
@@ -251,7 +252,8 @@
                     "layout": "horizontal",
                     "children": [
                       { "name": "mineCount", "wh": [80, 20] },
-                      { "name": "factoryCount", "wh": [80, 20] }
+                      { "name": "factoryCount", "wh": [80, 20] },
+                      { "name": "shipyardCount", "wh": [80, 20] }
                     ]
                   }
                 ]
@@ -378,6 +380,57 @@
                           { "name": "toggleInstall", "xy": [0, 4], "wh": [120, 20] }
                         ]
                       }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "shipBuilding",
+                "layout": "vertical",
+                "padding": 4,
+                "children": [
+                  {
+                    "name": "headingRow",
+                    "layout": "horizontal",
+                    "children": [
+                      { "name": "title", "wh": [120, 20] },
+                      { "name": "monthlyBuildEffort", "wh": [460, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_row1",
+                    "xy": [16, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "selectedShipType", "wh": [120, 20] },
+                      { "name": "shipSizeLabel", "wh": [40, 20] },
+                      { "name": "decreaseShipSize", "wh": [20, 20] },
+                      { "name": "shipSize", "wh": [20, 20] },
+                      { "name": "increaseShipSize", "wh": [20, 20] },
+                      { "name": "build", "wh": [60, 20] },
+                      { "name": "reset", "wh": [60, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_row2",
+                    "xy": [16, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "capability", "wh": [192, 20] },
+                      { "name": "speed", "wh": [192, 20] }
+                    ]
+                  },
+                  {
+                    "name": "_row3",
+                    "xy": [16, 0],
+                    "layout": "horizontal",
+                    "padding": 4,
+                    "children": [
+                      { "name": "buildEffort", "wh": [192, 20] },
+                      { "name": "done", "wh": [192, 20] },
+                      { "name": "cost", "wh": [192, 20] }
                     ]
                   }
                 ]

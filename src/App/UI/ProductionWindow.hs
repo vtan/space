@@ -6,13 +6,17 @@ import App.Prelude
 
 import qualified App.Common.IdMap as IdMap
 import qualified App.Common.Print as Print
+import qualified App.Dimension.Speed as Speed
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Mining as Logic.Mining
+import qualified App.Logic.ShipBuilding as Logic.ShipBuilding
 import qualified App.Model.BuildTask as BuildTask
 import qualified App.Model.Mineral as Mineral
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
+import qualified App.Model.Ship as Ship
+import qualified App.Update.ListBoxState as ListBoxState
 import qualified App.Update.Updating as Updating
 import qualified App.Update.Widget as Widget
 import qualified App.Update.WidgetTree as WidgetTree
@@ -67,12 +71,19 @@ update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
             Updating.widget "factoryCount" $
               Widget.label (Print.int factories)
 
+            let shipyards = installations ^. at Installation.Shipyard . non 0
+            Updating.widget "shipyardCountLabel" $ Widget.label' "Shipyard"
+            Updating.widget "shipyardCount" $
+              Widget.label (Print.int shipyards)
+
           miningAction <- Updating.useWidget "mining" $
             miningPanel colony minerals
           buildingAction <- Updating.useWidget "building" $
             buildingPanel time colony
+          shipBuildingAction <- Updating.useWidget "shipBuilding" $
+            shipBuildingPanel time colony
 
-          case miningAction <|> buildingAction of
+          case miningAction <|> buildingAction <|> shipBuildingAction of
             Just (ChangeMiningPriority resource diff) ->
               pure $ Logic.Mining.changeMiningPriority resource diff colony gs
 
@@ -103,7 +114,7 @@ miningPanel :: Colony -> HashMap Resource Mineral -> Updating (Maybe Action)
 miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
   Updating.useWidget "headingRow" $ do
     let totalMonthlyMined = Time.daysInMonth * Logic.Mining.dailyMinedAtFullAccessibility colony
-    Updating.widget "title" $ Widget.label' "Mining"
+    Updating.widget "title" $ Widget.label' "Mines"
     Updating.widget "totalMined" $
       Widget.label ("Mined / mo at 100% acc.: " <> Print.float0 totalMonthlyMined <> " t")
     Updating.thisWidget Widget.bottomLine
@@ -155,7 +166,7 @@ buildingPanel :: Time Int -> Colony -> Updating (Maybe Action)
 buildingPanel now colony@Colony{ buildQueue } = do
   Updating.useWidget "headingRow" $ do
     let monthlyBuildEffort = Time.daysInMonth * Logic.Building.dailyBuildEffort colony
-    Updating.widget "title" $ Widget.label' "Building"
+    Updating.widget "title" $ Widget.label' "Factories"
     Updating.widget "monthlyBuildEffort" $
       Widget.label ("Build effort / mo: " <> Print.int monthlyBuildEffort)
     Updating.thisWidget Widget.bottomLine
@@ -236,3 +247,60 @@ buildingPanel now colony@Colony{ buildQueue } = do
     <&> join
 
   pure (enqueue <|> increaseQuantity <|> decreaseQuantity <|> moveUp <|> moveDown <|> toggleInstall)
+
+shipBuildingPanel :: Time Int -> Colony -> Updating (Maybe Action)
+shipBuildingPanel now colony = do
+  Updating.useWidget "headingRow" $ do
+    let monthlyBuildEffort = Time.daysInMonth * Logic.ShipBuilding.dailyBuildEffort colony
+    Updating.widget "title" $ Widget.label' "Shipyards"
+    Updating.widget "monthlyBuildEffort" $
+      Widget.label ("Build effort / mo: " <> Print.int monthlyBuildEffort)
+    Updating.thisWidget Widget.bottomLine
+
+  selectedShipType <- Updating.widget "selectedShipType" $
+    Widget.closedDropdown
+      20 380
+      id Ship.printType
+      #selectedShipType
+      Ship.types
+
+  shipSize <- use (#ui . #selectedShipSize)
+  Updating.widget "shipSizeLabel" (Widget.label' "Size:")
+  Updating.widget "shipSize" (Widget.label (Print.int shipSize))
+
+  Updating.widget "increaseShipSize" (Widget.button "+") >>= \click ->
+    when click $
+      #ui . #selectedShipSize %= ((+ 1) >>> min 10)
+
+  Updating.widget "decreaseShipSize" (Widget.button "-") >>= \click ->
+    when click $
+      #ui . #selectedShipSize %= (subtract 1 >>> max 1)
+
+  build <- Updating.widget "build"
+    (Widget.button "Build")
+    <&> boolToMaybe (Just ())
+    <&> join
+
+  Updating.widget "reset" (Widget.button "Reset") >>= \click ->
+    when click $ do
+      #ui . #selectedShipType .= ListBoxState.initial
+      #ui . #selectedShipSize .= 1
+
+  for_ selectedShipType $ \shipType -> do
+    let capability =
+          case Logic.ShipBuilding.capabilityOf shipType shipSize of
+            Ship.Freighter Ship.FreighterCapability{ cargoCapacity } ->
+              "Cargo capacity: " <> Print.float0 cargoCapacity <> " t"
+            Ship.ColonyShip Ship.ColonyShipCapability { cabinCapacity } ->
+              "Cabin capacity: " <> Print.int cabinCapacity
+        speed = "Speed: " <> Speed.printKmPerSec (Logic.ShipBuilding.speedOf shipSize)
+        buildEffort = "Build effort: " <> Print.int (Logic.ShipBuilding.buildEffortNeeded shipSize)
+        done = "Done: " <> Time.printDate (Logic.ShipBuilding.finishTime now 0 shipSize colony)
+        cost = "Cost: " <> Resource.printCost (Logic.ShipBuilding.resourcesNeeded shipSize)
+    Updating.widget "capability" (Widget.label capability)
+    Updating.widget "speed" (Widget.label speed)
+    Updating.widget "buildEffort" (Widget.label buildEffort)
+    Updating.widget "done" (Widget.label done)
+    Updating.widget "cost" (Widget.label cost)
+
+  pure Nothing

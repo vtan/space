@@ -24,7 +24,15 @@ data Ship = Ship
 data Type
   = FreighterType
   | ColonyShipType
-  deriving (Show, Generic)
+  deriving (Show, Generic, Eq, Enum, Bounded)
+
+types :: [Type]
+types = [minBound .. maxBound]
+
+printType :: Type -> Text
+printType = \case
+  FreighterType -> "Freighter"
+  ColonyShipType -> "Colony ship"
 
 data Capability
   = Freighter FreighterCapability

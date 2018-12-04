@@ -4,12 +4,15 @@ import App.Prelude
 
 import qualified App.Common.IdMap as IdMap
 import qualified App.Dimension.Speed as Speed
+import qualified App.Dimension.Time as Time
 import qualified App.Logic.Util as Logic.Util
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 
 import App.Common.Id (Id(..))
+import App.Dimension.Speed (Speed)
+import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
@@ -83,24 +86,39 @@ dailyBuildEffort Colony{ installations } =
   let shipyards = installations ^. at Installation.Shipyard . non 0
   in 2 * shipyards
 
+finishTime :: Time Int -> Int -> Int -> Colony -> Time Int
+finishTime now effortSpent size colony =
+  now + Time.days
+    ( ceiling
+      ( fromIntegral (buildEffortNeeded size - effortSpent)
+      / fromIntegral (dailyBuildEffort colony)
+      :: Double
+      )
+    )
+
 shipBuiltAt :: Id Body -> OrbitalState -> Id Ship -> Ship.Type -> Int -> Ship
 shipBuiltAt bodyId OrbitalState{ position } shipId@(Id shipNo) typ size =
-  let capability =
-        case typ of
-          Ship.FreighterType ->
-            Ship.Freighter
-              Ship.FreighterCapability { cargoCapacity = 1000, loadedCargo = mempty }
-          Ship.ColonyShipType ->
-            Ship.ColonyShip
-              Ship.ColonyShipCapability { cabinCapacity = 1000, loadedPopulation = 0 }
-      speed = Speed.kmPerSec (20 * fromIntegral size)
-  in Ship
+  Ship
     { Ship.shipId = shipId
     , Ship.name = fromString $ "Ship " ++ show shipNo
     , Ship.size = size
     , Ship.position = position
-    , Ship.capability = capability
-    , Ship.speed = speed
+    , Ship.capability = capabilityOf typ size
+    , Ship.speed = speedOf size
     , Ship.order = Nothing
     , Ship.attachedToBody = Just bodyId
     }
+
+capabilityOf :: Ship.Type -> Int -> Ship.Capability
+capabilityOf typ size =
+  case typ of
+    Ship.FreighterType ->
+      Ship.Freighter
+        Ship.FreighterCapability { cargoCapacity = 1000 * fromIntegral size, loadedCargo = mempty }
+    Ship.ColonyShipType ->
+      Ship.ColonyShip
+        Ship.ColonyShipCapability { cabinCapacity = 1000 * fromIntegral size, loadedPopulation = 0 }
+
+speedOf :: Int -> Speed Double
+speedOf size =
+  Speed.kmPerSec (20 * fromIntegral size)

@@ -3,6 +3,7 @@ module App.Update.UIState where
 import App.Prelude
 
 import qualified App.Dimension.Local as Local
+import qualified App.Model.Ship as Ship
 import qualified App.Update.ListBoxState as ListBoxState
 
 import App.Common.Camera (Camera(..))
@@ -24,6 +25,8 @@ data UIState = UIState
   , selectedResource :: ListBoxState Resource
   , selectedInstallation :: ListBoxState Installation
   , selectedBuildingTaskIndex :: ListBoxState Int
+  , selectedShipType :: ListBoxState Ship.Type
+  , selectedShipSize :: Int
   , editedShipName :: Text
   , editedResourceQty :: Text
   , editedInstallationQty :: Text
@@ -51,6 +54,8 @@ initial = UIState
   , selectedResource = ListBoxState.initial
   , selectedInstallation = ListBoxState.initial
   , selectedBuildingTaskIndex = ListBoxState.initial
+  , selectedShipType = ListBoxState.initial
+  , selectedShipSize = 1
   , editedShipName = ""
   , editedResourceQty = ""
   , editedInstallationQty = ""
