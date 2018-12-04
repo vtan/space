@@ -18,6 +18,7 @@ import App.Model.Resource (Resource)
 import App.Model.Ship (Ship(..))
 import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import Data.String (fromString)
+import Linear ((^+^))
 
 build :: Id Body -> GameState -> GameState
 build bodyId gs@GameState{ colonies, bodyOrbitalStates } =
@@ -59,10 +60,16 @@ startBuilding typ size colony@Colony{ bodyId, shipBuildingTask, stockpile } gs =
           }
     Just (gs & #colonies . at bodyId . _Just .~ colony')
 
-cancel :: Id Body -> GameState -> GameState
-cancel bodyId gs =
-  gs & #colonies . at bodyId . _Just . #shipBuildingTask .~ Nothing
--- TODO give cost back
+cancel :: Colony -> GameState -> GameState
+cancel colony@Colony{ bodyId, stockpile, shipBuildingTask } gs =
+  fromMaybe gs $ do
+    ShipBuildingTask{ size } <- shipBuildingTask
+    let cost = resourcesNeeded size
+        colony' = colony
+          { stockpile = stockpile ^+^ cost
+          , shipBuildingTask = Nothing
+          }
+    Just (gs & #colonies . at bodyId .~ Just colony')
 
 buildEffortNeeded :: Int -> Int
 buildEffortNeeded size = 100 * size

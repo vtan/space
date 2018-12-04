@@ -27,7 +27,7 @@ import Text.Read (readMaybe)
 
 data Action
   = BuildShip Colony
-  | CancelBuildingShip
+  | CancelBuildingShip Colony
   | Install Installation Int Colony
   | Uninstall Installation Int Colony
   | FoundColony
@@ -84,7 +84,7 @@ update gs = do
 
         pure $ case action of
           Just (BuildShip colony) -> Logic.ShipBuilding.startBuilding Ship.FreighterType 1 colony gs
-          Just CancelBuildingShip -> Logic.ShipBuilding.cancel bodyId gs
+          Just (CancelBuildingShip colony) -> Logic.ShipBuilding.cancel colony gs
           Just (Install installation qty colony) -> Logic.Colony.installInstallation installation qty colony gs
           Just (Uninstall installation qty colony) -> Logic.Colony.uninstallInstallation installation qty colony gs
           Just FoundColony -> Logic.Colony.foundColony bodyId gs
@@ -141,7 +141,7 @@ shipBuildingPanel colony@Colony{ shipBuildingTask } = do
 
   cancel <- Updating.widget "cancel"
     (Widget.button "Cancel")
-    <&> boolToMaybe CancelBuildingShip
+    <&> boolToMaybe (CancelBuildingShip colony)
 
   pure (build <|> cancel)
 
