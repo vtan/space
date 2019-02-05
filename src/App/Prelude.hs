@@ -36,10 +36,6 @@ import Control.Monad.State.Strict as X
   (MonadState, StateT)
 import Data.Generics.Labels as X
   ()
-import Data.Generics.Product as X
-  (field)
-import Data.Generics.Sum as X
-  (_Ctor)
 import Data.HashMap.Strict as X
   (HashMap)
 import Data.HashSet as X

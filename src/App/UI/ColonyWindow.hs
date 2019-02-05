@@ -110,7 +110,7 @@ stockpileTable :: Colony -> Updating ()
 stockpileTable Colony{ stockpile } = do
   let (itemLabels, qtyLabels) = unzip $ itoList stockpile <&> \(resource, mass) ->
         ( Resource.print resource
-        , if resource & has (_Ctor @"Installation")
+        , if resource & has #_Installation
           then Print.float0 mass <> " t" <> Print.brackets (Print.int (floor (mass / Installation.mass) :: Int) <> " buildings")
           else Print.float0 mass <> " t"
         )
