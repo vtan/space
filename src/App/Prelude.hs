@@ -5,7 +5,6 @@ module App.Prelude
 where
 
 import Prelude as X
-import App.Prelude.Labels as X ()
 import Control.Applicative as X
 import Control.Arrow as X
 import Control.Lens.At as X
@@ -35,6 +34,8 @@ import Control.Monad.Reader as X
   (MonadReader, ReaderT)
 import Control.Monad.State.Strict as X
   (MonadState, StateT)
+import Data.Generics.Labels as X
+  ()
 import Data.Generics.Product as X
   (field)
 import Data.Generics.Sum as X
