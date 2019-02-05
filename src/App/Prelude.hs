@@ -50,7 +50,7 @@ import Data.IntMap.Strict as X
 import Data.List.NonEmpty as X
   (NonEmpty((:|)))
 import Data.Semigroup as X
-  (Semigroup, Monoid, (<>))
+  ((<>))
 import Data.Word as X
   (Word8, Word32)
 import Data.StateVar as X
