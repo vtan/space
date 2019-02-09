@@ -14,33 +14,55 @@ import qualified SDL
 import qualified SDL.Font as SDL.TTF
 import qualified SDL.Raw
 
-import Control.Exception (Exception, SomeException, displayException, try)
+import App.Model.GameState (GameState)
+import Control.Exception (Exception, SomeException, displayException, handle)
 import Data.String (fromString)
 import System.IO (hPutStrLn, stderr)
 
+data MainContext = MainContext
+  { window :: SDL.Window
+  , screenSize :: V2 Int
+  , renderContext :: Rendering.Context
+  }
+
+data MainState = MainState
+  { fpsCounter :: FpsCounter.Counter
+  , resourceContext :: Updating.ResourceContext
+  , gameState :: GameState
+  , updateState :: Updating.State
+  , renderState :: Rendering.State
+  }
+
 main :: IO ()
 main =
-  try main' >>= \case
-    Right () -> pure ()
-    Left (ex :: SomeException) -> logError ex
+  handle (\(ex :: SomeException) -> logError ex) $ do
+    SDL.initializeAll
+    SDL.TTF.initialize
+    let screenSize = V2 1728 972
+    window <- SDL.createWindow "" SDL.defaultWindow{ SDL.windowInitialSize = screenSize }
+    renderer <- SDL.createRenderer window (-1) SDL.defaultRenderer{ SDL.rendererType = SDL.AcceleratedVSyncRenderer }
+    font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
+    let renderContext = Rendering.newContext renderer font
+    resourceContext <- loadResourceContext
+    SDL.Raw.startTextInput
 
-main' :: IO ()
-main' = do
-  SDL.initializeAll
-  SDL.TTF.initialize
-  let screenSize = V2 1728 972
-  window <- SDL.createWindow ""
-    $ SDL.defaultWindow { SDL.windowInitialSize = screenSize }
-  renderer <- SDL.createRenderer window (-1) $
-    SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
-  font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
-  let renderContext = Rendering.newContext renderer font
-  resourceContext <- loadResourceContext
-  SDL.Raw.startTextInput
+    fpsCounter <- FpsCounter.new
+    let gameState = Initial.gameState
+        updateState = Updating.initialState
+        renderState = Rendering.initialState
+    mainLoop
+      MainContext{ window, screenSize, renderContext }
+      MainState{ fpsCounter, resourceContext, gameState, updateState, renderState }
 
-  fcInitial <- FpsCounter.new
-  flip fix (fcInitial, Initial.gameState, resourceContext, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, rc, us, rs) -> do
-    case fc ^. #updatedText of
+    SDL.TTF.quit
+    SDL.quit
+
+mainLoop :: MainContext -> MainState -> IO ()
+mainLoop
+    ctx@MainContext{ window, screenSize, renderContext }
+    MainState{ fpsCounter, resourceContext, gameState, updateState, renderState } =
+  do
+    case fpsCounter ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
@@ -53,25 +75,23 @@ main' = do
         , mousePosition = mousePos
         , screenSize = screenSize
         }
-    let uc = Updating.contextFrom rc frc
-        (!gs', !us') = Update.update gs
-          & Updating.runFrame events uc us
-        Updating.State{ Updating.deferredRendering } = us'
+    let uc = Updating.contextFrom resourceContext frc
+        (!gameState', !updateState') = Update.update gameState
+          & Updating.runFrame events uc updateState
+        Updating.State{ Updating.deferredRendering } = updateState'
         flatRendering = foldl' (*>) (pure ()) deferredRendering
-    ((), rs') <- flatRendering & Rendering.runFrame renderContext rs
+    ((), renderState') <- flatRendering & Rendering.runFrame renderContext renderState
 
-    rc' <-
-      if us' ^. #reloadResources
-      then reloadResourceContext <&> fromMaybe rc
-      else pure rc
+    resourceContext' <-
+      if updateState' ^. #reloadResources
+      then reloadResourceContext <&> fromMaybe resourceContext
+      else pure resourceContext
 
-    if us' ^. #quit
+    if updateState' ^. #quit
     then pure ()
     else do
-      fc' <- FpsCounter.record fc
-      cont (fc', gs', rc', us', rs')
-  SDL.TTF.quit
-  SDL.quit
+      fpsCounter' <- FpsCounter.record fpsCounter
+      mainLoop ctx (MainState fpsCounter' resourceContext' gameState' updateState' renderState')
 
 loadResourceContext :: IO Updating.ResourceContext
 loadResourceContext = do
@@ -83,9 +103,9 @@ loadResourceContext = do
 
 reloadResourceContext :: IO (Maybe Updating.ResourceContext)
 reloadResourceContext =
-  try loadResourceContext >>= \case
-    Right ctx -> pure (Just ctx)
-    Left (ex :: SomeException) -> Nothing <$ logError ex
+  handle
+    (\(ex :: SomeException) -> Nothing <$ logError ex)
+    (Just <$> loadResourceContext)
 
 logError :: Exception e => e -> IO ()
 logError ex = do
