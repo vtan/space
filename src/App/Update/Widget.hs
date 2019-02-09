@@ -76,7 +76,7 @@ listBox :: Eq i
   -> [a] -> Widget (Maybe a, Maybe a)
 listBox verticalSpacing toIx toText state items WidgetTree{ bounds } = do
   let hiddenHeight = length items * verticalSpacing - bounds ^. #wh . _y
-  mouseInside <- use #mousePosition <&> Rect.contains bounds
+  mouseInside <- view (#frameContext . #mousePosition) <&> Rect.contains bounds
   scrollDiff <- if
     | mouseInside -> Updating.consumeEvents (\case
           MouseWheelEvent diff -> Just (fromIntegral diff * (-2) * verticalSpacing)

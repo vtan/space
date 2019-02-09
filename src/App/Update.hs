@@ -20,7 +20,7 @@ import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
 update gs = do
-  reloadResources <- use #keyModifier >>= \case
+  reloadResources <- view (#frameContext . #keyModifier) >>= \case
     (SDL.keyModifierLeftCtrl -> True) ->
       Updating.consumeEvents (\case
         KeyPressEvent SDL.ScancodeR -> Just ()

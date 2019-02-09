@@ -85,7 +85,7 @@ timePanel :: GameState -> Updating (Maybe Action)
 timePanel gs = do
   screenWidth <- use (#ui . #camera . #eyeTo . _x)
     <&> ((* 2) >>> floor)
-  groupBounds <- view (#widgetTree . #bounds)
+  groupBounds <- view #bounds <$> Updating.thisWidget pure
   let controlsOffset = screenWidth - 2 * (groupBounds ^. #xy . _x) - (groupBounds ^. #wh . _x)
 
   nextMidnight <- Updating.widget "nextMidnight"

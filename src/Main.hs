@@ -28,54 +28,62 @@ main' :: IO ()
 main' = do
   SDL.initializeAll
   SDL.TTF.initialize
+  let screenSize = V2 1728 972
   window <- SDL.createWindow ""
-    $ SDL.defaultWindow { SDL.windowInitialSize = V2 1728 972 }
+    $ SDL.defaultWindow { SDL.windowInitialSize = screenSize }
   renderer <- SDL.createRenderer window (-1) $
     SDL.defaultRenderer { SDL.rendererType = SDL.AcceleratedVSyncRenderer }
   font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
   let renderContext = Rendering.newContext renderer font
-  updateContext <- loadUpdateContext
+  resourceContext <- loadResourceContext
   SDL.Raw.startTextInput
 
   fcInitial <- FpsCounter.new
-  flip fix (fcInitial, Initial.gameState, updateContext, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, uc, us, rs) -> do
+  flip fix (fcInitial, Initial.gameState, resourceContext, Updating.initialState, Rendering.initialState) $ \cont (fc, gs, rc, us, rs) -> do
     case fc ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
     events <- SDL.pollEvents
-    keyMod <- SDL.getModState
-    SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
-    let (!gs', !us') = Update.update gs
-          & Updating.runFrame (fc ^. #lastFrameTime) mousePos events keyMod uc us
+    frc <- do
+      keyMod <- SDL.getModState
+      SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
+      pure Updating.FrameContext
+        { keyModifier = keyMod
+        , mousePosition = mousePos
+        , screenSize = screenSize
+        }
+    let uc = Updating.contextFrom rc frc
+        (!gs', !us') = Update.update gs
+          & Updating.runFrame events uc us
         Updating.State{ Updating.deferredRendering } = us'
         flatRendering = foldl' (*>) (pure ()) deferredRendering
     ((), rs') <- flatRendering & Rendering.runFrame renderContext rs
 
-    uc' <-
+    rc' <-
       if us' ^. #reloadResources
-      then reloadUpdateContext <&> fromMaybe uc
-      else pure uc
+      then reloadResourceContext <&> fromMaybe rc
+      else pure rc
 
     if us' ^. #quit
     then pure ()
     else do
       fc' <- FpsCounter.record fc
-      cont (fc', gs', uc', us', rs')
+      cont (fc', gs', rc', us', rs')
   SDL.TTF.quit
   SDL.quit
 
-loadUpdateContext :: IO Updating.Context
-loadUpdateContext = do
+loadResourceContext :: IO Updating.ResourceContext
+loadResourceContext = do
   contents <- ByteString.readFile "data/layout.json"
   case Aeson.eitherDecodeStrict' contents of
     Right widgetLayout ->
-      pure $ Updating.Context (Update.WidgetTree.fromWidgetLayout widgetLayout)
+      pure Updating.ResourceContext{ widgetTree = Update.WidgetTree.fromWidgetLayout widgetLayout }
     Left err -> fail err
 
-reloadUpdateContext :: IO (Maybe Updating.Context)
-reloadUpdateContext =
-  try loadUpdateContext >>= \case
+reloadResourceContext :: IO (Maybe Updating.ResourceContext)
+reloadResourceContext =
+  try loadResourceContext >>= \case
     Right ctx -> pure (Just ctx)
     Left (ex :: SomeException) -> Nothing <$ logError ex
 

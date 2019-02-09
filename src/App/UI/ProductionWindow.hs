@@ -42,7 +42,7 @@ data Action
   | ToggleInstallInBuildingQueue Int
 
 update :: GameState -> Updating GameState
-update gs@GameState{ bodies, colonies, bodyMinerals, time } = do
+update gs@GameState{ bodies, colonies, bodyMinerals, time } =
   Updating.useWidget "productionWindow" $ do
     Updating.widget "decoration" $
       Widget.window 20 "Production"
@@ -134,9 +134,10 @@ miningPanel colony@Colony{ miningPriorities, stockpile } minerals = do
           priority = miningPriorities ^. at resource . non 0
           inStockpile = stockpile ^. at resource . non 0
       Updating.useWidget "row" $ do
-        rowHeight <- view (#widgetTree . #bounds . #wh . _y)
+        rowHeight <- view (#bounds . #wh . _y) <$> Updating.thisWidget pure
         let offsetRow bounds = bounds & #xy . _y +~ i * rowHeight
-        local (#widgetTree %~ WidgetTree.mapTree (#bounds %~ offsetRow)) $ do
+        -- TODO this should be a table widget
+        local (#resources . #widgetTree %~ WidgetTree.mapTree (#bounds %~ offsetRow)) $ do
           Updating.widget "name" $
             Widget.label (Resource.print resource)
           Updating.widget "monthlyMined" $

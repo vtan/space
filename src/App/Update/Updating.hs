@@ -5,7 +5,6 @@ import App.Prelude
 import qualified App.Update.UIState as UIState
 import qualified App.Update.WidgetTree as WidgetTree
 import qualified SDL
-import qualified SDL.Internal.Numbered
 
 import App.Common.HashedText (HashedText)
 import App.Dimension.Time (Time)
@@ -19,17 +18,30 @@ import Control.Monad.State.Strict (runStateT)
 type Updating a = ReaderT Context (StateT State Identity) a
 
 data Context = Context
+  { resources :: ResourceContext
+  , frameContext :: FrameContext
+  }
+  deriving (Show, Generic)
+
+data FrameContext = FrameContext
+  { keyModifier :: SDL.KeyModifier
+  , mousePosition :: V2 Int
+  , screenSize :: V2 Int
+  }
+  deriving (Show, Generic)
+
+data ResourceContext = ResourceContext
   { widgetTree :: WidgetTree }
   deriving (Show, Generic)
 
+contextFrom :: ResourceContext -> FrameContext -> Context
+contextFrom resources frameContext =
+  Context{ resources, frameContext }
+
 data State = State
   { events :: [SDL.Event]
-  , keyModifier :: SDL.KeyModifier
-  , mousePosition :: V2 Int
-  , totalRealTime :: Double
   , timeStepPerFrame :: Maybe (Time Int)
   , movingViewport :: Bool
-  , screenSize :: V2 Int
   , quit :: Bool
   , reloadResources :: Bool
   , focusedWidget :: Maybe HashedText
@@ -42,12 +54,8 @@ data State = State
 initialState :: State
 initialState = State
   { events = []
-  , keyModifier = SDL.Internal.Numbered.fromNumber 0
-  , mousePosition = 0
-  , totalRealTime = 0
   , timeStepPerFrame = Nothing
   , movingViewport = False
-  , screenSize = V2 1728 972
   , quit = False
   , reloadResources = False
   , focusedWidget = Nothing
@@ -56,13 +64,10 @@ initialState = State
   , deferredRendering = [pure ()]
   }
 
-runFrame :: Double -> V2 Int -> [SDL.Event] -> SDL.KeyModifier -> Context -> State -> Updating a -> (a, State)
-runFrame dtime mousePos events keyMod ctx st u =
+runFrame :: [SDL.Event] -> Context -> State -> Updating a -> (a, State)
+runFrame events ctx st u =
   let st' = st
-        & #totalRealTime +~ dtime
         & #events .~ []
-        & #keyModifier .~ keyMod
-        & #mousePosition .~ mousePos
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
       Identity (a, st'') = runStateT (runReaderT u ctx) st'
@@ -83,15 +88,15 @@ pushRendering =
 
 useWidget :: HashedText -> Updating a -> Updating a
 useWidget name =
-  local (#widgetTree %~ WidgetTree.child name)
+  local (#resources . #widgetTree %~ WidgetTree.child name)
 
 widget :: HashedText -> (WidgetTree -> Updating a) -> Updating a
 widget name w =
-  view (#widgetTree . to (WidgetTree.child name)) >>= w
+  view (#resources . #widgetTree . to (WidgetTree.child name)) >>= w
 
 thisWidget :: (WidgetTree -> Updating a) -> Updating a
 thisWidget w =
-  view #widgetTree >>= w
+  view (#resources . #widgetTree) >>= w
 
 filterEvents :: (SDL.Event -> Maybe a) -> Updating [a]
 filterEvents p =
