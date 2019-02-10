@@ -3,6 +3,7 @@ module App.Update.Updating where
 import App.Prelude
 
 import qualified App.Update.UIState as UIState
+import qualified App.Update.Widget2 as Widget2
 import qualified App.Update.WidgetTree as WidgetTree
 import qualified SDL
 
@@ -44,6 +45,7 @@ data State = State
   , movingViewport :: Bool
   , quit :: Bool
   , reloadResources :: Bool
+  , ui2 :: Widget2.UIState
   , focusedWidget :: Maybe HashedText
   , activeDropdown :: Maybe (Updating ())
   , ui :: UIState
@@ -58,6 +60,7 @@ initialState = State
   , movingViewport = False
   , quit = False
   , reloadResources = False
+  , ui2 = Widget2.initialState
   , focusedWidget = Nothing
   , activeDropdown = Nothing
   , ui = UIState.initial
@@ -66,10 +69,12 @@ initialState = State
 
 runFrame :: [SDL.Event] -> Context -> State -> Updating a -> (a, State)
 runFrame events ctx st u =
+  -- TODO clean this up
   let st' = st
         & #events .~ []
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
+        & #ui2 .~ Widget2.initialState{ Widget2.events = events }
       Identity (a, st'') = runStateT (runReaderT u ctx) st'
   in (a, st'')
   where

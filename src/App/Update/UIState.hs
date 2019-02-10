@@ -31,6 +31,7 @@ data UIState = UIState
   , editedResourceQty :: Text
   , editedInstallationQty :: Text
   , editedPopulationQty :: Text
+  , testNumber :: Int
   }
   deriving (Generic)
 
@@ -60,4 +61,5 @@ initial = UIState
   , editedResourceQty = ""
   , editedInstallationQty = ""
   , editedPopulationQty = ""
+  , testNumber = 0
   }

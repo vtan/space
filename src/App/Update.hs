@@ -4,6 +4,7 @@ where
 
 import App.Prelude
 
+import qualified App.Common.Print as Print
 import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.UI.ColonyWindow as ColonyWindow
 import qualified App.UI.ProductionWindow as ProductionWindow
@@ -12,6 +13,7 @@ import qualified App.UI.ShipWindow as ShipWindow
 import qualified App.UI.SystemMap as SystemMap
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
+import qualified App.Update.Widget2 as Widget2
 import qualified SDL
 
 import App.Model.GameState (GameState(..))
@@ -56,6 +58,15 @@ update gs = do
       >=> ScreenOverlay.update
       >=> SystemMap.update
     )
+
+  Widget2.label "label1"
+  Widget2.label "label2"
+  Widget2.label "label3"
+  Widget2.with #placementMode Widget2.Horizontal $
+    Widget2.with (#widgetSize . _x) 20 $ do
+      Widget2.button "+1" >>= \click -> when click (#ui . #testNumber += 1)
+      Widget2.button "*2" >>= \click -> when click (#ui . #testNumber *= 2)
+      Widget2.label =<< Print.int <$> use (#ui . #testNumber)
 
   timeStep <- use #timeStepPerFrame
   pure $ case timeStep of
