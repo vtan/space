@@ -5,6 +5,7 @@ where
 import App.Prelude
 
 import qualified App.Common.Camera as Camera
+import qualified App.Common.Rect as Rect
 import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
 import qualified App.Render.Rendering as Rendering
@@ -93,8 +94,8 @@ renderBody
       let label
             | all id childrenVisible = bodyName
             | otherwise = bodyName <> "..."
-          labelPos = bodyCenter & _y +~ 8
-      Rendering.text (fmap floor labelPos) label
+          labelRect = Rect.fromMinSize (floor <$> (bodyCenter & _y +~ 8)) (V2 128 20)
+      Rendering.text labelRect label
 
 renderShip :: Camera (Local Double) Double -> Ship -> Rendering ()
 renderShip camera Ship{ Ship.position } = do

@@ -6,6 +6,7 @@ import qualified App.Render.TextRenderer as TextRenderer
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
 
+import App.Common.Rect (Rect(..))
 import App.Render.TextRenderer (TextRenderer)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.State.Strict (runStateT)
@@ -38,14 +39,16 @@ runFrame ctx st r = runStateT (runReaderT (r <* endFrame) ctx) st
       view #renderer >>= SDL.present
       TextRenderer.clean
 
-text :: V2 Int -> Text -> Rendering ()
-text pos str =
+text :: Rect Int -> Text -> Rendering ()
+text (Rect pos requestedSize) str =
   case str of
     Empty -> pure ()
     _ -> do
       renderer <- view #renderer
       font <- view #font
-      texture <- TextRenderer.render renderer font str
-      SDL.TextureInfo{ SDL.textureWidth, SDL.textureHeight } <- SDL.queryTexture texture
-      let rect = SDL.Rectangle (SDL.P $ fmap fromIntegral pos) (V2 textureWidth textureHeight)
-      SDL.copy renderer texture Nothing (Just rect)
+      TextRenderer.RenderedText{ texture, size = textureSize } <-
+        TextRenderer.render renderer font str
+      let actualSize = min <$> fmap fromIntegral requestedSize <*> textureSize
+          sourceRect = SDL.Rectangle 0 actualSize
+          destinationRect = SDL.Rectangle (SDL.P $ fmap fromIntegral pos) actualSize
+      SDL.copy renderer texture (Just sourceRect) (Just destinationRect)

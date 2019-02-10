@@ -25,26 +25,26 @@ import Control.Monad.Zip (munzip)
 type Widget a = WidgetTree -> Updating a
 
 label :: TextBuilder -> Widget ()
-label builder WidgetTree{ bounds = Rect pos _ } =
+label builder WidgetTree{ bounds } =
   builder
     & TextBuilder.toLazyText
     & LazyText.toStrict
-    & Rendering.text pos
+    & Rendering.text bounds
     & Updating.render
 
 label' :: Text -> Widget ()
-label' text WidgetTree{ bounds = Rect pos _ } =
-  Updating.render (Rendering.text pos text)
+label' text WidgetTree{ bounds } =
+  Updating.render (Rendering.text bounds text)
 
 labels :: Int -> [TextBuilder] -> Widget ()
-labels verticalSpacing builders WidgetTree{ bounds = Rect firstPos _ } =
+labels verticalSpacing builders WidgetTree{ bounds } =
   Updating.render $
     ifor_ builders $ \i builder ->
-      let pos = firstPos & _y +~ i * verticalSpacing
+      let bounds' = bounds & #xy . _y +~ i * verticalSpacing
       in builder
         & TextBuilder.toLazyText
         & LazyText.toStrict
-        & Rendering.text pos
+        & Rendering.text bounds'
 
 bottomLine :: Widget ()
 bottomLine WidgetTree{ bounds } =
@@ -66,7 +66,7 @@ button text WidgetTree{ bounds }= do
     let color = if clicked then highlight else shade3
     SDL.rendererDrawColor r $= color
     SDL.fillRect r (Just $ Rect.toSdl bounds)
-    Rendering.text (bounds ^. #xy) text
+    Rendering.text bounds text
   pure clicked
 
 listBox :: Eq i
@@ -126,8 +126,8 @@ listBox verticalSpacing toIx toText state items WidgetTree{ bounds } = do
       SDL.rendererDrawColor r $= highlight
       SDL.fillRect r (Just $ Rect.toSdl rect)
     ifor_ texts $ \row text ->
-      let pos = (bounds ^. #xy) & _y +~ row * verticalSpacing
-      in Rendering.text pos text
+      let rect = bounds & #xy . _y +~ row * verticalSpacing
+      in Rendering.text rect text
     for_ scrollRatio $ \ ratio -> do
       let x = bounds ^. #xy . _x + bounds ^. #wh . _x - 4
           y = bounds ^. #xy . _y + floor (ratio * fromIntegral (bounds ^. #wh . _y - 8))
@@ -186,9 +186,11 @@ dropdownRendering bounds text = do
   r <- view #renderer
   SDL.rendererDrawColor r $= shade3
   SDL.fillRect r (Just $ Rect.toSdl bounds)
-  Rendering.text (bounds ^. #xy) text
-  let arrowPos = bounds ^. #xy & _x +~ (bounds ^. #wh . _x) - 20
-  Rendering.text arrowPos "▼"
+  Rendering.text bounds text
+  let arrowBounds = bounds
+        & #xy . _x +~ (bounds ^. #wh . _x) - 20
+        & #wh .~ V2 20 16
+  Rendering.text arrowBounds "▼"
 
 window :: Int -> Text -> Widget ()
 window titleHeight title WidgetTree{ bounds } =
@@ -202,7 +204,7 @@ window titleHeight title WidgetTree{ bounds } =
     SDL.fillRect r (Just $ Rect.toSdl titleBounds)
     SDL.rendererDrawColor r $= shade0
     SDL.fillRect r (Just $ Rect.toSdl restBounds)
-    Rendering.text (bounds ^. #xy) title
+    Rendering.text bounds title
 
 textBox :: Lens' UIState Text -> Widget Text
 textBox state WidgetTree{ name, bounds } = do
@@ -231,7 +233,7 @@ textBox state WidgetTree{ name, bounds } = do
     r <- view #renderer
     SDL.rendererDrawColor r $= shade2
     SDL.fillRect r (Just $ Rect.toSdl bounds)
-    Rendering.text (bounds ^. #xy) text'
+    Rendering.text bounds text'
     SDL.rendererDrawColor r $= if focused then highlight else shade1
     SDL.drawRect r (Just $ Rect.toSdl bounds)
   pure text'
