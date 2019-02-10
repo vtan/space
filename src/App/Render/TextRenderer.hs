@@ -6,7 +6,7 @@ import qualified Data.HashSet as HashSet
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
 
-import Control.Monad.State.Class (get)
+import Data.Generics.Product (HasType, typed)
 
 data TextRenderer = TextRenderer
   { cache :: HashMap Text SDL.Texture
@@ -20,9 +20,11 @@ new = TextRenderer
   , usedSinceLastClean = mempty
   }
 
-render :: (MonadState TextRenderer m, MonadIO m) => SDL.Renderer -> SDL.TTF.Font -> Text -> m SDL.Texture
+render
+  :: (MonadState s m, MonadIO m, HasType TextRenderer s)
+  => SDL.Renderer -> SDL.TTF.Font -> Text -> m SDL.Texture
 render renderer font text = do
-  TextRenderer{ cache } <- get
+  TextRenderer{ cache } <- use typed
   texture <- case cache ^. at text of
     Just t -> pure t
     Nothing -> do
@@ -30,17 +32,17 @@ render renderer font text = do
       surface <- SDL.TTF.blended font color text
       texture <- SDL.createTextureFromSurface renderer surface
       SDL.freeSurface surface
-      #cache %= set (at text) (Just texture)
+      typed @TextRenderer . #cache %= set (at text) (Just texture)
       pure texture
-  #usedSinceLastClean %= set (contains text) True
+  typed @TextRenderer . #usedSinceLastClean %= set (contains text) True
   pure texture
 
-clean :: (MonadState TextRenderer m, MonadIO m) => m ()
+clean :: (MonadState s m, MonadIO m, HasType TextRenderer s) => m ()
 clean = do
-  TextRenderer{ cache, usedSinceLastClean } <- get
+  TextRenderer{ cache, usedSinceLastClean } <- use typed
   let keys = cache & fmap (const ()) & HashSet.fromMap
       unusedKeys = HashSet.difference keys usedSinceLastClean
   for_ unusedKeys $ \key -> do
     for_ (cache ^. at key) SDL.destroyTexture
-    #cache %= set (at key) Nothing
-  #usedSinceLastClean .= mempty
+    typed @TextRenderer . #cache %= set (at key) Nothing
+  typed @TextRenderer . #usedSinceLastClean .= mempty

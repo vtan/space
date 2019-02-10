@@ -21,10 +21,10 @@ data Context = Context
 data State = State
   { textRenderer :: TextRenderer }
   deriving (Generic)
-  
+
 newContext :: SDL.Renderer -> SDL.TTF.Font -> Context
 newContext renderer font = Context
-  { renderer = renderer 
+  { renderer = renderer
   , font = font
   }
 
@@ -36,16 +36,16 @@ runFrame ctx st r = runStateT (runReaderT (r <* endFrame) ctx) st
   where
     endFrame = do
       view #renderer >>= SDL.present
-      zoom #textRenderer TextRenderer.clean
+      TextRenderer.clean
 
 text :: V2 Int -> Text -> Rendering ()
-text pos str = 
+text pos str =
   case str of
     Empty -> pure ()
     _ -> do
       renderer <- view #renderer
       font <- view #font
-      texture <- zoom #textRenderer $ TextRenderer.render renderer font str
+      texture <- TextRenderer.render renderer font str
       SDL.TextureInfo{ SDL.textureWidth, SDL.textureHeight } <- SDL.queryTexture texture
       let rect = SDL.Rectangle (SDL.P $ fmap fromIntegral pos) (V2 textureWidth textureHeight)
       SDL.copy renderer texture Nothing (Just rect)
