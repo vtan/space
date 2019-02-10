@@ -74,7 +74,8 @@ runFrame events ctx st u =
         & #events .~ []
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
-        & #ui2 .~ Widget2.initialState{ Widget2.events = events }
+        & #ui2 . #events .~ events
+        & #ui2 . #renderStack .~ pure () :| []
       Identity (a, st'') = runStateT (runReaderT u ctx) st'
   in (a, st'')
   where
