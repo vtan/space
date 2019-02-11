@@ -59,12 +59,11 @@ update gs = do
       >=> SystemMap.update
     )
 
-  Widget2.reset
   Widget2.label "label1"
   Widget2.label "label2"
   Widget2.label "label3"
-  Widget2.with #widgetSize 40 $
-    Widget2.group Widget2.Horizontal $ do
+  Widget2.group Widget2.Horizontal $
+    Widget2.sized 40 $ do
       Widget2.button "+1" >>= \click -> when click (#ui . #testNumber += 1)
       Widget2.button "*2" >>= \click -> when click (#ui . #testNumber *= 2)
       Widget2.label =<< Print.int <$> use (#ui . #testNumber)
@@ -72,23 +71,22 @@ update gs = do
   _ <- Widget2.textBox "shipName2" (#ui . #editedShipName)
   Widget2.label' "hello"
   Widget2.label' shipName
-  Widget2.with #widgetSize 80 $
-    Widget2.group Widget2.Horizontal $ do
-      _ <- Widget2.button "LARGE"
-      Widget2.with #widgetSize (V2 16 32) $ do
-        Widget2.group Widget2.Vertical $ do
-          _ <- Widget2.button "1"
-          _ <- Widget2.button "2"
-          pure ()
-        Widget2.group Widget2.Vertical $ do
-          _ <- Widget2.button "3"
-          _ <- Widget2.button "4"
-          pure ()
-      Widget2.group Widget2.Vertical $
-        Widget2.with #widgetSize (V2 80 16) $ do
-          Widget2.label "aaa"
-          Widget2.label "bbb"
-          Widget2.label "ccc"
+  Widget2.group Widget2.Horizontal $ do
+    _ <- Widget2.sized 80 (Widget2.button "LARGE")
+    Widget2.sized (V2 16 32) $ do
+      Widget2.group Widget2.Vertical $ do
+        _ <- Widget2.button "1"
+        _ <- Widget2.button "2"
+        pure ()
+      Widget2.group Widget2.Vertical $ do
+        _ <- Widget2.button "3"
+        _ <- Widget2.button "4"
+        pure ()
+    Widget2.group Widget2.Vertical $
+      Widget2.sized (V2 80 16) $ do
+        Widget2.label "aaa"
+        Widget2.label "bbb"
+        Widget2.label "ccc"
   Widget2.label' "hello"
 
   timeStep <- use #timeStepPerFrame

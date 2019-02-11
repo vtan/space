@@ -76,6 +76,7 @@ runFrame events ctx st u =
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
         & #ui2 . #events .~ events
         & #ui2 . #renderStack .~ pure () :| []
+        & #ui2 . #groups .~ Widget2.rootGroup :| []
       Identity (a, st'') = runStateT (runReaderT u ctx) st'
   in (a, st'')
   where

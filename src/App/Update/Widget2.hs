@@ -10,6 +10,7 @@ import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified SDL
 
 import App.Common.Rect (Rect(..))
+import App.Common.Util (_nonEmptyHead)
 import App.Render.Rendering (Rendering)
 import App.Update.Events
 import Control.Lens (Lens')
@@ -17,13 +18,18 @@ import Data.Generics.Product (HasType, typed)
 import Data.Monoid (Any(..))
 
 data UIState = UIState
-  { cursor :: V2 Int
-  , widgetSize :: V2 Int
-  , padding :: V2 Int
-  , placementMode :: PlacementMode
+  { groups :: NonEmpty UIGroup
   , focusedWidgetName :: Maybe Text
   , events :: [SDL.Event]
   , renderStack :: NonEmpty (Rendering ())
+  }
+  deriving (Generic)
+
+data UIGroup = UIGroup
+  { nextWidget :: Rect Int
+  , padding :: V2 Int
+  , placementMode :: PlacementMode
+  , totalSize :: V2 Int
   }
   deriving (Generic)
 
@@ -35,52 +41,67 @@ data PlacementMode
 initialState :: UIState
 initialState =
   UIState
-    { cursor = 128
-    , widgetSize = V2 80 16
-    , padding = 4
-    , placementMode = Vertical
+    { groups = rootGroup :| []
     , focusedWidgetName = Nothing
     , events = []
     , renderStack = pure () :| []
     }
 
-reset :: (MonadState s m, HasType UIState s) => m ()
-reset = do
-  typed @UIState %= \ui ->
-    ui
-      { cursor = 128
-      , widgetSize = V2 80 16
-      , padding = 4
-      , placementMode = Vertical
-      }
+rootGroup :: UIGroup
+rootGroup =
+  UIGroup
+    { nextWidget = Rect 128 (V2 100 20)
+    , padding = 4
+    , placementMode = Vertical
+    , totalSize = 0
+    }
 
-with :: (MonadState s m, HasType UIState s) => Lens' UIState a -> a -> m b -> m b
+with :: forall m s a b. (MonadState s m, HasType UIState s) => Lens' UIGroup a -> a -> m b -> m b
 with prop value action = do
-  oldValue <- use (typed @UIState . prop)
-  typed @UIState . prop .= value
+  let lens :: Lens' s a
+      lens = (typed @UIState . #groups . _nonEmptyHead . prop)
+  oldValue <- use lens
+  lens .= value
   result <- action
-  typed @UIState . prop .= oldValue
+  lens .= oldValue
   pure result
+
+sized :: (MonadState s m, HasType UIState s) => V2 Int -> m a -> m a
+sized = with (#nextWidget . #wh)
 
 group :: (MonadState s m, HasType UIState s) => PlacementMode -> m a -> m a
-group placementMode child =
-  withCursorMove $ do
-    UIState{ cursor = oldCursor, placementMode = oldPlacementMode } <- use typed
-    typed @UIState . #placementMode .= placementMode
-    result <- child
-    typed @UIState %= \ui -> ui{ cursor = oldCursor, placementMode = oldPlacementMode }
-    pure result
-
-withCursorMove :: (MonadState s m, HasType UIState s) => m a -> m a
-withCursorMove widget = do
-  result <- widget
-  typed @UIState %= \ui@UIState{ cursor, widgetSize, padding, placementMode } ->
-    case placementMode of
-      Horizontal ->
-        ui{ cursor = cursor & _x +~ (widgetSize ^. _x) + (padding ^. _x) }
-      Vertical ->
-        ui{ cursor = cursor & _y +~ (widgetSize ^. _y) + (padding ^. _y) }
+group placementMode child = do
+  UIState{ groups = currentGroup :| prevGroups } <- use typed
+  let newGroup = currentGroup{ placementMode, totalSize = 0 }
+  typed @UIState . #groups %= (newGroup :|) . toList
+  result <- child
+  UIGroup{ totalSize } <- use (typed @UIState . #groups . _nonEmptyHead)
+  typed @UIState . #groups .= advanceCursor totalSize currentGroup :| prevGroups
   pure result
+
+placeWidget :: (MonadState s m, HasType UIState s) => m a -> m a
+placeWidget widget = do
+  result <- widget
+  typed @UIState . #groups . _nonEmptyHead %=
+    \grp@UIGroup{ nextWidget = Rect _ size } -> advanceCursor size grp
+  pure result
+
+advanceCursor :: V2 Int -> UIGroup -> UIGroup
+advanceCursor size grp@UIGroup{ nextWidget, padding, placementMode, totalSize } =
+  let
+    mainAxis, otherAxis :: forall n. Lens' (V2 n) n
+    mainAxis = case placementMode of
+      Horizontal -> _x
+      Vertical -> _y
+    otherAxis = case placementMode of
+      Horizontal -> _y
+      Vertical -> _x
+    mainAxisIncrement = (size ^. mainAxis) + (padding ^. mainAxis)
+    nextWidget' = nextWidget & #xy . mainAxis +~ mainAxisIncrement
+    totalSize' = totalSize
+      & mainAxis +~ mainAxisIncrement
+      & otherAxis %~ max (size ^. otherAxis)
+  in grp{ nextWidget = nextWidget', totalSize = totalSize' }
 
 consumeEvents :: (MonadState s m, HasType UIState s, Monoid a, AsEmpty a) => (SDL.Event -> a) -> m a
 consumeEvents p = do
@@ -107,36 +128,34 @@ label =
 
 label' :: (MonadState s m, HasType UIState s) => Text -> m ()
 label' text =
-  withCursorMove $ do
-    UIState{ cursor, widgetSize } <- use typed
-    render (Rendering.text (Rect cursor widgetSize) text)
+  placeWidget $ do
+    UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
+    render (Rendering.text nextWidget text)
 
 button :: (MonadState s m, HasType UIState s) => Text -> m Bool
 button text =
-  withCursorMove $ do
-    UIState{ cursor, widgetSize } <- use typed
-    let bounds = Rect cursor widgetSize
+  placeWidget $ do
+    UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
     Any clicked <- consumeEvents $ \case
       MousePressEvent SDL.ButtonLeft pos ->
-        Any (Rect.contains bounds (fromIntegral <$> pos))
+        Any (Rect.contains nextWidget (fromIntegral <$> pos))
       _ -> mempty
     render $ do
       r <- view #renderer
       let color = if clicked then highlight else shade3
       SDL.rendererDrawColor r $= color
-      SDL.fillRect r (Just $ Rect.toSdl bounds)
-      Rendering.text bounds text
+      SDL.fillRect r (Just $ Rect.toSdl nextWidget)
+      Rendering.text nextWidget text
     pure clicked
 
 textBox :: (MonadState s m, HasType UIState s) => Text -> Lens' s Text -> m Text
 textBox name state =
-  withCursorMove $ do
-    UIState{ cursor, widgetSize, focusedWidgetName } <- use typed
-    let bounds = Rect cursor widgetSize
+  placeWidget $ do
+    UIState{ groups = UIGroup { nextWidget } :| _, focusedWidgetName } <- use typed
     focused <- do
       Any clicked <- consumeEvents $ \case
         MousePressEvent SDL.ButtonLeft pos ->
-          Any (Rect.contains bounds (fromIntegral <$> pos))
+          Any (Rect.contains nextWidget (fromIntegral <$> pos))
         _ -> mempty
       if clicked
       then True <$ (typed @UIState . #focusedWidgetName .= Just name)
@@ -158,10 +177,10 @@ textBox name state =
     render $ do
       r <- view #renderer
       SDL.rendererDrawColor r $= shade2
-      SDL.fillRect r (Just $ Rect.toSdl bounds)
-      Rendering.text bounds text'
+      SDL.fillRect r (Just $ Rect.toSdl nextWidget)
+      Rendering.text nextWidget text'
       SDL.rendererDrawColor r $= if focused then highlight else shade1
-      SDL.drawRect r (Just $ Rect.toSdl bounds)
+      SDL.drawRect r (Just $ Rect.toSdl nextWidget)
     pure text'
 
 
