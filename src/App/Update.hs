@@ -11,9 +11,10 @@ import qualified App.UI.ProductionWindow as ProductionWindow
 import qualified App.UI.ScreenOverlay as ScreenOverlay
 import qualified App.UI.ShipWindow as ShipWindow
 import qualified App.UI.SystemMap as SystemMap
+import qualified App.UI2.UI as UI
+import qualified App.UI2.Widget as Widget2
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
-import qualified App.Update.Widget2 as Widget2
 import qualified SDL
 
 import App.Model.GameState (GameState(..))
@@ -62,8 +63,8 @@ update gs = do
   Widget2.label "label1"
   Widget2.label "label2"
   Widget2.label "label3"
-  Widget2.group Widget2.Horizontal $
-    Widget2.sized 10 $ do
+  UI.group UI.Horizontal $
+    UI.sized 10 $ do
       Widget2.button "+1" >>= \click -> when click (#ui . #testNumber += 1)
       Widget2.button "*2" >>= \click -> when click (#ui . #testNumber *= 2)
       Widget2.label =<< Print.int <$> use (#ui . #testNumber)
@@ -71,19 +72,19 @@ update gs = do
   _ <- Widget2.textBox "shipName2" (#ui . #editedShipName)
   Widget2.label' "hello"
   Widget2.label' shipName
-  Widget2.group Widget2.Horizontal $ do
-    _ <- Widget2.sized 20 (Widget2.button "LARGE")
-    Widget2.sized (V2 2 8) $ do
-      Widget2.group Widget2.Vertical $ do
+  UI.group UI.Horizontal $ do
+    _ <- UI.sized 20 (Widget2.button "LARGE")
+    UI.sized (V2 2 8) $ do
+      UI.group UI.Vertical $ do
         _ <- Widget2.button "1"
         _ <- Widget2.button "2"
         pure ()
-      Widget2.group Widget2.Vertical $ do
+      UI.group UI.Vertical $ do
         _ <- Widget2.button "3"
         _ <- Widget2.button "4"
         pure ()
-    Widget2.group Widget2.Vertical $
-      Widget2.sized (V2 20 4) $ do
+    UI.group UI.Vertical $
+      UI.sized (V2 20 4) $ do
         Widget2.label "aaa"
         Widget2.label "bbb"
         Widget2.label "ccc"

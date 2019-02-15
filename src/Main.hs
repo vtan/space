@@ -4,10 +4,10 @@ import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
 import qualified App.Render.Rendering as Rendering
+import qualified App.UI2.UI as UI
 import qualified App.Update as Update
 import qualified App.Update.Initial as Initial
 import qualified App.Update.Updating as Updating
-import qualified App.Update.Widget2 as Widget2
 import qualified App.Update.WidgetTree as Update.WidgetTree
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString as ByteString
@@ -79,7 +79,7 @@ mainLoop
     let uc = Updating.contextFrom resourceContext frc
         (!gameState', !updateState') = Update.update gameState
           & Updating.runFrame events uc updateState
-        Updating.State{ Updating.deferredRendering, Updating.ui2 = Widget2.UIState{ renderStack } } = updateState'
+        Updating.State{ Updating.deferredRendering, Updating.ui2 = UI.UIState{ renderStack } } = updateState'
         flatRendering = foldl' (*>) (pure ()) (deferredRendering ++ toList renderStack)
     ((), renderState') <- flatRendering & Rendering.runFrame renderContext renderState
 
