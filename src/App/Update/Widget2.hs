@@ -22,6 +22,7 @@ data UIState = UIState
   , focusedWidgetName :: Maybe Text
   , events :: [SDL.Event]
   , renderStack :: NonEmpty (Rendering ())
+  , scaleFactor :: Int
   }
   deriving (Generic)
 
@@ -45,13 +46,14 @@ initialState =
     , focusedWidgetName = Nothing
     , events = []
     , renderStack = pure () :| []
+    , scaleFactor = 4
     }
 
 rootGroup :: UIGroup
 rootGroup =
   UIGroup
-    { nextWidget = Rect 128 (V2 100 20)
-    , padding = 4
+    { nextWidget = Rect 32 (V2 25 5)
+    , padding = 1
     , placementMode = Vertical
     , totalSize = 0
     }
@@ -122,6 +124,11 @@ render r =
   typed @UIState . #renderStack %=
     \(rhead :| rtail) -> (rhead *> r) :| rtail
 
+nextWidgetScaled :: (MonadState s m, HasType UIState s) => m (Rect Int)
+nextWidgetScaled = do
+  UIState{ scaleFactor, groups = UIGroup { nextWidget } :| _ } <- use typed
+  pure (scaleFactor *^ nextWidget)
+
 label :: (MonadState s m, HasType UIState s) => TextBuilder -> m ()
 label =
   label' . LazyText.toStrict . TextBuilder.toLazyText
@@ -129,33 +136,34 @@ label =
 label' :: (MonadState s m, HasType UIState s) => Text -> m ()
 label' text =
   placeWidget $ do
-    UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
-    render (Rendering.text nextWidget text)
+    bounds <- nextWidgetScaled
+    render (Rendering.text bounds text)
 
 button :: (MonadState s m, HasType UIState s) => Text -> m Bool
 button text =
   placeWidget $ do
-    UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
+    bounds <- nextWidgetScaled
     Any clicked <- consumeEvents $ \case
       MousePressEvent SDL.ButtonLeft pos ->
-        Any (Rect.contains nextWidget (fromIntegral <$> pos))
+        Any (Rect.contains bounds (fromIntegral <$> pos))
       _ -> mempty
     render $ do
       r <- view #renderer
       let color = if clicked then highlight else shade3
       SDL.rendererDrawColor r $= color
-      SDL.fillRect r (Just $ Rect.toSdl nextWidget)
-      Rendering.text nextWidget text
+      SDL.fillRect r (Just $ Rect.toSdl bounds)
+      Rendering.text bounds text
     pure clicked
 
 textBox :: (MonadState s m, HasType UIState s) => Text -> Lens' s Text -> m Text
 textBox name state =
   placeWidget $ do
-    UIState{ groups = UIGroup { nextWidget } :| _, focusedWidgetName } <- use typed
+    UIState{ focusedWidgetName } <- use typed
+    bounds <- nextWidgetScaled
     focused <- do
       Any clicked <- consumeEvents $ \case
         MousePressEvent SDL.ButtonLeft pos ->
-          Any (Rect.contains nextWidget (fromIntegral <$> pos))
+          Any (Rect.contains bounds (fromIntegral <$> pos))
         _ -> mempty
       if clicked
       then True <$ (typed @UIState . #focusedWidgetName .= Just name)
@@ -177,10 +185,10 @@ textBox name state =
     render $ do
       r <- view #renderer
       SDL.rendererDrawColor r $= shade2
-      SDL.fillRect r (Just $ Rect.toSdl nextWidget)
-      Rendering.text nextWidget text'
+      SDL.fillRect r (Just $ Rect.toSdl bounds)
+      Rendering.text bounds text'
       SDL.rendererDrawColor r $= if focused then highlight else shade1
-      SDL.drawRect r (Just $ Rect.toSdl nextWidget)
+      SDL.drawRect r (Just $ Rect.toSdl bounds)
     pure text'
 
 
