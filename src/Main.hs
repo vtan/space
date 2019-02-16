@@ -71,7 +71,7 @@ mainLoop
     frc <- do
       keyMod <- SDL.getModState
       SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
-      pure Updating.FrameContext
+      pure UI.UIContext
         { keyModifier = keyMod
         , mousePosition = mousePos
         , screenSize = screenSize

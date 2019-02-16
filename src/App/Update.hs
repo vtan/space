@@ -20,6 +20,7 @@ import qualified SDL
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
+import Data.String (fromString)
 
 update :: GameState -> Updating GameState
 update gs = do
@@ -89,6 +90,18 @@ update gs = do
         Widget2.label "bbb"
         Widget2.label "ccc"
   Widget2.label' "hello"
+  (n, _) <-
+    UI.sized (V2 10 20) $
+      Widget2.listBox
+        Widget2.ListBox
+          { itemHeight = 5
+          , scrollBarSize = V2 1 2
+          , toIx = id
+          , toText = show >>> fromString
+          }
+        (#ui . #selectedBuildingTaskIndex)
+        [0..10]
+  for_ n $ Print.int >>> Widget2.label
 
   timeStep <- use #timeStepPerFrame
   pure $ case timeStep of

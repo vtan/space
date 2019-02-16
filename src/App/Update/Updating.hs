@@ -20,14 +20,7 @@ type Updating a = ReaderT Context (StateT State Identity) a
 
 data Context = Context
   { resources :: ResourceContext
-  , frameContext :: FrameContext
-  }
-  deriving (Show, Generic)
-
-data FrameContext = FrameContext
-  { keyModifier :: SDL.KeyModifier
-  , mousePosition :: V2 Int
-  , screenSize :: V2 Int
+  , frameContext :: UI2.UIContext
   }
   deriving (Show, Generic)
 
@@ -35,7 +28,7 @@ data ResourceContext = ResourceContext
   { widgetTree :: WidgetTree }
   deriving (Show, Generic)
 
-contextFrom :: ResourceContext -> FrameContext -> Context
+contextFrom :: ResourceContext -> UI2.UIContext -> Context
 contextFrom resources frameContext =
   Context{ resources, frameContext }
 
