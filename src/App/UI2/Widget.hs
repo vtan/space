@@ -11,23 +11,23 @@ import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified SDL
 
 import App.Common.Util (clamp)
-import App.UI2.UI (UIContext(..), UIGroup(..), UIState(..))
+import App.UI2.UI (MonadUI, UIContext(..), UIGroup(..), UIState(..))
 import App.Update.Events
 import App.Update.ListBoxState (ListBoxState)
 import Control.Lens (Lens')
-import Data.Generics.Product (HasType, typed)
+import Data.Generics.Product (typed)
 
-label :: (MonadState s m, HasType UIState s) => TextBuilder -> m ()
+label :: MonadUI r s m => TextBuilder -> m ()
 label =
   label' . LazyText.toStrict . TextBuilder.toLazyText
 
-label' :: (MonadState s m, HasType UIState s) => Text -> m ()
+label' :: MonadUI r s m => Text -> m ()
 label' text =
   UI.placeWidget $ do
     bounds <- UI.nextWidgetScaled
     UI.render (Rendering.text bounds text)
 
-button :: (MonadState s m, HasType UIState s) => Text -> m Bool
+button :: MonadUI r s m => Text -> m Bool
 button text =
   UI.placeWidget $ do
     bounds <- UI.nextWidgetScaled
@@ -43,7 +43,7 @@ button text =
       Rendering.text bounds text
     pure clicked
 
-textBox :: (MonadState s m, HasType UIState s) => Text -> Lens' s Text -> m Text
+textBox :: MonadUI r s m => Text -> Lens' s Text -> m Text
 textBox name state =
   UI.placeWidget $ do
     UIState{ focusedWidgetName } <- use typed
@@ -87,7 +87,7 @@ data ListBox a i = ListBox
   }
 
 listBox
-  :: (MonadState s m, MonadReader r m, HasType UIState s, HasType UIContext r, Eq i)
+  :: (MonadUI r s m, Eq i)
   => ListBox a i
   -> Lens' s (ListBoxState i)
   -> [a]
@@ -122,7 +122,7 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
         state . #scrollOffset .= new
         pure new
     -- TODO this works as long as `itemHeight` and `scrollOffset` are divisors of the box height
-    UIState{ scaleFactor } <- use typed
+    UIContext{ scaleFactor } <- view typed
     let scrolledPastItemNo = scrollOffset `div` itemHeight
         shownItemNo = (nextWidget ^. #wh . _y) `div` itemHeight
         shownItems = items & drop scrolledPastItemNo & take shownItemNo

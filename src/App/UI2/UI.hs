@@ -10,13 +10,14 @@ import App.Render.Rendering (Rendering)
 import Control.Lens (Lens')
 import Data.Generics.Product (HasType, typed)
 
+type MonadUI r s m =
+  (MonadReader r m, MonadState s m, HasType UIContext r, HasType UIState s)
+
 data UIState = UIState
   { groups :: NonEmpty UIGroup
   , focusedWidgetName :: Maybe Text
   , events :: [SDL.Event]
   , renderStack :: NonEmpty (Rendering ())
-  -- TODO move this to context
-  , scaleFactor :: Int
   }
   deriving (Generic)
 
@@ -24,6 +25,7 @@ data UIContext = UIContext
   { keyModifier :: SDL.KeyModifier
   , mousePosition :: V2 Int
   , screenSize :: V2 Int
+  , scaleFactor :: Int
   }
   deriving (Show, Generic)
 
@@ -47,7 +49,6 @@ initialState =
     , focusedWidgetName = Nothing
     , events = []
     , renderStack = pure () :| []
-    , scaleFactor = 4
     }
 
 rootGroup :: UIGroup
@@ -59,7 +60,7 @@ rootGroup =
     , totalSize = 0
     }
 
-with :: forall m s a b. (MonadState s m, HasType UIState s) => Lens' UIGroup a -> a -> m b -> m b
+with :: forall m r s a b. MonadUI r s m => Lens' UIGroup a -> a -> m b -> m b
 with prop value action = do
   let lens :: Lens' s a
       lens = (typed @UIState . #groups . _nonEmptyHead . prop)
@@ -69,10 +70,10 @@ with prop value action = do
   lens .= oldValue
   pure result
 
-sized :: (MonadState s m, HasType UIState s) => V2 Int -> m a -> m a
+sized :: MonadUI r s m => V2 Int -> m a -> m a
 sized = with (#nextWidget . #wh)
 
-group :: (MonadState s m, HasType UIState s) => PlacementMode -> m a -> m a
+group :: MonadUI r s m => PlacementMode -> m a -> m a
 group placementMode child = do
   UIState{ groups = currentGroup :| prevGroups } <- use typed
   let newGroup = currentGroup{ placementMode, totalSize = 0 }
@@ -82,7 +83,7 @@ group placementMode child = do
   typed @UIState . #groups .= advanceCursor totalSize currentGroup :| prevGroups
   pure result
 
-placeWidget :: (MonadState s m, HasType UIState s) => m a -> m a
+placeWidget :: MonadUI r s m => m a -> m a
 placeWidget widget = do
   result <- widget
   typed @UIState . #groups . _nonEmptyHead %=
@@ -106,7 +107,7 @@ advanceCursor size grp@UIGroup{ nextWidget, padding, placementMode, totalSize } 
       & otherAxis %~ max (size ^. otherAxis)
   in grp{ nextWidget = nextWidget', totalSize = totalSize' }
 
-consumeEvents :: (MonadState s m, HasType UIState s, Monoid a, AsEmpty a) => (SDL.Event -> a) -> m a
+consumeEvents :: (MonadUI r s m, Monoid a, AsEmpty a) => (SDL.Event -> a) -> m a
 consumeEvents p = do
   UIState{ events } <- use typed
   let (remainingEvents, results) =
@@ -120,12 +121,13 @@ consumeEvents p = do
   typed @UIState . #events .= remainingEvents
   pure (fold results)
 
-render :: (MonadState s m, HasType UIState s) => Rendering () -> m ()
+render :: MonadUI r s m => Rendering () -> m ()
 render r =
   typed @UIState . #renderStack %=
     \(rhead :| rtail) -> (rhead *> r) :| rtail
 
-nextWidgetScaled :: (MonadState s m, HasType UIState s) => m (Rect Int)
+nextWidgetScaled :: MonadUI r s m => m (Rect Int)
 nextWidgetScaled = do
-  UIState{ scaleFactor, groups = UIGroup { nextWidget } :| _ } <- use typed
+  UIContext{ scaleFactor } <- view typed
+  UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
   pure (scaleFactor *^ nextWidget)

@@ -75,6 +75,7 @@ mainLoop
         { keyModifier = keyMod
         , mousePosition = mousePos
         , screenSize = screenSize
+        , scaleFactor = 4
         }
     let uc = Updating.contextFrom resourceContext frc
         (!gameState', !updateState') = Update.update gameState
