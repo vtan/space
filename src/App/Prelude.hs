@@ -21,6 +21,7 @@ import Control.Lens.Setter as X
 import Control.Lens.Tuple as X
 import Control.Lens.Traversal as X
 import Control.Monad as X
+import Control.Monad.Zip as X
 import Data.Either as X
 import Data.Foldable as X
 import Data.Function as X
@@ -46,7 +47,7 @@ import Data.IntMap.Strict as X
 import Data.List.NonEmpty as X
   (NonEmpty((:|)))
 import Data.Semigroup as X
-  ((<>))
+  ((<>), Any(..), First(..), Sum(..))
 import Data.Word as X
   (Word8, Word32)
 import Data.StateVar as X

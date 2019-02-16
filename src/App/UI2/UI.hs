@@ -15,9 +15,17 @@ data UIState = UIState
   , focusedWidgetName :: Maybe Text
   , events :: [SDL.Event]
   , renderStack :: NonEmpty (Rendering ())
+  -- TODO move this to context
   , scaleFactor :: Int
   }
   deriving (Generic)
+
+data UIContext = UIContext
+  { keyModifier :: SDL.KeyModifier
+  , mousePosition :: V2 Int
+  , screenSize :: V2 Int
+  }
+  deriving (Show, Generic)
 
 data UIGroup = UIGroup
   { nextWidget :: Rect Int
