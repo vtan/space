@@ -173,7 +173,7 @@ data Window = Window
   }
   deriving (Show, Generic)
 
-window :: MonadUI r s m => Window -> m () -> m ()
+window :: MonadUI r s m => Window -> m a -> m a
 window Window{ titleHeight, title } body =
   UI.placeWidget $ do
     scaler <- UI.scaler

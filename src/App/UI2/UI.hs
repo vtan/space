@@ -77,6 +77,15 @@ positioned = with (#nextWidget . #xy)
 sized :: MonadUI r s m => V2 (Unscaled Int) -> m a -> m a
 sized = with (#nextWidget . #wh)
 
+width :: MonadUI r s m => Unscaled Int -> m a -> m a
+width = with (#nextWidget . #wh . _x)
+
+height :: MonadUI r s m => Unscaled Int -> m a -> m a
+height = with (#nextWidget . #wh . _y)
+
+padded :: MonadUI r s m => V2 (Unscaled Int) -> m a -> m a
+padded = with #padding
+
 group :: MonadUI r s m => PlacementMode -> m a -> m a
 group placementMode child = do
   UIState{ groups = currentGroup :| prevGroups } <- use typed

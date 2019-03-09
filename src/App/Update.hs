@@ -4,23 +4,20 @@ where
 
 import App.Prelude
 
-import qualified App.Common.Print as Print
 import qualified App.Logic.TimeStep as Logic.TimeStep
-import qualified App.UI.ColonyWindow as ColonyWindow
+import qualified App.UI.ColonyWindow as OldColonyWindow
 import qualified App.UI.ProductionWindow as ProductionWindow
 import qualified App.UI.ScreenOverlay as ScreenOverlay
 import qualified App.UI.ShipWindow as ShipWindow
 import qualified App.UI.SystemMap as SystemMap
-import qualified App.UI2.UI as UI
-import qualified App.UI2.Widget as Widget2
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
+import qualified App.View.ColonyWindow as ColonyWindow
 import qualified SDL
 
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import Data.String (fromString)
 
 update :: GameState -> Updating GameState
 update gs = do
@@ -61,6 +58,7 @@ update gs = do
       >=> SystemMap.update
     )
 
+    {-
   UI.positioned 32 $
     UI.sized (V2 100 150) $
       Widget2.window Widget2.Window{ titleHeight = 5, title = "Test window" } $
@@ -106,6 +104,7 @@ update gs = do
                 (#ui . #selectedBuildingTaskIndex)
                 [0..10]
           for_ n $ Print.int >>> Widget2.label
+          -}
 
   timeStep <- use #timeStepPerFrame
   pure $ case timeStep of
@@ -115,7 +114,7 @@ update gs = do
 handleUI :: GameState -> Updating GameState
 handleUI gs =
   use (#ui . #activeWindow) >>= \case
-    Just UIState.ColonyWindow -> ColonyWindow.update gs
+    Just UIState.ColonyWindow -> OldColonyWindow.update gs *> ColonyWindow.update gs
     Just UIState.ShipWindow -> ShipWindow.update gs
     Just UIState.ProductionWindow -> ProductionWindow.update gs
     Nothing -> pure gs
