@@ -23,13 +23,13 @@ import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
 update gs@GameState{ bodies, bodyMinerals, colonies } =
-  UI.positioned (V2 180 20) >>> UI.sized (V2 150 150) $
+  UI.positioned (V2 180 20) . UI.sized (V2 150 150) $
     Widget.window Widget.Window{ titleHeight = 5, title = "Colonies" } $
       UI.group UI.Horizontal $ do
         selectedBody <- bodyList (toList bodies)
         case selectedBody of
           Just Body{ bodyId } ->
-            UI.group UI.Vertical >>> UI.sized (V2 30 5) $ do
+            UI.group UI.Vertical . UI.sized (V2 30 5) $ do
               mineablePanel (bodyMinerals ^. at bodyId . _Just)
               case colonies ^. at bodyId of
                 Just colony -> do
@@ -60,7 +60,7 @@ bodyList bodies =
 mineablePanel :: HashMap Resource Mineral -> Updating ()
 mineablePanel minerals = do
   UI.width 40 (Widget.label' "Mineable resources")
-  UI.padded 0 $ do
+  UI.group' . UI.padded 0 $ do
     when ((not . null) minerals) $
       UI.group UI.Horizontal $ do
         Widget.label' "Mineral"

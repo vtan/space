@@ -96,6 +96,11 @@ group placementMode child = do
   typed @UIState . #groups .= advanceCursor totalSize currentGroup :| prevGroups
   pure result
 
+group' :: MonadUI r s m => m a -> m a
+group' child = do
+  UIState{ groups = UIGroup{ placementMode } :| _ } <- use typed
+  group placementMode child
+
 placeWidget :: MonadUI r s m => m a -> m a
 placeWidget widget = do
   result <- widget
