@@ -10,6 +10,7 @@ import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified SDL
 
+import App.Common.Rect (Rect(..))
 import App.Common.Util (clamp)
 import App.UI2.UI (MonadUI, UIContext(..), UIGroup(..), UIState(..))
 import App.Update.Events
@@ -85,6 +86,7 @@ data ListBox a i = ListBox
   , toIx :: a -> i
   , toText :: a -> Text
   }
+  deriving (Generic)
 
 listBox
   :: (MonadUI r s m, Eq i)
@@ -163,6 +165,36 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
         SDL.rendererDrawColor r $= shade3
         SDL.fillRect r (Just $ Rect.toSdl rect)
     pure (selectedItem, has _Just clickedIx)
+
+data Window = Window
+  { titleHeight :: Int
+  , title :: Text
+  }
+  deriving (Show, Generic)
+
+window :: MonadUI r s m => Window -> m () -> m ()
+window Window{ titleHeight, title } body =
+  UI.placeWidget $ do
+    UIContext{ scaleFactor } <- view typed
+    UIState{ groups = UIGroup{ nextWidget, padding } :| _ } <- use typed
+    let
+      titleHeightScaled = scaleFactor * titleHeight
+      bounds = scaleFactor *^ nextWidget
+    UI.render $ do
+      let titleBounds = bounds & #wh . _y .~ titleHeightScaled
+          restBounds = bounds
+            & #xy . _y +~ titleHeightScaled
+            & #wh . _y -~ titleHeightScaled
+      r <- view #renderer
+      SDL.rendererDrawColor r $= shade2
+      SDL.fillRect r (Just $ Rect.toSdl titleBounds)
+      SDL.rendererDrawColor r $= shade0
+      SDL.fillRect r (Just $ Rect.toSdl restBounds)
+      Rendering.text bounds title
+    let Rect pos size = nextWidget
+    UI.positioned (pos + padding + V2 0 titleHeight) $
+      UI.sized (size - padding - V2 0 titleHeight) $
+        body
 
 shade0, shade1, shade2, shade3, highlight :: Num a => V4 a
 shade0 = V4 23 23 23 255

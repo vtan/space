@@ -54,7 +54,7 @@ initialState =
 rootGroup :: UIGroup
 rootGroup =
   UIGroup
-    { nextWidget = Rect 32 (V2 25 5)
+    { nextWidget = Rect 0 (V2 25 5)
     , padding = 1
     , placementMode = Vertical
     , totalSize = 0
@@ -69,6 +69,9 @@ with prop value action = do
   result <- action
   lens .= oldValue
   pure result
+
+positioned :: MonadUI r s m => V2 Int -> m a -> m a
+positioned = with (#nextWidget . #xy)
 
 sized :: MonadUI r s m => V2 Int -> m a -> m a
 sized = with (#nextWidget . #wh)
