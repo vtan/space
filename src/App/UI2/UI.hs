@@ -7,6 +7,7 @@ import qualified SDL
 import App.Common.Rect (Rect(..))
 import App.Common.Util (_nonEmptyHead)
 import App.Render.Rendering (Rendering)
+import App.UI2.Unscaled
 import Control.Lens (Lens')
 import Data.Generics.Product (HasType, typed)
 
@@ -30,10 +31,10 @@ data UIContext = UIContext
   deriving (Show, Generic)
 
 data UIGroup = UIGroup
-  { nextWidget :: Rect Int
-  , padding :: V2 Int
+  { nextWidget :: Rect (Unscaled Int)
+  , padding :: V2 (Unscaled Int)
   , placementMode :: PlacementMode
-  , totalSize :: V2 Int
+  , totalSize :: V2 (Unscaled Int)
   }
   deriving (Generic)
 
@@ -70,10 +71,10 @@ with prop value action = do
   lens .= oldValue
   pure result
 
-positioned :: MonadUI r s m => V2 Int -> m a -> m a
+positioned :: MonadUI r s m => V2 (Unscaled Int) -> m a -> m a
 positioned = with (#nextWidget . #xy)
 
-sized :: MonadUI r s m => V2 Int -> m a -> m a
+sized :: MonadUI r s m => V2 (Unscaled Int) -> m a -> m a
 sized = with (#nextWidget . #wh)
 
 group :: MonadUI r s m => PlacementMode -> m a -> m a
@@ -93,7 +94,7 @@ placeWidget widget = do
     \grp@UIGroup{ nextWidget = Rect _ size } -> advanceCursor size grp
   pure result
 
-advanceCursor :: V2 Int -> UIGroup -> UIGroup
+advanceCursor :: V2 (Unscaled Int) -> UIGroup -> UIGroup
 advanceCursor size grp@UIGroup{ nextWidget, padding, placementMode, totalSize } =
   let
     mainAxis, otherAxis :: forall n. Lens' (V2 n) n
@@ -131,6 +132,11 @@ render r =
 
 nextWidgetScaled :: MonadUI r s m => m (Rect Int)
 nextWidgetScaled = do
-  UIContext{ scaleFactor } <- view typed
+  sc <- scaler
   UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
-  pure (scaleFactor *^ nextWidget)
+  pure (fmap sc nextWidget)
+
+scaler :: MonadUI r s m => m (Unscaled Int -> Int)
+scaler = do
+  UIContext{ scaleFactor } <- view typed
+  pure $ \(Unscaled x) -> x * scaleFactor

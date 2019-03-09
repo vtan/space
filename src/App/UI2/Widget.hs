@@ -13,6 +13,7 @@ import qualified SDL
 import App.Common.Rect (Rect(..))
 import App.Common.Util (clamp)
 import App.UI2.UI (MonadUI, UIContext(..), UIGroup(..), UIState(..))
+import App.UI2.Unscaled (Unscaled(..))
 import App.Update.Events
 import App.Update.ListBoxState (ListBoxState)
 import Control.Lens (Lens')
@@ -81,8 +82,8 @@ textBox name state =
     pure text'
 
 data ListBox a i = ListBox
-  { itemHeight :: Int
-  , scrollBarSize :: V2 Int
+  { itemHeight :: Unscaled Int
+  , scrollBarSize :: V2 (Unscaled Int)
   , toIx :: a -> i
   , toText :: a -> Text
   }
@@ -114,21 +115,21 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
           then Just . First . fmap fromIntegral $ pos
           else mempty
         _ -> mempty
-    let hiddenHeight = length items * itemHeight - nextWidget ^. #wh . _y
+    let hiddenHeight = (length items *^ itemHeight) - (nextWidget ^. #wh . _y)
     scrollOffset <- case scrollDiff of
       _ | hiddenHeight < 0 -> pure 0
-      0 -> use (state . #scrollOffset)
+      0 -> Unscaled <$> use (state . #scrollOffset)
       _ -> do
-        current <- use (state . #scrollOffset)
+        current <- Unscaled <$> use (state . #scrollOffset)
         let new = clamp 0 (current + scrollDiff) hiddenHeight
-        state . #scrollOffset .= new
+        state . #scrollOffset .= getUnscaled new
         pure new
     -- TODO this works as long as `itemHeight` and `scrollOffset` are divisors of the box height
-    UIContext{ scaleFactor } <- view typed
-    let scrolledPastItemNo = scrollOffset `div` itemHeight
-        shownItemNo = (nextWidget ^. #wh . _y) `div` itemHeight
+    scaler <- UI.scaler
+    let scrolledPastItemNo = getUnscaled (scrollOffset `div` itemHeight)
+        shownItemNo = getUnscaled ((nextWidget ^. #wh . _y) `div` itemHeight)
         shownItems = items & drop scrolledPastItemNo & take shownItemNo
-        itemHeightScaled = scaleFactor * itemHeight
+        itemHeightScaled = scaler itemHeight
         clickedRow = clickedPos <&> \pos ->
           ((pos - (bounds ^. #xy)) ^. _y) `div` itemHeightScaled + scrolledPastItemNo
         clickedItem = clickedRow >>= \i -> items ^? ix i
@@ -144,7 +145,7 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
         scrollRatio :: Maybe Double
           | hiddenHeight <= 0 = Nothing
           | otherwise = Just $ (fromIntegral scrollOffset / fromIntegral hiddenHeight)
-    let scrollBarScaled = scaleFactor *^ scrollBarSize
+        scrollBarScaled = scaler <$> scrollBarSize
     UI.render $ do
       r <- view #renderer
       SDL.rendererDrawColor r $= shade1
@@ -167,7 +168,7 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
     pure (selectedItem, has _Just clickedIx)
 
 data Window = Window
-  { titleHeight :: Int
+  { titleHeight :: Unscaled Int
   , title :: Text
   }
   deriving (Show, Generic)
@@ -175,11 +176,11 @@ data Window = Window
 window :: MonadUI r s m => Window -> m () -> m ()
 window Window{ titleHeight, title } body =
   UI.placeWidget $ do
-    UIContext{ scaleFactor } <- view typed
+    scaler <- UI.scaler
     UIState{ groups = UIGroup{ nextWidget, padding } :| _ } <- use typed
     let
-      titleHeightScaled = scaleFactor * titleHeight
-      bounds = scaleFactor *^ nextWidget
+      titleHeightScaled = scaler titleHeight
+      bounds = scaler <$> nextWidget
     UI.render $ do
       let titleBounds = bounds & #wh . _y .~ titleHeightScaled
           restBounds = bounds

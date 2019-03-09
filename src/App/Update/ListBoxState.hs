@@ -4,6 +4,7 @@ import App.Prelude
 
 data ListBoxState i = ListBoxState
   { selectedIndex :: Maybe i
+  -- TODO use unscaled
   , scrollOffset :: Int
   }
   deriving (Show, Generic)
