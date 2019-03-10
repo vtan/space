@@ -7,12 +7,13 @@ import App.Prelude
 import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.UI.ColonyWindow as OldColonyWindow
 import qualified App.UI.ProductionWindow as ProductionWindow
-import qualified App.UI.ScreenOverlay as ScreenOverlay
 import qualified App.UI.ShipWindow as ShipWindow
 import qualified App.UI.SystemMap as SystemMap
+import qualified App.UI2.UI as UI
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
 import qualified App.View.ColonyWindow as ColonyWindow
+import qualified App.View.ScreenOverlay as ScreenOverlay
 import qualified SDL
 
 import App.Model.GameState (GameState(..))
@@ -53,58 +54,10 @@ update gs = do
     updateDropdown *> Updating.pushRendering
 
   gs' <- gs & (
-      handleUI
-      >=> ScreenOverlay.update
+      fmap UI.group' handleUI
+      >=> fmap UI.group' ScreenOverlay.update
       >=> SystemMap.update
     )
-
-    {-
-  UI.positioned 32 $
-    UI.sized (V2 100 150) $
-      Widget2.window Widget2.Window{ titleHeight = 5, title = "Test window" } $
-        UI.sized (V2 20 5) $ do
-          Widget2.label "label1"
-          Widget2.label "label2"
-          Widget2.label "label3"
-          UI.group UI.Horizontal $
-            UI.sized 10 $ do
-              Widget2.button "+1" >>= \click -> when click (#ui . #testNumber += 1)
-              Widget2.button "*2" >>= \click -> when click (#ui . #testNumber *= 2)
-              Widget2.label =<< Print.int <$> use (#ui . #testNumber)
-          shipName <- Widget2.textBox "shipName" (#ui . #editedShipName)
-          _ <- Widget2.textBox "shipName2" (#ui . #editedShipName)
-          Widget2.label' "hello"
-          Widget2.label' shipName
-          UI.group UI.Horizontal $ do
-            _ <- UI.sized 20 (Widget2.button "LARGE")
-            UI.sized (V2 2 8) $ do
-              UI.group UI.Vertical $ do
-                _ <- Widget2.button "1"
-                _ <- Widget2.button "2"
-                pure ()
-              UI.group UI.Vertical $ do
-                _ <- Widget2.button "3"
-                _ <- Widget2.button "4"
-                pure ()
-            UI.group UI.Vertical $
-              UI.sized (V2 20 4) $ do
-                Widget2.label "aaa"
-                Widget2.label "bbb"
-                Widget2.label "ccc"
-          Widget2.label' "hello"
-          (n, _) <-
-            UI.sized (V2 10 20) $
-              Widget2.listBox
-                Widget2.ListBox
-                  { itemHeight = 5
-                  , scrollBarSize = V2 1 2
-                  , toIx = id
-                  , toText = show >>> fromString
-                  }
-                (#ui . #selectedBuildingTaskIndex)
-                [0..10]
-          for_ n $ Print.int >>> Widget2.label
-          -}
 
   timeStep <- use #timeStepPerFrame
   pure $ case timeStep of
