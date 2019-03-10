@@ -4,6 +4,7 @@ import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
 import qualified App.Render.Rendering as Rendering
+import qualified App.Render.TextRenderer as TextRenderer
 import qualified App.UI2.UI as UI
 import qualified App.Update as Update
 import qualified App.Update.Initial as Initial
@@ -23,11 +24,12 @@ import System.IO (hPutStrLn, stderr)
 data MainContext = MainContext
   { window :: SDL.Window
   , screenSize :: V2 Int
-  , renderContext :: Rendering.Context
   }
 
 data MainState = MainState
   { fpsCounter :: FpsCounter.Counter
+  , scaleFactor :: Int
+  , renderContext :: Rendering.Context
   , resourceContext :: Updating.ResourceContext
   , gameState :: GameState
   , updateState :: Updating.State
@@ -42,7 +44,7 @@ main =
     let screenSize = V2 1728 972
     window <- SDL.createWindow "" SDL.defaultWindow{ SDL.windowInitialSize = screenSize }
     renderer <- SDL.createRenderer window (-1) SDL.defaultRenderer{ SDL.rendererType = SDL.AcceleratedVSyncRenderer }
-    font <- SDL.TTF.load "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf" 17
+    font <- SDL.TTF.load fontPath (fontSize 4)
     let renderContext = Rendering.newContext renderer font
     resourceContext <- loadResourceContext
     SDL.Raw.startTextInput
@@ -51,17 +53,18 @@ main =
     let gameState = Initial.gameState
         updateState = Updating.initialState
         renderState = Rendering.initialState
+        scaleFactor = 4
     mainLoop
-      MainContext{ window, screenSize, renderContext }
-      MainState{ fpsCounter, resourceContext, gameState, updateState, renderState }
+      MainContext{ window, screenSize }
+      MainState{ fpsCounter, scaleFactor, renderContext, resourceContext, gameState, updateState, renderState }
 
     SDL.TTF.quit
     SDL.quit
 
 mainLoop :: MainContext -> MainState -> IO ()
 mainLoop
-    ctx@MainContext{ window, screenSize, renderContext }
-    MainState{ fpsCounter, resourceContext, gameState, updateState, renderState } =
+    ctx@MainContext{ window, screenSize }
+    MainState{ fpsCounter, scaleFactor, renderContext, resourceContext, gameState, updateState, renderState } =
   do
     case fpsCounter ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
@@ -75,7 +78,7 @@ mainLoop
         { keyModifier = keyMod
         , mousePosition = mousePos
         , screenSize = screenSize
-        , scaleFactor = 4
+        , scaleFactor = scaleFactor
         }
     let uc = Updating.contextFrom resourceContext frc
         (!gameState', !updateState') = Update.update gameState
@@ -89,11 +92,32 @@ mainLoop
       then reloadResourceContext <&> fromMaybe resourceContext
       else pure resourceContext
 
+    (scaleFactor', renderContext', renderState'') <-
+      case updateState' ^. #newScaleFactor of
+        Just new -> do
+          rc <- reloadFont new renderContext
+          let rs = renderState'{ Rendering.textRenderer = TextRenderer.new }
+          pure (new, rc, rs)
+        Nothing -> pure (scaleFactor, renderContext, renderState')
+
     if updateState' ^. #quit
     then pure ()
     else do
       fpsCounter' <- FpsCounter.record fpsCounter
-      mainLoop ctx (MainState fpsCounter' resourceContext' gameState' updateState' renderState')
+      mainLoop ctx (MainState fpsCounter' scaleFactor' renderContext' resourceContext' gameState' updateState' renderState'')
+
+fontPath :: String
+fontPath = "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf"
+
+fontSize :: Int -> Int
+fontSize scaleFactor = 1 + 4 * scaleFactor
+
+reloadFont :: Int -> Rendering.Context -> IO Rendering.Context
+reloadFont newFontSize rc@Rendering.Context{ font } =
+  handle (\(ex :: SomeException) -> rc <$ logError ex) $ do
+    newFont <- SDL.TTF.load fontPath (fontSize newFontSize)
+    SDL.TTF.free font
+    pure rc{ Rendering.font = newFont }
 
 loadResourceContext :: IO Updating.ResourceContext
 loadResourceContext = do

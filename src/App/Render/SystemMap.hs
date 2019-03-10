@@ -94,7 +94,7 @@ renderBody
       let label
             | all id childrenVisible = bodyName
             | otherwise = bodyName <> "..."
-          labelRect = Rect.fromMinSize (floor <$> (bodyCenter & _y +~ 8)) (V2 128 20)
+          labelRect = Rect.fromMinSize (floor <$> (bodyCenter & _y +~ 8)) (V2 256 40)
       Rendering.text labelRect label
 
 renderShip :: Camera (Local Double) Double -> Ship -> Rendering ()

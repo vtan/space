@@ -37,6 +37,7 @@ data State = State
   , timeStepPerFrame :: Maybe (Time Int)
   , movingViewport :: Bool
   , quit :: Bool
+  , newScaleFactor :: Maybe Int
   , reloadResources :: Bool
   , ui2 :: UI2.UIState
   , focusedWidget :: Maybe HashedText
@@ -52,6 +53,7 @@ initialState = State
   , timeStepPerFrame = Nothing
   , movingViewport = False
   , quit = False
+  , newScaleFactor = Nothing
   , reloadResources = False
   , ui2 = UI2.initialState
   , focusedWidget = Nothing
@@ -65,6 +67,7 @@ runFrame events ctx st u =
   -- TODO clean this up
   let st' = st
         & #events .~ []
+        & #newScaleFactor .~ Nothing
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
         & #ui2 . #events .~ events

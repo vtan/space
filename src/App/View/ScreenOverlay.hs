@@ -11,6 +11,7 @@ import qualified App.UI2.UI as UI
 import qualified App.UI2.Widget as Widget
 import qualified SDL
 
+import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
@@ -20,6 +21,7 @@ data Action
   = ToggleWindow UIState.Window
   | NextMidnight
   | SetSpeed Int
+  | SetScaleFactor Int
 
 update :: GameState -> Updating GameState
 update =
@@ -49,10 +51,11 @@ handleUI :: GameState -> Updating GameState
 handleUI gs = do
   topGroupAct <- topGroup
   timeControlGroupAct <- timeControlGroup
+  scalingGroupAct <- scalingGroup
   currentTimeGroup gs
 
   activeWindow <- use (#ui . #activeWindow)
-  case topGroupAct <|> timeControlGroupAct of
+  case topGroupAct <|> timeControlGroupAct <|> scalingGroupAct of
     Just (ToggleWindow w) | w `elem` activeWindow ->
       gs <$ (#ui . #activeWindow .= Nothing)
     Just (ToggleWindow w) ->
@@ -61,6 +64,8 @@ handleUI gs = do
       pure $ Logic.TimeStep.jumpToNextMidnight gs
     Just (SetSpeed speed) ->
       gs <$ setGameSpeed speed
+    Just (SetScaleFactor scaleFactor) ->
+      gs <$ (#newScaleFactor .= Just scaleFactor)
     Nothing -> pure gs
 
 topGroup :: Updating (Maybe Action)
@@ -110,6 +115,28 @@ currentTimeGroup GameState{ time } =
     UI.group UI.Horizontal $
       UI.positioned (V2 x 6) . UI.sized (V2 width 5) $
         Widget.label currentTime
+
+scalingGroup :: Updating (Maybe Action)
+scalingGroup = do
+  x <- startOfRightAligned 20
+  UI.group UI.Horizontal $
+    UI.positioned (V2 x 12) . UI.sized (V2 4 5) $ do
+      decrease <- Widget.button "-"
+      Widget.label "UI"
+      increase <- Widget.button "+"
+      let diff = if
+            | decrease -> Just (-1)
+            | increase -> Just 1
+            | otherwise -> Nothing
+      action <- for diff $ \n -> do
+        current <- view (#frameContext . #scaleFactor)
+        let new = clamp 2 (current + n) 6
+        pure $
+          if new /= current
+          then Just (SetScaleFactor new)
+          else Nothing
+      pure (join action)
+
 
 startOfRightAligned :: Int -> Updating (Unscaled Int)
 startOfRightAligned groupWidth = do
