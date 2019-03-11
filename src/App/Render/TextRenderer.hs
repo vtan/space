@@ -9,7 +9,8 @@ import qualified SDL.Font as SDL.TTF
 import Data.Generics.Product (HasType, typed)
 
 data TextRenderer = TextRenderer
-  { cache :: HashMap Text RenderedText
+  { font :: SDL.TTF.Font
+  , cache :: HashMap Text RenderedText
   , usedSinceLastClean :: HashSet Text
   }
   deriving (Generic)
@@ -20,17 +21,19 @@ data RenderedText = RenderedText
   }
   deriving (Generic)
 
-new :: TextRenderer
-new = TextRenderer
-  { cache = mempty
-  , usedSinceLastClean = mempty
-  }
+new :: SDL.TTF.Font -> TextRenderer
+new font =
+  TextRenderer
+    { font
+    , cache = mempty
+    , usedSinceLastClean = mempty
+    }
 
 render
   :: (MonadState s m, MonadIO m, HasType TextRenderer s)
-  => SDL.Renderer -> SDL.TTF.Font -> Text -> m RenderedText
-render renderer font text = do
-  TextRenderer{ cache } <- use typed
+  => SDL.Renderer -> Text -> m RenderedText
+render renderer text = do
+  TextRenderer{ font, cache } <- use typed
   renderedText <- case cache ^. at text of
     Just t -> pure t
     Nothing -> do
