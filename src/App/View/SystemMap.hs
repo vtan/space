@@ -1,4 +1,4 @@
-module App.UI.SystemMap
+module App.View.SystemMap
   ( update )
 where
 
@@ -17,7 +17,7 @@ import Numeric.Extras (cbrt)
 update :: GameState -> Updating GameState
 update gs =
   gs <$ do
-    use #events >>= traverse_ handleEvent
+    use (#ui2 . #events) >>= traverse_ handleEvent
     camera <- use (#ui . #camera)
     #deferredRendering %= (Render.SystemMap.render camera gs :)
 
@@ -35,7 +35,7 @@ handleEvent = \case
       #ui . #camera . #eyeFrom -= motionAu
   MouseWheelEvent (fromIntegral -> amount) -> do
     movingViewport <- use #movingViewport
-    when (not movingViewport) $ do
+    unless movingViewport $ do
       scale <- use (#ui . #camera . #scale . _x)
       let zoomLevel = cbrt scale
           zoomLevel' = clamp 1.5 (zoomLevel + 0.5 * amount) 70

@@ -8,12 +8,12 @@ import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.UI.ColonyWindow as OldColonyWindow
 import qualified App.UI.ProductionWindow as ProductionWindow
 import qualified App.UI.ShipWindow as ShipWindow
-import qualified App.UI.SystemMap as SystemMap
 import qualified App.UI2.UI as UI
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
 import qualified App.View.ColonyWindow as ColonyWindow
 import qualified App.View.ScreenOverlay as ScreenOverlay
+import qualified App.View.SystemMap as SystemMap
 import qualified SDL
 
 import App.Model.GameState (GameState(..))
