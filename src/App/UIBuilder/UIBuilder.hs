@@ -154,3 +154,9 @@ scaler :: MonadUI r s m => m (Unscaled Int -> Int)
 scaler = do
   UIBuilderContext{ scaleFactor } <- view typed
   pure $ \(Unscaled x) -> x * scaleFactor
+
+startOfRightAligned :: MonadUI r s m => Int -> m (Unscaled Int)
+startOfRightAligned groupWidth = do
+  UIBuilderContext{ scaleFactor, screenSize } <- view typed
+  let V2 screenWidth _ = fmap (`div` scaleFactor) screenSize
+  pure (Unscaled (screenWidth - groupWidth))

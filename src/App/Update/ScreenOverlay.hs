@@ -15,8 +15,6 @@ import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.UIBuilder.UIBuilder (UIBuilderContext(..))
-import App.UIBuilder.Unscaled (Unscaled(..))
 
 data Action
   = ToggleWindow UIState.Window
@@ -91,7 +89,7 @@ timeControlGroup =
     padding = 1
     groupWidth = labelCount * (buttonWidth + padding)
   in do
-    x <- startOfRightAligned groupWidth
+    x <- UI.startOfRightAligned groupWidth
     UI.group UI.Horizontal $
       UI.positioned (V2 x 1) . UI.sized (V2 buttonWidth 5) $ do
         nextMidnight <- Widget.button "next" <&> \case
@@ -112,14 +110,14 @@ currentTimeGroup GameState{ time } =
     width = 40
     currentTime = Time.printDateTime time
   in do
-    x <- startOfRightAligned width
+    x <- UI.startOfRightAligned width
     UI.group UI.Horizontal $
       UI.positioned (V2 x 6) . UI.sized (V2 width 5) $
         Widget.label currentTime
 
 scalingGroup :: Updating (Maybe Action)
 scalingGroup = do
-  x <- startOfRightAligned 20
+  x <- UI.startOfRightAligned 16
   UI.group UI.Horizontal $
     UI.positioned (V2 x 12) . UI.sized (V2 4 5) $ do
       decrease <- Widget.button "-"
@@ -137,12 +135,6 @@ scalingGroup = do
           then Just (SetScaleFactor new)
           else Nothing
       pure (join action)
-
-startOfRightAligned :: Int -> Updating (Unscaled Int)
-startOfRightAligned groupWidth = do
-  UIBuilderContext{ scaleFactor, screenSize } <- view #uiBuilderContext
-  let V2 screenWidth _ = fmap (`div` scaleFactor) screenSize
-  pure (Unscaled (screenWidth - groupWidth))
 
 setGameSpeed :: Int -> Updating ()
 setGameSpeed speed =
