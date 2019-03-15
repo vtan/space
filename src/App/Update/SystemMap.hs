@@ -1,4 +1,4 @@
-module App.View.SystemMap
+module App.Update.SystemMap
   ( update )
 where
 
@@ -17,7 +17,7 @@ import Numeric.Extras (cbrt)
 update :: GameState -> Updating GameState
 update gs =
   gs <$ do
-    use (#ui2 . #events) >>= traverse_ handleEvent
+    use (#uiBuilderState . #events) >>= traverse_ handleEvent
     camera <- use (#ui . #camera)
     #deferredRendering %= (Render.SystemMap.render camera gs :)
 

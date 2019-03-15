@@ -1,4 +1,4 @@
-module App.UI2.UI where
+module App.UIBuilder.UIBuilder where
 
 import App.Prelude
 
@@ -7,14 +7,14 @@ import qualified SDL
 import App.Common.Rect (Rect(..))
 import App.Common.Util (_nonEmptyHead)
 import App.Render.Rendering (Rendering)
-import App.UI2.Unscaled
+import App.UIBuilder.Unscaled
 import Control.Lens (Lens')
 import Data.Generics.Product (HasType, typed)
 
 type MonadUI r s m =
-  (MonadReader r m, MonadState s m, HasType UIContext r, HasType UIState s)
+  (MonadReader r m, MonadState s m, HasType UIBuilderContext r, HasType UIBuilderState s)
 
-data UIState = UIState
+data UIBuilderState = UIBuilderState
   { groups :: NonEmpty UIGroup
   , focusedWidgetName :: Maybe Text
   , events :: [SDL.Event]
@@ -22,7 +22,7 @@ data UIState = UIState
   }
   deriving (Generic)
 
-data UIContext = UIContext
+data UIBuilderContext = UIBuilderContext
   { keyModifier :: SDL.KeyModifier
   , mousePosition :: V2 Int
   , screenSize :: V2 Int
@@ -43,9 +43,9 @@ data PlacementMode
   | Horizontal
   deriving (Show, Generic)
 
-initialState :: UIState
+initialState :: UIBuilderState
 initialState =
-  UIState
+  UIBuilderState
     { groups = rootGroup :| []
     , focusedWidgetName = Nothing
     , events = []
@@ -64,7 +64,7 @@ rootGroup =
 with :: forall m r s a b. MonadUI r s m => Lens' UIGroup a -> a -> m b -> m b
 with prop value action = do
   let lens :: Lens' s a
-      lens = (typed @UIState . #groups . _nonEmptyHead . prop)
+      lens = (typed @UIBuilderState . #groups . _nonEmptyHead . prop)
   oldValue <- use lens
   lens .= value
   result <- action
@@ -88,23 +88,23 @@ padded = with #padding
 
 group :: MonadUI r s m => PlacementMode -> m a -> m a
 group placementMode child = do
-  UIState{ groups = currentGroup :| prevGroups } <- use typed
+  UIBuilderState{ groups = currentGroup :| prevGroups } <- use typed
   let newGroup = currentGroup{ placementMode, totalSize = 0 }
-  typed @UIState . #groups %= (newGroup :|) . toList
+  typed @UIBuilderState . #groups %= (newGroup :|) . toList
   result <- child
-  UIGroup{ totalSize } <- use (typed @UIState . #groups . _nonEmptyHead)
-  typed @UIState . #groups .= advanceCursor totalSize currentGroup :| prevGroups
+  UIGroup{ totalSize } <- use (typed @UIBuilderState . #groups . _nonEmptyHead)
+  typed @UIBuilderState . #groups .= advanceCursor totalSize currentGroup :| prevGroups
   pure result
 
 group' :: MonadUI r s m => m a -> m a
 group' child = do
-  UIState{ groups = UIGroup{ placementMode } :| _ } <- use typed
+  UIBuilderState{ groups = UIGroup{ placementMode } :| _ } <- use typed
   group placementMode child
 
 placeWidget :: MonadUI r s m => m a -> m a
 placeWidget widget = do
   result <- widget
-  typed @UIState . #groups . _nonEmptyHead %=
+  typed @UIBuilderState . #groups . _nonEmptyHead %=
     \grp@UIGroup{ nextWidget = Rect _ size } -> advanceCursor size grp
   pure result
 
@@ -127,7 +127,7 @@ advanceCursor size grp@UIGroup{ nextWidget, padding, placementMode, totalSize } 
 
 consumeEvents :: (MonadUI r s m, Monoid a, AsEmpty a) => (SDL.Event -> a) -> m a
 consumeEvents p = do
-  UIState{ events } <- use typed
+  UIBuilderState{ events } <- use typed
   let (remainingEvents, results) =
         events
           & map (\e ->
@@ -136,21 +136,21 @@ consumeEvents p = do
                 pe -> Right pe
             )
           & partitionEithers
-  typed @UIState . #events .= remainingEvents
+  typed @UIBuilderState . #events .= remainingEvents
   pure (fold results)
 
 render :: MonadUI r s m => Rendering () -> m ()
 render r =
-  typed @UIState . #renderStack %=
+  typed @UIBuilderState . #renderStack %=
     \(rhead :| rtail) -> (rhead *> r) :| rtail
 
 nextWidgetScaled :: MonadUI r s m => m (Rect Int)
 nextWidgetScaled = do
   sc <- scaler
-  UIState{ groups = UIGroup { nextWidget } :| _ } <- use typed
+  UIBuilderState{ groups = UIGroup { nextWidget } :| _ } <- use typed
   pure (fmap sc nextWidget)
 
 scaler :: MonadUI r s m => m (Unscaled Int -> Int)
 scaler = do
-  UIContext{ scaleFactor } <- view typed
+  UIBuilderContext{ scaleFactor } <- view typed
   pure $ \(Unscaled x) -> x * scaleFactor

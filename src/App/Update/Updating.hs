@@ -2,7 +2,7 @@ module App.Update.Updating where
 
 import App.Prelude
 
-import qualified App.UI2.UI as UI2
+import qualified App.UIBuilder.UIBuilder as UIBuilder
 import qualified App.Update.UIState as UIState
 import qualified App.Update.WidgetTree as WidgetTree
 import qualified SDL
@@ -10,6 +10,7 @@ import qualified SDL
 import App.Common.HashedText (HashedText)
 import App.Dimension.Time (Time)
 import App.Render.Rendering (Rendering)
+import App.UIBuilder.UIBuilder (UIBuilderContext, UIBuilderState)
 import App.Update.Events
 import App.Update.UIState (UIState)
 import App.Update.WidgetTree (WidgetTree)
@@ -20,7 +21,7 @@ type Updating a = ReaderT Context (StateT State Identity) a
 
 data Context = Context
   { resources :: ResourceContext
-  , frameContext :: UI2.UIContext
+  , uiBuilderContext :: UIBuilderContext
   }
   deriving (Show, Generic)
 
@@ -28,9 +29,9 @@ data ResourceContext = ResourceContext
   { widgetTree :: WidgetTree }
   deriving (Show, Generic)
 
-contextFrom :: ResourceContext -> UI2.UIContext -> Context
-contextFrom resources frameContext =
-  Context{ resources, frameContext }
+contextFrom :: ResourceContext -> UIBuilderContext -> Context
+contextFrom resources uiBuilderContext =
+  Context{ resources, uiBuilderContext }
 
 data State = State
   { events :: [SDL.Event]
@@ -39,7 +40,7 @@ data State = State
   , quit :: Bool
   , newScaleFactor :: Maybe Int
   , reloadResources :: Bool
-  , ui2 :: UI2.UIState
+  , uiBuilderState :: UIBuilderState
   , focusedWidget :: Maybe HashedText
   , activeDropdown :: Maybe (Updating ())
   , ui :: UIState
@@ -55,7 +56,7 @@ initialState = State
   , quit = False
   , newScaleFactor = Nothing
   , reloadResources = False
-  , ui2 = UI2.initialState
+  , uiBuilderState = UIBuilder.initialState
   , focusedWidget = Nothing
   , activeDropdown = Nothing
   , ui = UIState.initial
@@ -70,9 +71,9 @@ runFrame events ctx st u =
         & #newScaleFactor .~ Nothing
         & #deferredRendering .~ [pure ()]
         & (\acc0 -> foldr (flip applyEvent) acc0 events)
-        & #ui2 . #events .~ events
-        & #ui2 . #renderStack .~ pure () :| []
-        & #ui2 . #groups .~ UI2.rootGroup :| []
+        & #uiBuilderState . #events .~ events
+        & #uiBuilderState . #renderStack .~ pure () :| []
+        & #uiBuilderState . #groups .~ UIBuilder.rootGroup :| []
       Identity (a, st'') = runStateT (runReaderT u ctx) st'
   in (a, st'')
   where

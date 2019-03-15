@@ -1,4 +1,4 @@
-module App.View.ColonyWindow
+module App.Update.ColonyWindow
   ( update )
 where
 
@@ -6,19 +6,15 @@ import App.Prelude
 
 import qualified App.Common.Print as Print
 import qualified App.Logic.Colony as ColonyLogic
-import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
-import qualified App.Model.Ship as Ship
-import qualified App.UI2.UI as UI
-import qualified App.UI2.Widget as Widget
+import qualified App.UIBuilder.UIBuilder as UI
+import qualified App.UIBuilder.Widget as Widget
 
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
-import App.Model.Installation (Installation)
 import App.Model.Mineral (Mineral(..))
 import App.Model.Resource (Resource)
-import App.Model.ShipBuildingTask (ShipBuildingTask(..))
 import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
@@ -61,7 +57,7 @@ mineablePanel :: HashMap Resource Mineral -> Updating ()
 mineablePanel minerals = do
   UI.width 40 (Widget.label' "Mineable resources")
   UI.group' . UI.padded 0 $ do
-    when ((not . null) minerals) $
+    unless (null minerals) $
       UI.group UI.Horizontal $ do
         Widget.label' "Mineral"
         Widget.label' "Available"
@@ -76,7 +72,7 @@ stockpilePanel :: Colony -> Updating ()
 stockpilePanel Colony{ stockpile } = do
   Widget.label' "Stockpile"
   UI.padded 0 $ do
-    when ((not . null) stockpile) $
+    unless (null stockpile) $
       UI.group UI.Horizontal $ do
         Widget.label' "Mineral"
         Widget.label' "In stockpile"

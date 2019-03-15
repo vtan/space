@@ -1,4 +1,4 @@
-module App.UI2.Unscaled where
+module App.UIBuilder.Unscaled where
 
 import App.Prelude
 

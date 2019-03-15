@@ -1,10 +1,10 @@
-module App.UI2.Widget where
+module App.UIBuilder.Widget where
 
 import App.Prelude
 
 import qualified App.Common.Rect as Rect
 import qualified App.Render.Rendering as Rendering
-import qualified App.UI2.UI as UI
+import qualified App.UIBuilder.UIBuilder as UI
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text.Lazy.Builder as TextBuilder
@@ -12,8 +12,8 @@ import qualified SDL
 
 import App.Common.Rect (Rect(..))
 import App.Common.Util (clamp)
-import App.UI2.UI (MonadUI, UIContext(..), UIGroup(..), UIState(..))
-import App.UI2.Unscaled (Unscaled(..))
+import App.UIBuilder.UIBuilder (MonadUI, UIBuilderContext(..), UIGroup(..), UIBuilderState(..))
+import App.UIBuilder.Unscaled (Unscaled(..))
 import App.Update.Events
 import App.Update.ListBoxState (ListBoxState)
 import Control.Lens (Lens')
@@ -48,7 +48,7 @@ button text =
 textBox :: MonadUI r s m => Text -> Lens' s Text -> m Text
 textBox name state =
   UI.placeWidget $ do
-    UIState{ focusedWidgetName } <- use typed
+    UIBuilderState{ focusedWidgetName } <- use typed
     bounds <- UI.nextWidgetScaled
     focused <- do
       Any clicked <- UI.consumeEvents $ \case
@@ -56,7 +56,7 @@ textBox name state =
           Any (Rect.contains bounds (fromIntegral <$> pos))
         _ -> mempty
       if clicked
-      then True <$ (typed @UIState . #focusedWidgetName .= Just name)
+      then True <$ (typed @UIBuilderState . #focusedWidgetName .= Just name)
       else pure (elem name focusedWidgetName)
     text <- use state
     text' <-
@@ -97,9 +97,9 @@ listBox
   -> m (Maybe a, Bool)
 listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
   UI.placeWidget $ do
-    UIState{ groups = UIGroup{ nextWidget } :| _ } <- use typed
+    UIBuilderState{ groups = UIGroup{ nextWidget } :| _ } <- use typed
     bounds <- UI.nextWidgetScaled
-    UIContext{ mousePosition } <- view typed
+    UIBuilderContext{ mousePosition } <- view typed
     Sum scrollDiff <-
       if Rect.contains bounds mousePosition
       then
@@ -177,7 +177,7 @@ window :: MonadUI r s m => Window -> m a -> m a
 window Window{ titleHeight, title } body =
   UI.placeWidget $ do
     scaler <- UI.scaler
-    UIState{ groups = UIGroup{ nextWidget, padding } :| _ } <- use typed
+    UIBuilderState{ groups = UIGroup{ nextWidget, padding } :| _ } <- use typed
     let
       titleHeightScaled = scaler titleHeight
       bounds = scaler <$> nextWidget

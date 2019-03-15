@@ -8,12 +8,12 @@ import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.UI.ColonyWindow as OldColonyWindow
 import qualified App.UI.ProductionWindow as ProductionWindow
 import qualified App.UI.ShipWindow as ShipWindow
-import qualified App.UI2.UI as UI
+import qualified App.UIBuilder.UIBuilder as UIBuilder
+import qualified App.Update.ColonyWindow as ColonyWindow
+import qualified App.Update.ScreenOverlay as ScreenOverlay
+import qualified App.Update.SystemMap as SystemMap
 import qualified App.Update.UIState as UIState
 import qualified App.Update.Updating as Updating
-import qualified App.View.ColonyWindow as ColonyWindow
-import qualified App.View.ScreenOverlay as ScreenOverlay
-import qualified App.View.SystemMap as SystemMap
 import qualified SDL
 
 import App.Model.GameState (GameState(..))
@@ -22,7 +22,7 @@ import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
 update gs = do
-  reloadResources <- view (#frameContext . #keyModifier) >>= \case
+  reloadResources <- view (#uiBuilderContext . #keyModifier) >>= \case
     (SDL.keyModifierLeftCtrl -> True) ->
       Updating.consumeEvents (\case
         KeyPressEvent SDL.ScancodeR -> Just ()
@@ -54,8 +54,8 @@ update gs = do
     updateDropdown *> Updating.pushRendering
 
   gs' <- gs & (
-      fmap UI.group' handleUI
-      >=> fmap UI.group' ScreenOverlay.update
+      fmap UIBuilder.group' handleUI
+      >=> fmap UIBuilder.group' ScreenOverlay.update
       >=> SystemMap.update
     )
 

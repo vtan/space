@@ -1,4 +1,4 @@
-module App.View.ScreenOverlay
+module App.Update.ScreenOverlay
   ( update )
 where
 
@@ -7,15 +7,16 @@ import App.Prelude
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.Update.UIState as UIState
-import qualified App.UI2.UI as UI
-import qualified App.UI2.Widget as Widget
+import qualified App.UIBuilder.UIBuilder as UI
+import qualified App.UIBuilder.Widget as Widget
 import qualified SDL
 
 import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
 import App.Update.Events
 import App.Update.Updating (Updating)
-import App.UI2.Unscaled (Unscaled(..))
+import App.UIBuilder.UIBuilder (UIBuilderContext(..))
+import App.UIBuilder.Unscaled (Unscaled(..))
 
 data Action
   = ToggleWindow UIState.Window
@@ -129,7 +130,7 @@ scalingGroup = do
             | increase -> Just 1
             | otherwise -> Nothing
       action <- for diff $ \n -> do
-        current <- view (#frameContext . #scaleFactor)
+        current <- view (#uiBuilderContext . #scaleFactor)
         let new = clamp 2 (current + n) 6
         pure $
           if new /= current
@@ -137,10 +138,9 @@ scalingGroup = do
           else Nothing
       pure (join action)
 
-
 startOfRightAligned :: Int -> Updating (Unscaled Int)
 startOfRightAligned groupWidth = do
-  UI.UIContext{ scaleFactor, screenSize } <- view #frameContext
+  UIBuilderContext{ scaleFactor, screenSize } <- view #uiBuilderContext
   let V2 screenWidth _ = fmap (`div` scaleFactor) screenSize
   pure (Unscaled (screenWidth - groupWidth))
 

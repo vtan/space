@@ -4,7 +4,6 @@ import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
 import qualified App.Render.Rendering as Rendering
-import qualified App.UI2.UI as UI
 import qualified App.Update as Update
 import qualified App.Update.Initial as Initial
 import qualified App.Update.Updating as Updating
@@ -16,6 +15,7 @@ import qualified SDL.Font as SDL.TTF
 import qualified SDL.Raw
 
 import App.Model.GameState (GameState)
+import App.UIBuilder.UIBuilder (UIBuilderContext(..), UIBuilderState(..))
 import Control.Exception (SomeException, displayException, handle)
 import Data.String (fromString)
 import System.IO (hPutStrLn, stderr)
@@ -72,7 +72,7 @@ mainLoop
     frc <- do
       keyMod <- SDL.getModState
       SDL.P (fmap fromIntegral -> mousePos) <- SDL.getAbsoluteMouseLocation
-      pure UI.UIContext
+      pure UIBuilderContext
         { keyModifier = keyMod
         , mousePosition = mousePos
         , screenSize = screenSize
@@ -81,7 +81,7 @@ mainLoop
     let uc = Updating.contextFrom resourceContext frc
         (!gameState', !updateState') = Update.update gameState
           & Updating.runFrame events uc updateState
-        Updating.State{ Updating.deferredRendering, Updating.ui2 = UI.UIState{ renderStack } } = updateState'
+        Updating.State{ Updating.deferredRendering, Updating.uiBuilderState = UIBuilderState{ renderStack } } = updateState'
         flatRendering = foldl' (*>) (pure ()) (deferredRendering ++ toList renderStack)
     ((), renderState') <- flatRendering & Rendering.runFrame renderContext renderState
 
