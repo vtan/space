@@ -72,12 +72,8 @@ topGroup =
   UI.group UI.Horizontal $
     UI.positioned 1 . UI.sized (V2 22 5) $ do
       colonies <- Widget.button "Colonies"
-      ships <- Widget.button "Ships"
-      production <- Widget.button "Production"
       pure $ if
         | colonies -> Just (ToggleWindow UIState.ColonyWindow)
-        | ships -> Just (ToggleWindow UIState.ShipWindow)
-        | production -> Just (ToggleWindow UIState.ProductionWindow)
         | otherwise -> Nothing
 
 timeControlGroup :: Updating (Maybe Action)

@@ -6,6 +6,7 @@ import App.Prelude
 
 import qualified App.Common.Camera as Camera
 import qualified App.Render.SystemMap as Render.SystemMap
+import qualified App.UIBuilder.UIBuilder as UI
 import qualified SDL
 
 import App.Common.Util (clamp)
@@ -19,7 +20,7 @@ update gs =
   gs <$ do
     use (#uiBuilderState . #events) >>= traverse_ handleEvent
     camera <- use (#ui . #camera)
-    #deferredRendering %= (Render.SystemMap.render camera gs :)
+    UI.pushRender (Render.SystemMap.render camera gs)
 
 handleEvent :: SDL.Event -> Updating ()
 handleEvent = \case

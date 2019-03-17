@@ -139,6 +139,11 @@ consumeEvents p = do
   typed @UIBuilderState . #events .= remainingEvents
   pure (fold results)
 
+pushRender :: MonadUI r s m => Rendering () -> m ()
+pushRender r =
+  typed @UIBuilderState . #renderStack %=
+    \(rhead :| rtail) -> r :| (rhead : rtail)
+
 render :: MonadUI r s m => Rendering () -> m ()
 render r =
   typed @UIBuilderState . #renderStack %=

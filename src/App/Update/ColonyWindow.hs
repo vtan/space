@@ -19,7 +19,7 @@ import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
 update gs@GameState{ bodies, bodyMinerals, colonies } =
-  UI.positioned (V2 180 20) . UI.sized (V2 150 150) $
+  UI.positioned (V2 20 20) . UI.sized (V2 150 150) $
     Widget.window Widget.Window{ titleHeight = 5, title = "Colonies" } $
       UI.group UI.Horizontal $ do
         selectedBody <- bodyList (toList bodies)
