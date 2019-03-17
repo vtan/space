@@ -1,4 +1,4 @@
-module App.Update.Initial where
+module App.Logic.InitialGameState where
 
 import App.Prelude
 
@@ -16,8 +16,8 @@ import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
 
-gameState :: GameState
-gameState = GameState
+initial :: GameState
+initial = GameState
   { rootBody = theRootBody
   , bodies = Body.allChildren theRootBody
       & map (\body@Body{ bodyId } -> (bodyId, body))

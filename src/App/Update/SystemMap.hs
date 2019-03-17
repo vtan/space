@@ -9,9 +9,9 @@ import qualified App.Render.SystemMap as Render.SystemMap
 import qualified App.UIBuilder.UIBuilder as UI
 import qualified SDL
 
+import App.Common.EventPatterns
 import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
-import App.Update.Events
 import App.Update.Updating (Updating)
 import Numeric.Extras (cbrt)
 

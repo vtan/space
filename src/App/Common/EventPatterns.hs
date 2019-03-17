@@ -1,4 +1,4 @@
-module App.Update.Events where
+module App.Common.EventPatterns where
 
 import App.Prelude
 
@@ -14,7 +14,7 @@ pattern QuitEvent <-
 
 pattern KeyPressEvent :: SDL.Scancode -> SDL.Event
 pattern KeyPressEvent scancode <-
-  SDL.Event 
+  SDL.Event
     { SDL.eventPayload = SDL.KeyboardEvent SDL.KeyboardEventData
       { SDL.keyboardEventKeyMotion = SDL.Pressed
       , SDL.keyboardEventKeysym = SDL.Keysym { SDL.keysymScancode = scancode }
@@ -58,13 +58,13 @@ pattern MouseWheelEvent amount <-
 pattern TextInputEvent :: Text -> SDL.Event
 pattern TextInputEvent text <-
   SDL.Event
-    { SDL.eventPayload = SDL.TextInputEvent SDL.TextInputEventData 
+    { SDL.eventPayload = SDL.TextInputEvent SDL.TextInputEventData
       { SDL.textInputEventText = text }
     }
 
 isUnicodeKeyEvent :: SDL.Event -> Bool
 isUnicodeKeyEvent = \case
-  SDL.Event 
+  SDL.Event
     { SDL.eventPayload = SDL.KeyboardEvent SDL.KeyboardEventData
       { SDL.keyboardEventKeysym = SDL.Keysym { SDL.keysymKeycode = keycode } -- TODO check for modifier keys
       }

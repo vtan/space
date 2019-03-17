@@ -1,11 +1,12 @@
-module App.Update.ListBoxState where
+module App.UIBuilder.ListBoxState where
 
 import App.Prelude
 
+import App.UIBuilder.Unscaled
+
 data ListBoxState i = ListBoxState
   { selectedIndex :: Maybe i
-  -- TODO use unscaled
-  , scrollOffset :: Int
+  , scrollOffset :: Unscaled Int
   }
   deriving (Show, Generic)
 

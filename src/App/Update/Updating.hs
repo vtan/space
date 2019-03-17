@@ -6,9 +6,9 @@ import qualified App.UIBuilder.UIBuilder as UIBuilder
 import qualified App.Update.UIState as UIState
 import qualified SDL
 
+import App.Common.EventPatterns
 import App.Dimension.Time (Time)
 import App.UIBuilder.UIBuilder (UIBuilderContext, UIBuilderState)
-import App.Update.Events
 import App.Update.UIState (UIState)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.State.Strict (runStateT)

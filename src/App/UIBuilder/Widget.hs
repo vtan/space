@@ -10,12 +10,12 @@ import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified SDL
 
+import App.Common.EventPatterns
 import App.Common.Rect (Rect(..))
 import App.Common.Util (clamp)
+import App.UIBuilder.ListBoxState (ListBoxState)
 import App.UIBuilder.UIBuilder (MonadUI, UIBuilderContext(..), UIGroup(..), UIBuilderState(..))
 import App.UIBuilder.Unscaled (Unscaled(..))
-import App.Update.Events
-import App.Update.ListBoxState (ListBoxState)
 import Control.Lens (Lens')
 import Data.Generics.Product (typed)
 
@@ -118,11 +118,11 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
     let hiddenHeight = (length items *^ itemHeight) - (nextWidget ^. #wh . _y)
     scrollOffset <- case scrollDiff of
       _ | hiddenHeight < 0 -> pure 0
-      0 -> Unscaled <$> use (state . #scrollOffset)
+      0 -> use (state . #scrollOffset)
       _ -> do
-        current <- Unscaled <$> use (state . #scrollOffset)
+        current <- use (state . #scrollOffset)
         let new = clamp 0 (current + scrollDiff) hiddenHeight
-        state . #scrollOffset .= getUnscaled new
+        state . #scrollOffset .= new
         pure new
     -- TODO this works as long as `itemHeight` and `scrollOffset` are divisors of the box height
     scaler <- UI.scaler

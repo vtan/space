@@ -3,9 +3,9 @@ module Main (main) where
 import App.Prelude
 
 import qualified App.FpsCounter as FpsCounter
+import qualified App.Logic.InitialGameState as InitialGameState
 import qualified App.Render.Rendering as Rendering
-import qualified App.Update as Update
-import qualified App.Update.Initial as Initial
+import qualified App.Update.FrameController as FrameController
 import qualified App.Update.Updating as Updating
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
@@ -44,7 +44,7 @@ main =
     SDL.Raw.startTextInput
 
     fpsCounter <- FpsCounter.new
-    let gameState = Initial.gameState
+    let gameState = InitialGameState.initial
         updateState = Updating.initialState
         scaleFactor = 4
     mainLoop
@@ -75,7 +75,7 @@ mainLoop
           , scaleFactor = scaleFactor
           }
         }
-    let (!gameState', !updateState') = Update.update gameState
+    let (!gameState', !updateState') = FrameController.update gameState
           & Updating.runFrame events uc updateState
         Updating.State{ Updating.uiBuilderState = UIBuilderState{ renderStack } } = updateState'
         flatRendering = foldl' (*>) (pure ()) (toList renderStack)

@@ -4,7 +4,7 @@ import App.Prelude
 
 import qualified App.Dimension.Local as Local
 import qualified App.Model.Ship as Ship
-import qualified App.Update.ListBoxState as ListBoxState
+import qualified App.UIBuilder.ListBoxState as ListBoxState
 
 import App.Common.Camera (Camera(..))
 import App.Common.Id (Id)
@@ -13,7 +13,7 @@ import App.Model.Body (Body)
 import App.Model.Installation (Installation)
 import App.Model.Resource (Resource)
 import App.Model.Ship (Ship)
-import App.Update.ListBoxState (ListBoxState)
+import App.UIBuilder.ListBoxState (ListBoxState)
 
 data UIState = UIState
   { camera :: Camera (Local Double) Double

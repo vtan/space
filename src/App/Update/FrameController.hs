@@ -1,4 +1,4 @@
-module App.Update
+module App.Update.FrameController
   ( update )
 where
 
@@ -12,8 +12,8 @@ import qualified App.Update.SystemMap as SystemMap
 import qualified App.Update.UIState as UIState
 import qualified SDL
 
+import App.Common.EventPatterns
 import App.Model.GameState (GameState(..))
-import App.Update.Events
 import App.Update.Updating (Updating)
 
 update :: GameState -> Updating GameState
