@@ -1,4 +1,4 @@
-module App.Render.Rendering where
+module App.Render.Render where
 
 import App.Prelude
 
@@ -11,39 +11,39 @@ import App.Render.TextRenderer (TextRenderer(..))
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.State.Strict (runStateT)
 
-type Rendering a = ReaderT Context (StateT State IO) a
+type Render a = ReaderT RenderContext (StateT RenderState IO) a
 
-data Context = Context
+data RenderContext = RenderContext
   { renderer :: SDL.Renderer }
   deriving (Show, Generic)
 
-data State = State
+data RenderState = RenderState
   { textRenderer :: TextRenderer }
   deriving (Generic)
 
-newContext :: SDL.Renderer -> Context
+newContext :: SDL.Renderer -> RenderContext
 newContext renderer =
-  Context { renderer = renderer }
+  RenderContext { renderer = renderer }
 
-newState :: String -> Int -> IO State
+newState :: String -> Int -> IO RenderState
 newState fontPath fontSize = do
   font <- SDL.TTF.load fontPath fontSize
-  pure State{ textRenderer = TextRenderer.new font }
+  pure RenderState{ textRenderer = TextRenderer.new font }
 
-reloadFont :: String -> Int -> State -> IO State
-reloadFont fontPath fontSize st@State{ textRenderer = TextRenderer{ font } } = do
+reloadFont :: String -> Int -> RenderState -> IO RenderState
+reloadFont fontPath fontSize st@RenderState{ textRenderer = TextRenderer{ font } } = do
   newFont <- SDL.TTF.load fontPath fontSize
   SDL.TTF.free font
   pure st{ textRenderer = TextRenderer.new newFont }
 
-runFrame :: Context -> State -> Rendering a -> IO (a, State)
+runFrame :: RenderContext -> RenderState -> Render a -> IO (a, RenderState)
 runFrame ctx st r = runStateT (runReaderT (r <* endFrame) ctx) st
   where
     endFrame = do
       view #renderer >>= SDL.present
       TextRenderer.clean
 
-text :: Rect Int -> Text -> Rendering ()
+text :: Rect Int -> Text -> Render ()
 text (Rect pos requestedSize) str =
   case str of
     Empty -> pure ()

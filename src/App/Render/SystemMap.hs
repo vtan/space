@@ -8,7 +8,7 @@ import qualified App.Common.Camera as Camera
 import qualified App.Common.Rect as Rect
 import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
-import qualified App.Render.Rendering as Rendering
+import qualified App.Render.Render as Render
 import qualified Data.Vector.Storable as Vector
 import qualified Linear as Linear
 import qualified SDL
@@ -20,11 +20,11 @@ import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Ship (Ship(..))
-import App.Render.Rendering (Rendering)
+import App.Render.Render (Render)
 import Data.Vector.Storable (Vector)
 import SDL (($=))
 
-render :: Camera (Local Double) Double -> GameState -> Rendering ()
+render :: Camera (Local Double) Double -> GameState -> Render ()
 render camera GameState{ rootBody, bodyOrbitalStates, ships } = do
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= V4 0 0 0 255
@@ -41,7 +41,7 @@ data RenderBodyEnv = RenderBodyEnv
   , orbitalStates :: IdMap Body OrbitalState
   }
 
-renderBodyEnv :: Camera (Local Double) Double -> IdMap Body OrbitalState -> Rendering RenderBodyEnv
+renderBodyEnv :: Camera (Local Double) Double -> IdMap Body OrbitalState -> Render RenderBodyEnv
 renderBodyEnv camera orbitalStates = do
   renderer <- view #renderer
   let cameraRadiusSq = Camera.boundingCircleRadiusSq camera
@@ -54,7 +54,7 @@ renderBodyEnv camera orbitalStates = do
     , orbitalStates
     }
 
-renderBody :: RenderBodyEnv -> Maybe (V2 Double) -> Body -> Rendering Bool
+renderBody :: RenderBodyEnv -> Maybe (V2 Double) -> Body -> Render Bool
 renderBody
     env@RenderBodyEnv{ renderer, camera, cameraCenter, cameraRadiusSq, cameraRadius, orbitalStates }
     parentDrawnCenter
@@ -95,9 +95,9 @@ renderBody
             | all id childrenVisible = bodyName
             | otherwise = bodyName <> "..."
           labelRect = Rect.fromMinSize (floor <$> (bodyCenter & _y +~ 8)) (V2 256 40)
-      Rendering.text labelRect label
+      Render.text labelRect label
 
-renderShip :: Camera (Local Double) Double -> Ship -> Rendering ()
+renderShip :: Camera (Local Double) Double -> Ship -> Render ()
 renderShip camera Ship{ Ship.position } = do
   let center = Camera.pointToScreen camera position
       points = shipCircle

@@ -6,7 +6,7 @@ import qualified SDL
 
 import App.Common.Rect (Rect(..))
 import App.Common.Util (_nonEmptyHead)
-import App.Render.Rendering (Rendering)
+import App.Render.Render (Render)
 import App.UIBuilder.Unscaled
 import Control.Lens (Lens')
 import Data.Generics.Product (HasType, typed)
@@ -18,7 +18,7 @@ data UIBuilderState = UIBuilderState
   { groups :: NonEmpty UIGroup
   , focusedWidgetName :: Maybe Text
   , events :: [SDL.Event]
-  , renderStack :: NonEmpty (Rendering ())
+  , renderStack :: NonEmpty (Render ())
   }
   deriving (Generic)
 
@@ -139,12 +139,12 @@ consumeEvents p = do
   typed @UIBuilderState . #events .= remainingEvents
   pure (fold results)
 
-pushRender :: MonadUI r s m => Rendering () -> m ()
+pushRender :: MonadUI r s m => Render () -> m ()
 pushRender r =
   typed @UIBuilderState . #renderStack %=
     \(rhead :| rtail) -> r :| (rhead : rtail)
 
-render :: MonadUI r s m => Rendering () -> m ()
+render :: MonadUI r s m => Render () -> m ()
 render r =
   typed @UIBuilderState . #renderStack %=
     \(rhead :| rtail) -> (rhead *> r) :| rtail

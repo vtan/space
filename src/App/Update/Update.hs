@@ -1,4 +1,4 @@
-module App.Update.Updating where
+module App.Update.Update where
 
 import App.Prelude
 
@@ -13,13 +13,13 @@ import App.Update.UIState (UIState)
 import Control.Monad.Reader (runReaderT)
 import Control.Monad.State.Strict (runStateT)
 
-type Updating a = ReaderT Context (StateT State Identity) a
+type Update a = ReaderT UpdateContext (StateT UpdateState Identity) a
 
-data Context = Context
+data UpdateContext = UpdateContext
   { uiBuilderContext :: UIBuilderContext }
   deriving (Show, Generic)
 
-data State = State
+data UpdateState = UpdateState
   { timeStepPerFrame :: Maybe (Time Int)
   , movingViewport :: Bool
   , quit :: Bool
@@ -30,8 +30,8 @@ data State = State
   }
   deriving (Generic)
 
-initialState :: State
-initialState = State
+initialState :: UpdateState
+initialState = UpdateState
   { timeStepPerFrame = Nothing
   , movingViewport = False
   , quit = False
@@ -41,7 +41,7 @@ initialState = State
   , ui = UIState.initial
   }
 
-runFrame :: [SDL.Event] -> Context -> State -> Updating a -> (a, State)
+runFrame :: [SDL.Event] -> UpdateContext -> UpdateState -> Update a -> (a, UpdateState)
 runFrame events ctx st u =
   -- TODO clean this up
   let st' = st

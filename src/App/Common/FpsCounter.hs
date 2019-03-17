@@ -1,4 +1,4 @@
-module App.FpsCounter
+module App.Common.FpsCounter
   ( Counter
   , new, record
   )

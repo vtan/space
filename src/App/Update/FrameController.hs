@@ -14,9 +14,9 @@ import qualified SDL
 
 import App.Common.EventPatterns
 import App.Model.GameState (GameState(..))
-import App.Update.Updating (Updating)
+import App.Update.Update (Update)
 
-update :: GameState -> Updating GameState
+update :: GameState -> Update GameState
 update gs = do
   Any reloadResources <- view (#uiBuilderContext . #keyModifier) >>= \case
     (SDL.keyModifierLeftCtrl -> True) ->
@@ -43,7 +43,7 @@ update gs = do
     Just step -> gs' & Logic.TimeStep.stepTime step
     Nothing -> gs'
 
-handleUI :: GameState -> Updating GameState
+handleUI :: GameState -> Update GameState
 handleUI gs =
   use (#ui . #activeWindow) >>= \case
     Just UIState.ColonyWindow -> ColonyWindow.update gs

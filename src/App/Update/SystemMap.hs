@@ -12,17 +12,17 @@ import qualified SDL
 import App.Common.EventPatterns
 import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
-import App.Update.Updating (Updating)
+import App.Update.Update (Update)
 import Numeric.Extras (cbrt)
 
-update :: GameState -> Updating GameState
+update :: GameState -> Update GameState
 update gs =
   gs <$ do
     use (#uiBuilderState . #events) >>= traverse_ handleEvent
     camera <- use (#ui . #camera)
     UI.pushRender (Render.SystemMap.render camera gs)
 
-handleEvent :: SDL.Event -> Updating ()
+handleEvent :: SDL.Event -> Update ()
 handleEvent = \case
   MousePressEvent SDL.ButtonLeft _ ->
     #movingViewport .= True

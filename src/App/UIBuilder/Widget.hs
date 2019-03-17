@@ -3,7 +3,7 @@ module App.UIBuilder.Widget where
 import App.Prelude
 
 import qualified App.Common.Rect as Rect
-import qualified App.Render.Rendering as Rendering
+import qualified App.Render.Render as Render
 import qualified App.UIBuilder.UIBuilder as UI
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as LazyText
@@ -27,7 +27,7 @@ label' :: MonadUI r s m => Text -> m ()
 label' text =
   UI.placeWidget $ do
     bounds <- UI.nextWidgetScaled
-    UI.render (Rendering.text bounds text)
+    UI.render (Render.text bounds text)
 
 button :: MonadUI r s m => Text -> m Bool
 button text =
@@ -42,7 +42,7 @@ button text =
       let color = if clicked then highlight else shade3
       SDL.rendererDrawColor r $= color
       SDL.fillRect r (Just $ Rect.toSdl bounds)
-      Rendering.text bounds text
+      Render.text bounds text
     pure clicked
 
 textBox :: MonadUI r s m => Text -> Lens' s Text -> m Text
@@ -76,7 +76,7 @@ textBox name state =
       r <- view #renderer
       SDL.rendererDrawColor r $= shade2
       SDL.fillRect r (Just $ Rect.toSdl bounds)
-      Rendering.text bounds text'
+      Render.text bounds text'
       SDL.rendererDrawColor r $= if focused then highlight else shade1
       SDL.drawRect r (Just $ Rect.toSdl bounds)
     pure text'
@@ -158,7 +158,7 @@ listBox ListBox{ itemHeight, scrollBarSize, toIx, toText } state items =
         SDL.fillRect r (Just $ Rect.toSdl rect)
       ifor_ texts $ \row text ->
         let rect = bounds & #xy . _y +~ row * itemHeightScaled
-        in Rendering.text rect text
+        in Render.text rect text
       for_ scrollRatio $ \ ratio -> do
         let x = (bounds ^. #xy . _x) + (bounds ^. #wh . _x) - (scrollBarScaled ^. _x)
             y = (bounds ^. #xy . _y) + floor (ratio * fromIntegral ((bounds ^. #wh . _y) - (scrollBarScaled ^. _y)))
@@ -191,7 +191,7 @@ window Window{ titleHeight, title } body =
       SDL.fillRect r (Just $ Rect.toSdl titleBounds)
       SDL.rendererDrawColor r $= shade0
       SDL.fillRect r (Just $ Rect.toSdl restBounds)
-      Rendering.text bounds title
+      Render.text bounds title
     let Rect pos size = nextWidget
     UI.positioned (pos + padding + V2 0 titleHeight) $
       UI.sized (size - padding - V2 0 titleHeight) $

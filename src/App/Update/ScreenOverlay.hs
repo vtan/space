@@ -14,7 +14,7 @@ import qualified SDL
 import App.Common.EventPatterns
 import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
-import App.Update.Updating (Updating)
+import App.Update.Update (Update)
 
 data Action
   = ToggleWindow UIState.Window
@@ -22,11 +22,11 @@ data Action
   | SetSpeed Int
   | SetScaleFactor Int
 
-update :: GameState -> Updating GameState
+update :: GameState -> Update GameState
 update =
   handleKeyEvents >=> handleUI
 
-handleKeyEvents :: GameState -> Updating GameState
+handleKeyEvents :: GameState -> Update GameState
 handleKeyEvents gs = do
   (fmap getFirst -> newGameSpeed) <- UI.consumeEvents $ \case
     KeyPressEvent SDL.ScancodeGrave -> Just (First 0)
@@ -46,7 +46,7 @@ handleKeyEvents gs = do
     then Logic.TimeStep.jumpToNextMidnight gs
     else gs
 
-handleUI :: GameState -> Updating GameState
+handleUI :: GameState -> Update GameState
 handleUI gs = do
   topGroupAct <- topGroup
   timeControlGroupAct <- timeControlGroup
@@ -67,7 +67,7 @@ handleUI gs = do
       gs <$ (#newScaleFactor .= Just scaleFactor)
     Nothing -> pure gs
 
-topGroup :: Updating (Maybe Action)
+topGroup :: Update (Maybe Action)
 topGroup =
   UI.group UI.Horizontal $
     UI.positioned 1 . UI.sized (V2 22 5) $ do
@@ -76,7 +76,7 @@ topGroup =
         | colonies -> Just (ToggleWindow UIState.ColonyWindow)
         | otherwise -> Nothing
 
-timeControlGroup :: Updating (Maybe Action)
+timeControlGroup :: Update (Maybe Action)
 timeControlGroup =
   let
     labels = ["stop", "1min", "10min", "1h", "12h", "5d"] :: [Text]
@@ -100,7 +100,7 @@ timeControlGroup =
         let speed = listToMaybe (catMaybes speeds)
         pure (nextMidnight <|> (SetSpeed <$> speed))
 
-currentTimeGroup :: GameState -> Updating ()
+currentTimeGroup :: GameState -> Update ()
 currentTimeGroup GameState{ time } =
   let
     width = 40
@@ -111,7 +111,7 @@ currentTimeGroup GameState{ time } =
       UI.positioned (V2 x 6) . UI.sized (V2 width 5) $
         Widget.label currentTime
 
-scalingGroup :: Updating (Maybe Action)
+scalingGroup :: Update (Maybe Action)
 scalingGroup = do
   x <- UI.startOfRightAligned 16
   UI.group UI.Horizontal $
@@ -132,7 +132,7 @@ scalingGroup = do
           else Nothing
       pure (join action)
 
-setGameSpeed :: Int -> Updating ()
+setGameSpeed :: Int -> Update ()
 setGameSpeed speed =
   -- TODO assuming 60 fps
   case speed of

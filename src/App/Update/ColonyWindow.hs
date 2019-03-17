@@ -15,9 +15,9 @@ import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
 import App.Model.Resource (Resource)
-import App.Update.Updating (Updating)
+import App.Update.Update (Update)
 
-update :: GameState -> Updating GameState
+update :: GameState -> Update GameState
 update gs@GameState{ bodies, bodyMinerals, colonies } =
   UI.positioned (V2 20 20) . UI.sized (V2 150 150) $
     Widget.window Widget.Window{ titleHeight = 5, title = "Colonies" } $
@@ -39,7 +39,7 @@ update gs@GameState{ bodies, bodyMinerals, colonies } =
                     else gs
           Nothing -> pure gs
 
-bodyList :: [Body] -> Updating (Maybe Body)
+bodyList :: [Body] -> Update (Maybe Body)
 bodyList bodies =
   fmap fst $
     UI.width 35 $
@@ -53,7 +53,7 @@ bodyList bodies =
         (#ui . #selectedBody)
         (toList bodies)
 
-mineablePanel :: HashMap Resource Mineral -> Updating ()
+mineablePanel :: HashMap Resource Mineral -> Update ()
 mineablePanel minerals = do
   UI.width 40 (Widget.label' "Mineable resources")
   UI.group' . UI.padded 0 $ do
@@ -68,7 +68,7 @@ mineablePanel minerals = do
         Widget.label (Print.float0 available <> " t")
         Widget.label (Print.float0 (100 * accessibility) <> "%")
 
-stockpilePanel :: Colony -> Updating ()
+stockpilePanel :: Colony -> Update ()
 stockpilePanel Colony{ stockpile } = do
   Widget.label' "Stockpile"
   UI.padded 0 $ do
