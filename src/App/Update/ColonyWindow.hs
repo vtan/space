@@ -56,7 +56,7 @@ bodyList bodies =
 mineablePanel :: HashMap Resource Mineral -> Update ()
 mineablePanel minerals = do
   UI.width 40 (Widget.label' "Mineable resources")
-  UI.group' . UI.padded 0 $ do
+  UI.indent 4 . UI.group' . UI.padded 0 $ do
     unless (null minerals) $
       UI.group UI.Horizontal $ do
         Widget.label' "Mineral"
@@ -71,7 +71,7 @@ mineablePanel minerals = do
 stockpilePanel :: Colony -> Update ()
 stockpilePanel Colony{ stockpile } = do
   Widget.label' "Stockpile"
-  UI.padded 0 $ do
+  UI.indent 4 . UI.padded 0 $ do
     unless (null stockpile) $
       UI.group UI.Horizontal $ do
         Widget.label' "Mineral"

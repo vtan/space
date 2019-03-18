@@ -101,6 +101,13 @@ group' child = do
   UIBuilderState{ groups = UIGroup{ placementMode } :| _ } <- use typed
   group placementMode child
 
+indent :: MonadUI r s m => Unscaled Int -> m a -> m a
+indent indentWidth child = do
+  UIBuilderState{ groups = UIGroup{ placementMode } :| _ } <- use typed
+  group Horizontal $ do
+    sized (V2 indentWidth 0) (placeWidget (pure ()))
+    group placementMode child
+
 placeWidget :: MonadUI r s m => m a -> m a
 placeWidget widget = do
   result <- widget
