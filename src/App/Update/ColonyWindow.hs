@@ -4,7 +4,7 @@ where
 
 import App.Prelude
 
-import qualified App.Common.Print as Print
+import qualified App.Common.Display as Display
 import qualified App.Logic.Colony as ColonyLogic
 import qualified App.Model.Resource as Resource
 import qualified App.UIBuilder.UIBuilder as UI
@@ -65,8 +65,8 @@ mineablePanel minerals = do
     ifor_ minerals $ \resource Mineral{ available, accessibility } ->
       UI.group UI.Horizontal $ do
         Widget.label (Resource.print resource)
-        Widget.label (Print.float0 available <> " t")
-        Widget.label (Print.float0 (100 * accessibility) <> "%")
+        Widget.label (Display.float0 available <> " t")
+        Widget.label (Display.float0 (100 * accessibility) <> "%")
 
 stockpilePanel :: Colony -> Update ()
 stockpilePanel Colony{ stockpile } = do
@@ -79,4 +79,4 @@ stockpilePanel Colony{ stockpile } = do
     ifor_ stockpile $ \resource quantity ->
       UI.group UI.Horizontal $ do
         Widget.label (Resource.print resource)
-        Widget.label (Print.float0 quantity <> " t")
+        Widget.label (Display.float0 quantity <> " t")

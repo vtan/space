@@ -2,7 +2,7 @@ module App.Model.Resource where
 
 import App.Prelude
 
-import qualified App.Common.Print as Print
+import qualified App.Common.Display as Display
 import qualified App.Model.Installation as Installation
 import qualified Data.List as List
 
@@ -42,6 +42,6 @@ printShort = \case
 printCost :: HashMap Resource Double -> TextBuilder
 printCost =
   itoList
-  >>> map (\(resource, mass) -> Print.float0 mass <> " " <> printShort resource)
+  >>> map (\(resource, mass) -> Display.float0 mass <> " " <> printShort resource)
   >>> List.intersperse ", "
   >>> fold

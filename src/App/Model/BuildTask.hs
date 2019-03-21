@@ -2,7 +2,7 @@ module App.Model.BuildTask where
 
 import App.Prelude
 
-import qualified App.Common.Print as Print
+import qualified App.Common.Display as Display
 import qualified App.Model.Installation as Installation
 
 import App.Model.Installation (Installation)
@@ -17,5 +17,5 @@ data BuildTask = BuildTask
 
 print :: BuildTask -> TextBuilder
 print BuildTask{..} =
-  Installation.print installation <> " " <> Print.brackets (Print.int quantity)
+  Installation.print installation <> " " <> Display.brackets (Display.int quantity)
     <> (if installWhenDone then " (install)" else " (store)")

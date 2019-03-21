@@ -1,4 +1,4 @@
-module App.Common.Print where
+module App.Common.Display where
 
 import App.Prelude
 
