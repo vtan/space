@@ -6,6 +6,7 @@ import qualified App.Common.Display as Display
 import qualified App.Dimension.Local as Local
 import qualified App.Dimension.Time as Time
 
+import App.Common.Display (Display, display)
 import App.Dimension.Local (Local)
 import App.Dimension.Time (Time)
 
@@ -23,9 +24,9 @@ mul :: (Num a, Integral b) => Time b -> Speed a -> Local a
 mul time (Speed auPerSec) =
   Local.au (fromIntegral (Time.toSeconds time) * auPerSec)
 
-printKmPerSec :: Speed Double -> TextBuilder
-printKmPerSec (Speed auPerSec) =
-  Display.float0 (auPerSec * auToKm) <> " km/s"
+instance Display (Speed Double) where
+  display (Speed auPerSec) =
+    Display.fixed 0 (auPerSec * auToKm) <> " km/s"
 
 auToKm :: Num a => a
 auToKm = 149597000

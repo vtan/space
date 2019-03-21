@@ -16,10 +16,3 @@ all = [minBound .. maxBound]
 
 mass :: Num a => a
 mass = 500
-
-print :: Installation -> TextBuilder
-print = \case
-  Infrastructure -> "Infrastructure"
-  Mine -> "Mine"
-  Factory -> "Factory"
-  Shipyard -> "Shipyard"

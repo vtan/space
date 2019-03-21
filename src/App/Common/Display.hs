@@ -7,30 +7,30 @@ import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified Data.Text.Lazy.Builder.Int as TextBuilder
 import qualified Data.Text.Lazy.Builder.RealFloat as TextBuilder
 
-text :: Text -> TextBuilder
-text =
-  TextBuilder.fromText
+class Display a where
+  display :: a -> TextBuilder
 
-float0 :: RealFloat a => a -> TextBuilder
-float0 =
-  TextBuilder.formatRealFloat TextBuilder.Fixed (Just 0)
+instance Display Text where
+  display = TextBuilder.fromText
 
-float2 :: RealFloat a => a -> TextBuilder
-float2 =
-  TextBuilder.formatRealFloat TextBuilder.Fixed (Just 2)
+instance Display Int where
+  display = TextBuilder.decimal
 
-int :: Integral a => a -> TextBuilder
-int =
-  TextBuilder.decimal
+instance Display Double where
+  display = TextBuilder.formatRealFloat TextBuilder.Fixed (Just 2)
+
+fixed :: RealFloat a => Int -> a -> TextBuilder
+fixed digits =
+  TextBuilder.formatRealFloat TextBuilder.Fixed (Just digits)
 
 int02 :: Integral a => a -> TextBuilder
 int02 x
   | x < 10 = "0" <> TextBuilder.decimal x
   | otherwise = TextBuilder.decimal x
 
-brackets :: TextBuilder -> TextBuilder
-brackets builder =
-  "(" <> builder <> ")"
+percent :: RealFloat a => a -> TextBuilder
+percent x =
+  fixed 0 (100 * x) <> "%"
 
 toText :: TextBuilder -> Text
 toText =

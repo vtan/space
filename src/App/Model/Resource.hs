@@ -2,10 +2,9 @@ module App.Model.Resource where
 
 import App.Prelude
 
-import qualified App.Common.Display as Display
 import qualified App.Model.Installation as Installation
-import qualified Data.List as List
 
+import App.Common.Display (Display, display)
 import App.Model.Installation (Installation(..))
 
 data Resource
@@ -17,6 +16,13 @@ data Resource
 
 instance Hashable Resource
 
+instance Display Resource where
+  display = \case
+    Cadrium -> "Cadrium"
+    Erchanite -> "Erchanite"
+    Tellerite -> "Tellerite"
+    Installation _ -> "???"
+
 all :: [Resource]
 all =
   minerals
@@ -24,24 +30,3 @@ all =
 
 minerals :: [Resource]
 minerals = [Cadrium, Erchanite, Tellerite]
-
-print :: Resource -> TextBuilder
-print = \case
-  Cadrium -> "Cadrium"
-  Erchanite -> "Erchanite"
-  Tellerite -> "Tellerite"
-  Installation i -> Installation.print i <> " Installation"
-
-printShort :: Resource -> TextBuilder
-printShort = \case
-  Cadrium -> "Cad"
-  Erchanite -> "Ern"
-  Tellerite -> "Tlr"
-  Installation _ -> "Inst"
-
-printCost :: HashMap Resource Double -> TextBuilder
-printCost =
-  itoList
-  >>> map (\(resource, mass) -> Display.float0 mass <> " " <> printShort resource)
-  >>> List.intersperse ", "
-  >>> fold

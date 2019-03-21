@@ -4,13 +4,13 @@ where
 
 import App.Prelude
 
-import qualified App.Dimension.Time as Time
 import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.Update.UIState as UIState
 import qualified App.UIBuilder.UIBuilder as UI
 import qualified App.UIBuilder.Widget as Widget
 import qualified SDL
 
+import App.Common.Display (display)
 import App.Common.EventPatterns
 import App.Common.Util (clamp)
 import App.Model.GameState (GameState(..))
@@ -101,15 +101,12 @@ timeControlGroup =
         pure (nextMidnight <|> (SetSpeed <$> speed))
 
 currentTimeGroup :: GameState -> Update ()
-currentTimeGroup GameState{ time } =
-  let
-    width = 40
-    currentTime = Time.printDateTime time
-  in do
-    x <- UI.startOfRightAligned width
-    UI.group UI.Horizontal $
-      UI.positioned (V2 x 6) . UI.sized (V2 width 5) $
-        Widget.label currentTime
+currentTimeGroup GameState{ time } = do
+  let width = 40
+  x <- UI.startOfRightAligned width
+  UI.group UI.Horizontal $
+    UI.positioned (V2 x 6) . UI.sized (V2 width 5) $
+      Widget.label (display time)
 
 scalingGroup :: Update (Maybe Action)
 scalingGroup = do

@@ -29,11 +29,6 @@ data Type
 types :: [Type]
 types = [minBound .. maxBound]
 
-printType :: Type -> Text
-printType = \case
-  FreighterType -> "Freighter"
-  ColonyShipType -> "Colony ship"
-
 data Capability
   = Freighter FreighterCapability
   | ColonyShip ColonyShipCapability

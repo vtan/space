@@ -6,10 +6,10 @@ import App.Prelude
 
 import qualified App.Common.Display as Display
 import qualified App.Logic.Colony as ColonyLogic
-import qualified App.Model.Resource as Resource
 import qualified App.UIBuilder.UIBuilder as UI
 import qualified App.UIBuilder.Widget as Widget
 
+import App.Common.Display (display)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
@@ -64,9 +64,9 @@ mineablePanel minerals = do
         Widget.label' "Mining speed"
     ifor_ minerals $ \resource Mineral{ available, accessibility } ->
       UI.group UI.Horizontal $ do
-        Widget.label (Resource.print resource)
-        Widget.label (Display.float0 available <> " t")
-        Widget.label (Display.float0 (100 * accessibility) <> "%")
+        Widget.label (display resource)
+        Widget.label (Display.fixed 0 available <> " t")
+        Widget.label (Display.percent accessibility)
 
 stockpilePanel :: Colony -> Update ()
 stockpilePanel Colony{ stockpile } = do
@@ -78,5 +78,5 @@ stockpilePanel Colony{ stockpile } = do
         Widget.label' "In stockpile"
     ifor_ stockpile $ \resource quantity ->
       UI.group UI.Horizontal $ do
-        Widget.label (Resource.print resource)
-        Widget.label (Display.float0 quantity <> " t")
+        Widget.label (display resource)
+        Widget.label (Display.fixed 0 quantity <> " t")
