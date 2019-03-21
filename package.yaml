@@ -52,6 +52,7 @@ default-extensions:
   - NamedFieldPuns
   - NoImplicitPrelude
   - NoMonomorphismRestriction
+  - NumericUnderscores
   - OverloadedLabels
   - OverloadedLists
   - OverloadedStrings

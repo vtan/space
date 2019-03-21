@@ -65,7 +65,7 @@ mineablePanel minerals = do
     ifor_ minerals $ \resource Mineral{ available, accessibility } ->
       UI.group UI.Horizontal $ do
         Widget.label (display resource)
-        Widget.label (Display.fixed 0 available <> " t")
+        Widget.label (Display.normal available)
         Widget.label (Display.percent accessibility)
 
 stockpilePanel :: Colony -> Update ()
@@ -79,4 +79,4 @@ stockpilePanel Colony{ stockpile } = do
     ifor_ stockpile $ \resource quantity ->
       UI.group UI.Horizontal $ do
         Widget.label (display resource)
-        Widget.label (Display.fixed 0 quantity <> " t")
+        Widget.label (Display.normal quantity)

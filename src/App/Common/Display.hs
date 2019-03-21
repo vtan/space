@@ -19,16 +19,24 @@ instance Display Int where
 instance Display Double where
   display = TextBuilder.formatRealFloat TextBuilder.Fixed (Just 2)
 
-fixed :: RealFloat a => Int -> a -> TextBuilder
+fixed :: Int -> Double -> TextBuilder
 fixed digits =
   TextBuilder.formatRealFloat TextBuilder.Fixed (Just digits)
 
-int02 :: Integral a => a -> TextBuilder
+normal :: Double -> TextBuilder
+normal x =
+  let ax = abs x
+  in if
+    | ax < 1_000 -> fixed 1 x
+    | ax < 1_000_000 -> fixed 1 (x / 1_000) <> "k"
+    | otherwise -> fixed 1 (x / 1_000_000) <> "M"
+
+int02 :: Int -> TextBuilder
 int02 x
   | x < 10 = "0" <> TextBuilder.decimal x
   | otherwise = TextBuilder.decimal x
 
-percent :: RealFloat a => a -> TextBuilder
+percent :: Double -> TextBuilder
 percent x =
   fixed 0 (100 * x) <> "%"
 
