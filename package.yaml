@@ -40,16 +40,13 @@ dependencies:
 default-extensions:
   - BangPatterns
   - ConstraintKinds
-  - DataKinds
   - DeriveFunctor
   - DeriveGeneric
   - DeriveTraversable
   - FlexibleContexts
-  - FlexibleInstances
   - GeneralizedNewtypeDeriving
   - InstanceSigs
   - LambdaCase
-  - MultiParamTypeClasses
   - MultiWayIf
   - NamedFieldPuns
   - NoImplicitPrelude
