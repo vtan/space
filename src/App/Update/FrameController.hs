@@ -6,6 +6,7 @@ import App.Prelude
 
 import qualified App.Logic.TimeStep as Logic.TimeStep
 import qualified App.UIBuilder.UIBuilder as UIBuilder
+import qualified App.UIBuilder.Widget as Widget
 import qualified App.Update.ColonyWindow as ColonyWindow
 import qualified App.Update.ScreenOverlay as ScreenOverlay
 import qualified App.Update.SystemMap as SystemMap
@@ -31,6 +32,9 @@ update gs = do
     <&> (not . null)
   when clickedAnywhere $
     #uiBuilderState . #focusedWidgetName .= Nothing -- if clicked on a focusable widget, it will consume the click and set the focus
+
+  Widget.displayedTooltip (V2 3 5)
+  UIBuilder.pushRender (pure ())
 
   gs' <- gs & (
       fmap UIBuilder.group' handleUI

@@ -65,7 +65,8 @@ mineablePanel minerals = do
     ifor_ minerals $ \resource Mineral{ available, accessibility } ->
       UI.group UI.Horizontal $ do
         Widget.label (display resource)
-        Widget.label (Display.normal available)
+        UI.tooltip [Display.toText $ display available] $
+          Widget.label (Display.normal available)
         Widget.label (Display.percent accessibility)
 
 stockpilePanel :: Colony -> Update ()

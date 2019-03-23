@@ -5,6 +5,7 @@ import App.Prelude
 import qualified App.Common.Rect as Rect
 import qualified App.Render.Render as Render
 import qualified App.UIBuilder.UIBuilder as UI
+
 import qualified Data.Text as Text
 import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text.Lazy.Builder as TextBuilder
@@ -16,6 +17,7 @@ import App.Common.Util (clamp)
 import App.UIBuilder.ListBoxState (ListBoxState)
 import App.UIBuilder.UIBuilder (MonadUI, UIBuilderContext(..), UIGroup(..), UIBuilderState(..))
 import App.UIBuilder.Unscaled (Unscaled(..))
+
 import Control.Lens (Lens')
 import Data.Generics.Product (typed)
 
@@ -196,6 +198,31 @@ window Window{ titleHeight, title } body =
     UI.positioned (pos + padding + V2 0 titleHeight) $
       UI.sized (size - padding - V2 0 titleHeight) $
         body
+
+displayedTooltip :: MonadUI r s m => V2 (Unscaled Int) -> m ()
+displayedTooltip unscaledCharSize = do
+  UIBuilderState{ displayedTooltip = text } <- use typed
+  UIBuilderContext{ mousePosition } <- view typed
+  case text of
+    Just textLines -> do
+      assign (typed @UIBuilderState . #displayedTooltip) Nothing
+      scaler <- UI.scaler
+      let
+        V2 charWidth charHeight = fmap scaler unscaledCharSize
+        totalHeight = length textLines * charHeight
+        totalWidth = maximum $ fmap (\line -> Text.length line * charWidth) textLines
+        bounds = Rect (mousePosition + 16) (V2 totalWidth totalHeight)
+      UI.render $ do
+        r <- view #renderer
+        SDL.rendererDrawColor r $= shade3
+        SDL.fillRect r (Just $ Rect.toSdl bounds)
+        ifor_ textLines $ \i line -> do
+          let lineBounds = bounds
+                & set (#wh . _y) charHeight
+                & over (#xy . _y) (+ i * charHeight)
+          Render.text lineBounds line
+        pure ()
+    Nothing -> pure ()
 
 shade0, shade1, shade2, shade3, highlight :: Num a => V4 a
 shade0 = V4 23 23 23 255

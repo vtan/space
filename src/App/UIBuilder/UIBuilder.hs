@@ -2,12 +2,15 @@ module App.UIBuilder.UIBuilder where
 
 import App.Prelude
 
+import qualified App.Common.Rect as Rect
+
 import qualified SDL
 
 import App.Common.Rect (Rect(..))
 import App.Common.Util (_nonEmptyHead)
 import App.Render.Render (Render)
 import App.UIBuilder.Unscaled
+
 import Control.Lens (Lens')
 import Data.Generics.Product (HasType, typed)
 
@@ -17,6 +20,7 @@ type MonadUI r s m =
 data UIBuilderState = UIBuilderState
   { groups :: NonEmpty UIGroup
   , focusedWidgetName :: Maybe Text
+  , displayedTooltip :: Maybe (NonEmpty Text)
   , events :: [SDL.Event]
   , renderStack :: NonEmpty (Render ())
   }
@@ -32,6 +36,7 @@ data UIBuilderContext = UIBuilderContext
 
 data UIGroup = UIGroup
   { nextWidget :: Rect (Unscaled Int)
+  , lastWidget :: Rect (Unscaled Int)
   , padding :: V2 (Unscaled Int)
   , placementMode :: PlacementMode
   , totalSize :: V2 (Unscaled Int)
@@ -48,6 +53,7 @@ initialState =
   UIBuilderState
     { groups = rootGroup :| []
     , focusedWidgetName = Nothing
+    , displayedTooltip = Nothing
     , events = []
     , renderStack = pure () :| []
     }
@@ -56,6 +62,7 @@ rootGroup :: UIGroup
 rootGroup =
   UIGroup
     { nextWidget = Rect 0 (V2 25 5)
+    , lastWidget = Rect 0 0
     , padding = 1
     , placementMode = Vertical
     , totalSize = 0
@@ -130,7 +137,11 @@ advanceCursor size grp@UIGroup{ nextWidget, padding, placementMode, totalSize } 
     totalSize' = totalSize
       & mainAxis +~ mainAxisIncrement
       & otherAxis %~ max (size ^. otherAxis)
-  in grp{ nextWidget = nextWidget', totalSize = totalSize' }
+  in grp
+    { nextWidget = nextWidget'
+    , lastWidget = nextWidget & #wh .~ size
+    , totalSize = totalSize'
+    }
 
 consumeEvents :: (MonadUI r s m, Monoid a, AsEmpty a) => (SDL.Event -> a) -> m a
 consumeEvents p = do
@@ -172,3 +183,14 @@ startOfRightAligned groupWidth = do
   UIBuilderContext{ scaleFactor, screenSize } <- view typed
   let V2 screenWidth _ = fmap (`div` scaleFactor) screenSize
   pure (Unscaled (screenWidth - groupWidth))
+
+tooltip :: MonadUI r s m => NonEmpty Text -> m a -> m a
+tooltip textLines child = do
+  result <- child
+  UIBuilderState{ groups = UIGroup{ lastWidget } :| _ } <- use typed
+  UIBuilderContext{ mousePosition } <- view typed
+  sc <- scaler
+  let scaledLastWidget = fmap sc lastWidget
+  when (Rect.contains scaledLastWidget mousePosition) $
+    assign (typed @UIBuilderState . #displayedTooltip) (Just textLines)
+  pure result
