@@ -32,6 +32,8 @@ import Control.Monad.IO.Class as X
   (MonadIO)
 import Control.Monad.Reader as X
   (MonadReader, ReaderT)
+import Control.Monad.Reader.Class as X
+  (ask, local)
 import Control.Monad.State.Strict as X
   (MonadState, StateT)
 import Data.Generics.Labels as X

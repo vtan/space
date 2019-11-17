@@ -4,18 +4,23 @@ import App.Prelude
 
 import qualified App.Common.FpsCounter as FpsCounter
 import qualified Core.CachedTextRenderer as CachedTextRenderer
-import qualified Core.RenderedText as RenderedText
-
-import qualified SDL
-import qualified SDL.Font as SDL.TTF
-import qualified SDL.Raw
+import qualified Core.UI.Layout as Layout
 
 import App.Common.EventPatterns
 import App.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
 import Core.TextRenderer (TextRenderer(..))
+import Core.UI.Layout (Constrained(..))
+import Core.UI.Theme
+import Core.UI.UI
+import Core.UI.Widgets
+
+import qualified SDL
+import qualified SDL.Font as SDL.TTF
+import qualified SDL.Raw
 
 import Control.Exception (SomeException, displayException, handle)
+import Control.Monad.Reader (runReaderT)
 import Data.String (fromString)
 import System.IO (hPutStrLn, stderr)
 
@@ -25,6 +30,7 @@ data MainContext = MainContext
 data MainState = MainState
   { fpsCounter :: FpsCounter.Counter
   , coreContext :: CoreContext
+  , gameState :: Text
   }
 
 main :: IO ()
@@ -39,13 +45,15 @@ main =
 
     font <- SDL.TTF.load fontPath 16
     cachedTextRenderer <- CachedTextRenderer.new TextRenderer{ renderer, font }
-    let coreContext = CoreContext{ renderer, cachedTextRenderer }
+    let
+      coreContext = CoreContext{ renderer, cachedTextRenderer }
+      gameState = "empty"
 
     fpsCounter <- FpsCounter.new
 
     mainLoop
       MainContext{ window }
-      MainState{ fpsCounter, coreContext }
+      MainState{ fpsCounter, coreContext, gameState }
 
     SDL.TTF.quit
     SDL.quit
@@ -53,7 +61,7 @@ main =
 mainLoop :: MainContext -> MainState -> IO ()
 mainLoop
     ctx@MainContext{ window }
-    st@MainState{ fpsCounter, coreContext = CoreContext{ renderer, cachedTextRenderer} } =
+    st@MainState{ fpsCounter, coreContext = coreContext@CoreContext{ renderer }, gameState } =
   do
     case fpsCounter ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
@@ -63,16 +71,31 @@ mainLoop
     case events & find (\case QuitEvent -> True; _ -> False) of
       Just _ -> pure ()
       Nothing -> do
+        let
+          uiContext = UIContext
+            { cursor = Rect 8 200
+            , theme = Theme { borderColor = V4 191 191 191 255 }
+            }
+          (stateChange, UIState{ renderStack }) = run uiContext events (ui gameState)
+
         SDL.rendererDrawColor renderer $= V4 0 0 0 255
         SDL.clear renderer
-
-        renderedText <- cachedTextRenderer & CachedTextRenderer.render "Hello"
-        RenderedText.render renderer (Rect 0 200) renderedText
-
+        runReaderT (sequence_ (toList renderStack)) coreContext
         SDL.present renderer
 
         fpsCounter' <- FpsCounter.record fpsCounter
-        mainLoop ctx st{ fpsCounter = fpsCounter' }
+        mainLoop ctx st{ fpsCounter = fpsCounter', gameState = stateChange gameState }
+
+ui ::Text -> UIComponent Text
+ui gs =
+  (<>) <$> local (set (#cursor . #xy . _y) 208) (button "check") <*>
+  Layout.vertical
+    [ Sized 20 (text gs)
+    , Stretched (button "hi")
+    , Stretched (button "hi")
+    , Sized 20 (button "hi")
+    , Sized 20 (button "hi")
+    ]
 
 fontPath :: String
 fontPath = "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf"
