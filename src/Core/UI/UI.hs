@@ -6,6 +6,8 @@ import App.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
 import Core.UI.Theme (Theme(..))
 
+import qualified Control.Monad.State as State
+import qualified Data.List as List
 import qualified SDL
 
 import Control.Monad.Reader (ReaderT(..), runReaderT)
@@ -35,6 +37,13 @@ run context events component =
     (Endo stateChange, uiState) = runState (runReaderT component context) initialState
   in
     (stateChange, uiState)
+
+consumeEvents :: (SDL.Event -> Bool) -> UI [SDL.Event]
+consumeEvents predicate = do
+  allEvents <- State.gets events
+  let (consumed, remaining) = List.partition predicate allEvents
+  State.modify' (set #events remaining)
+  pure consumed
 
 render :: (CoreContext -> IO ()) -> UI ()
 render renderAction =

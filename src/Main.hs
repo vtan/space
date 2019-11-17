@@ -74,7 +74,10 @@ mainLoop
         let
           uiContext = UIContext
             { cursor = Rect 8 200
-            , theme = Theme { borderColor = V4 191 191 191 255 }
+            , theme = Theme
+              { borderColor = V4 191 191 191 255
+              , highlightColor = V4 31 171 171 255
+              }
             }
           (stateChange, UIState{ renderStack }) = run uiContext events (ui gameState)
 
@@ -88,19 +91,19 @@ mainLoop
 
 ui ::Text -> UIComponent Text
 ui gs =
-  (<>) <$> local (set (#cursor . #xy . _y) 208) (button "check") <*>
+  (<>) <$> local (set (#cursor . #xy . _y) 208) (button "5" (const "5")) <*>
   Layout.vertical
     [ Sized 20 (text gs)
-    , Stretched (button "hi")
+    , Stretched (button "1" (const "1"))
     , Stretched $ Layout.horizontal
       [ Sized 40 (text "A")
       , Sized 40 (text "A")
-      , Stretched (button "B")
+      , Stretched (button "2" (const "2"))
       , Sized 40 (text "A")
       , Sized 40 (text "A")
       ]
-    , Sized 20 (button "hi")
-    , Sized 20 (button "hi")
+    , Sized 20 (button "3" (const "3"))
+    , Sized 20 (button "4" (const "4"))
     ]
 
 fontPath :: String
