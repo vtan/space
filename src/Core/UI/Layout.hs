@@ -1,10 +1,15 @@
-module Core.UI.Layout where
+module Core.UI.Layout
+  ( Constrained(..)
+  , horizontal, vertical
+  )
+where
 
 import App.Prelude
 
 import App.Common.Rect (Rect(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 
+import Control.Lens (Lens')
 import Data.Bifunctor (bimap)
 
 data Constrained a
@@ -12,12 +17,21 @@ data Constrained a
   | Stretched a
   deriving (Generic)
 
+horizontal :: [Constrained (UIComponent a)] -> UIComponent a
+horizontal = box _x
+
 vertical :: [Constrained (UIComponent a)] -> UIComponent a
-vertical children = do
+vertical = box _y
+
+box
+  :: Lens' (V2 Double) Double
+  -> [Constrained (UIComponent a)]
+  -> UIComponent a
+box axisLens children = do
   UIContext{ cursor } <- ask
   let
-    Rect (V2 left top) (V2 width height) = cursor
-    sizeToDistribute = height
+    Rect cursorPos cursorSize = cursor
+    sizeToDistribute = view axisLens cursorSize
 
     (totalGivenSize, stretchedCount) = children
       & map (\case
@@ -32,17 +46,19 @@ vertical children = do
       else (sizeToDistribute - totalGivenSize) / stretchedCount
 
   (_, stateChange) <- foldlM
-    ( \(usedSize, stateChange) constraintedChild ->
+    ( \(usedSizeOnAxis, stateChange) constraintedChild ->
         let
-          (size, child) = case constraintedChild of
+          (sizeOnAxis, child) = case constraintedChild of
             Sized s c -> (s, c)
             Stretched c -> (stretchedSize, c)
-          localCursor = Rect (V2 left (top + usedSize)) (V2 width size)
-          usedSize' = usedSize + size
+          localCursor = Rect
+            (over axisLens (+ usedSizeOnAxis) cursorPos)
+            (set axisLens sizeOnAxis cursorSize)
+          usedSizeOnAxis' = usedSizeOnAxis + sizeOnAxis
         in
           local (set #cursor localCursor) child
             & fmap (<> stateChange)
-            & fmap (usedSize', )
+            & fmap (usedSizeOnAxis', )
     )
     (0, mempty)
     children

@@ -92,7 +92,13 @@ ui gs =
   Layout.vertical
     [ Sized 20 (text gs)
     , Stretched (button "hi")
-    , Stretched (button "hi")
+    , Stretched $ Layout.horizontal
+      [ Sized 40 (text "A")
+      , Sized 40 (text "A")
+      , Stretched (button "B")
+      , Sized 40 (text "A")
+      , Sized 40 (text "A")
+      ]
     , Sized 20 (button "hi")
     , Sized 20 (button "hi")
     ]
