@@ -32,9 +32,6 @@ type Render a = ReaderT CoreContext IO a
 
 render :: Camera (Local Double) Double -> GameState -> Render ()
 render camera GameState{ rootBody, bodyOrbitalStates, ships } = do
-  renderer <- view #renderer
-  SDL.rendererDrawColor renderer $= V4 0 0 0 255
-  SDL.clear renderer
   _ <- renderBodyEnv camera bodyOrbitalStates >>= \env -> renderBody env Nothing rootBody
   for_ ships (renderShip camera)
 

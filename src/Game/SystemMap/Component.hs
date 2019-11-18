@@ -1,4 +1,6 @@
-module Game.SystemMap.Component where
+module Game.SystemMap.Component
+  ( systemMap )
+where
 
 import App.Prelude
 
@@ -22,7 +24,6 @@ systemMap :: AppState -> UIComponent AppState
 systemMap AppState{ gameState, uiState = UIState{ camera }} = do
   allEvents <- use #events
   modify' (set #events [])
-  UI.pushRenderStack
   UI.render (SystemMap.Rendering.render camera gameState)
   pure (foldMap (Endo . handleEvent) allEvents)
 

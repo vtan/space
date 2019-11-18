@@ -1,25 +1,27 @@
-module Game.Controller where
+module Game.Controller
+  ( update )
+where
 
 import App.Prelude
 
-import qualified Core.UI.Layout as Layout
+import qualified App.Logic.TimeStep as TimeStepLogic
+import qualified Core.UI.UI as UI
 import qualified Game.SystemMap.Component as SystemMap
+import qualified Game.TimeOverlay as TimeOverlay
 
 import App.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
-import Core.UI.Layout (Constrained(..))
-import Core.UI.Theme
-import Core.UI.UI
-import Core.UI.Widgets
+import Core.UI.Theme (Theme(..))
+import Core.UI.UI (UIComponent, UIContext(..), UIState(..))
 import Game.AppState (AppState(..))
 
 import qualified SDL
 
 update :: [SDL.Event] -> AppState -> (ReaderT CoreContext IO (), AppState)
-update events appState =
+update events appState@AppState{ timeStep } =
   let
     uiContext = UIContext
-      { cursor = Rect 8 (V2 400 200)
+      { cursor = Rect 0 0
       , defaultSize = V2 80 20
       , layoutGap = 4
       , scaleFactor = 1
@@ -28,27 +30,21 @@ update events appState =
         , highlightColor = V4 31 171 171 255
         }
       }
-    (stateChange, UIState{ renderStack }) = run uiContext events (ui appState)
+    (stateChangeFromUi, UIState{ renderStack }) = UI.run uiContext events (ui appState)
+    appState' = appState
+      & stateChangeFromUi
+      & ( case timeStep of
+            Just time -> over #gameState (TimeStepLogic.stepTime time)
+            Nothing -> id
+        )
   in
     ( sequence_ (toList renderStack)
-    , stateChange appState
+    , appState'
     )
 
 ui :: AppState -> UIComponent AppState
 ui appState =
-  SystemMap.systemMap appState
-  {-
-  Layout.vertical
-    [ Sized 20 (label gs)
-    , Stretched (button "1" (const "1"))
-    , Stretched $ Layout.horizontal
-      [ DefaultSized (label "A")
-      , DefaultSized (label "A")
-      , Stretched (button "2" (const "2"))
-      , Sized 40 (label "A")
-      , Sized 40 (label "A")
-      ]
-    , DefaultSized (button "3" (const "3"))
-    , DefaultSized (button "4" (const "4"))
+  UI.concat
+    [ TimeOverlay.timeOverlay appState
+    , UI.pushRenderStack *> SystemMap.systemMap appState
     ]
-    -}

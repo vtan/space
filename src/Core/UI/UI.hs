@@ -43,6 +43,10 @@ run context events component =
   in
     (stateChange, uiState)
 
+concat :: [UIComponent s] -> UIComponent s
+concat =
+  fmap fold . sequence
+
 consumeEvents :: (SDL.Event -> Bool) -> UI [SDL.Event]
 consumeEvents predicate = do
   allEvents <- State.gets events
@@ -65,6 +69,6 @@ scaleRect rect =
   ask & fmap \UIContext{ scaleFactor } ->
     Rect.toSdl (fmap (round @Double @CInt) (scaleFactor *^ rect))
 
-absolutePosition :: V2 Double -> UIComponent s -> UIComponent s
-absolutePosition pos child =
-  local (set (#cursor . #xy) pos) child
+cursorAt :: Rect Double -> UIComponent s -> UIComponent s
+cursorAt localCursor child =
+  local (set #cursor localCursor) child

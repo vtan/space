@@ -1,4 +1,6 @@
-module App.Logic.TimeStep where
+module App.Logic.TimeStep
+  ( stepTime, jumpToNextMidnight )
+where
 
 import App.Prelude
 

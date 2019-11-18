@@ -1,4 +1,6 @@
-module Core.UI.Widgets where
+module Core.UI.Widgets
+  ( label, label', button )
+where
 
 import App.Prelude
 
@@ -13,12 +15,18 @@ import Core.CoreContext (CoreContext(..))
 import Core.UI.Theme (Theme(..))
 import Core.UI.UI (UI, UIComponent, UIContext(..))
 
+import qualified Data.Text.Lazy as LazyText
+import qualified Data.Text.Lazy.Builder as TextBuilder
 import qualified SDL
 
 import Data.Semigroup (Endo(..))
 
-label :: Text -> UIComponent s
-label str =
+label :: TextBuilder -> UIComponent s
+label =
+  label' . LazyText.toStrict . TextBuilder.toLazyText
+
+label' :: Text -> UIComponent s
+label' str =
   const mempty <$> text str
 
 button :: Text -> (s -> s) -> UIComponent s
@@ -27,10 +35,11 @@ button str onClick = do
   clicked <- clickedInside cursor
   scaledCursor <- UI.scaleRect cursor
   UI.render $ ask >>= \CoreContext{ renderer } -> do
-    let rect = Just scaledCursor
-    when clicked $ do
-      SDL.rendererDrawColor renderer $= highlightColor
-      SDL.fillRect renderer rect
+    let
+      rect = Just scaledCursor
+      backgroundColor = if clicked then highlightColor else V4 0 0 0 255
+    SDL.rendererDrawColor renderer $= backgroundColor
+    SDL.fillRect renderer rect
     SDL.rendererDrawColor renderer $= borderColor
     SDL.drawRect renderer rect
   text str

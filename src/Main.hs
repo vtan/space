@@ -48,6 +48,7 @@ main =
       appState = AppState
         { gameState = InitialGameState.initial
         , uiState = UIState.initial screenSize
+        , timeStep = Nothing
         }
 
     fpsCounter <- FpsCounter.new
