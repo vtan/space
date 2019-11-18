@@ -15,12 +15,14 @@ data RenderedText = RenderedText
   }
   deriving (Generic)
 
-render :: MonadIO m => SDL.Renderer -> Rect Int -> RenderedText -> m ()
-render renderer (Rect pos requestedSize) RenderedText{ texture, size = textureSize } =
+render :: MonadIO m => SDL.Renderer -> Double -> Rect Double -> RenderedText -> m ()
+render renderer scale (Rect pos requestedSize) RenderedText{ texture, size = textureSize } =
   let
-    actualSize = min <$> fmap fromIntegral requestedSize <*> textureSize
-    sourceRect = SDL.Rectangle 0 actualSize
-    destinationRect = SDL.Rectangle (SDL.P (fmap fromIntegral pos)) actualSize
+    actualSize = min
+      <$> fmap round requestedSize
+      <*> fmap round (scale *^ fmap fromIntegral textureSize)
+    sourceRect = SDL.Rectangle 0 textureSize
+    destinationRect = SDL.Rectangle (SDL.P (fmap round pos)) actualSize
   in
     SDL.copy renderer texture (Just sourceRect) (Just destinationRect)
 

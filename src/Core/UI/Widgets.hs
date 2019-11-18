@@ -48,10 +48,10 @@ button str onClick = do
 text :: Text -> UI ()
 text str = do
   UIContext{ cursor, scaleFactor } <- ask
-  let scaledCursor = fmap round (scaleFactor *^ cursor)
+  let scaledCursor = scaleFactor *^ cursor
   UI.render $ ask >>= \CoreContext{ renderer, cachedTextRenderer } -> do
     renderedText <- cachedTextRenderer & CachedTextRenderer.render str
-    RenderedText.render renderer scaledCursor renderedText
+    RenderedText.render renderer scaleFactor scaledCursor renderedText
   pure ()
 
 clickedInside :: Rect Double -> UI Bool

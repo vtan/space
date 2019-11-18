@@ -37,6 +37,8 @@ main =
   handle logError $ do
     SDL.initializeAll
     SDL.TTF.initialize
+    SDL.HintRenderScaleQuality $= SDL.ScaleBest
+
     let screenSize = V2 1728 972
     window <- SDL.createWindow "" SDL.defaultWindow{ SDL.windowInitialSize = screenSize }
     renderer <- SDL.createRenderer window (-1) SDL.defaultRenderer{ SDL.rendererType = SDL.AcceleratedVSyncRenderer }
