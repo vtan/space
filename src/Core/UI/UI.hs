@@ -2,6 +2,8 @@ module Core.UI.UI where
 
 import App.Prelude
 
+import qualified App.Common.Rect as Rect
+
 import App.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
 import Core.UI.Theme (Theme(..))
@@ -10,7 +12,7 @@ import qualified Control.Monad.State as State
 import qualified Data.List as List
 import qualified SDL
 
-import Control.Monad.Reader (ReaderT(..), runReaderT)
+import Control.Monad.Reader (ReaderT, runReaderT)
 import Control.Monad.State (State, runState)
 import Data.Semigroup (Endo(..))
 
@@ -20,6 +22,9 @@ type UI a = ReaderT UIContext (State UIState) a
 
 data UIContext = UIContext
   { cursor :: Rect Double
+  , defaultSize :: V2 Double
+  , layoutGap :: Double
+  , scaleFactor :: Double
   , theme :: Theme
   }
   deriving (Generic)
@@ -45,10 +50,20 @@ consumeEvents predicate = do
   State.modify' (set #events remaining)
   pure consumed
 
-render :: (CoreContext -> IO ()) -> UI ()
+render :: ReaderT CoreContext IO () -> UI ()
 render renderAction =
   modifying #renderStack $ \(currentLayer :| rest) ->
-    (currentLayer *> (ReaderT renderAction)) :| rest
+    (currentLayer *> renderAction) :| rest
+
+pushRenderStack :: UI ()
+pushRenderStack =
+  modifying #renderStack \(currentLayer :| rest) ->
+    pure () :| (currentLayer : rest)
+
+scaleRect :: Rect Double -> UI (SDL.Rectangle CInt)
+scaleRect rect =
+  ask & fmap \UIContext{ scaleFactor } ->
+    Rect.toSdl (fmap (round @Double @CInt) (scaleFactor *^ rect))
 
 absolutePosition :: V2 Double -> UIComponent s -> UIComponent s
 absolutePosition pos child =

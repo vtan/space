@@ -3,8 +3,11 @@ module Main (main) where
 import App.Prelude
 
 import qualified App.Common.FpsCounter as FpsCounter
+import qualified App.Logic.InitialGameState as InitialGameState
 import qualified Core.CachedTextRenderer as CachedTextRenderer
 import qualified Core.UI.Layout as Layout
+import qualified Game.SystemMap.Component as SystemMap
+import qualified Game.UIState as UIState
 
 import App.Common.EventPatterns
 import App.Common.Rect (Rect(..))
@@ -14,6 +17,7 @@ import Core.UI.Layout (Constrained(..))
 import Core.UI.Theme
 import Core.UI.UI
 import Core.UI.Widgets
+import Game.AppState (AppState(..))
 
 import qualified SDL
 import qualified SDL.Font as SDL.TTF
@@ -30,7 +34,7 @@ data MainContext = MainContext
 data MainState = MainState
   { fpsCounter :: FpsCounter.Counter
   , coreContext :: CoreContext
-  , gameState :: Text
+  , appState :: AppState
   }
 
 main :: IO ()
@@ -47,13 +51,16 @@ main =
     cachedTextRenderer <- CachedTextRenderer.new TextRenderer{ renderer, font }
     let
       coreContext = CoreContext{ renderer, cachedTextRenderer }
-      gameState = "empty"
+      appState = AppState
+        { gameState = InitialGameState.initial
+        , uiState = UIState.initial screenSize
+        }
 
     fpsCounter <- FpsCounter.new
 
     mainLoop
       MainContext{ window }
-      MainState{ fpsCounter, coreContext, gameState }
+      MainState{ fpsCounter, coreContext, appState }
 
     SDL.TTF.quit
     SDL.quit
@@ -61,7 +68,7 @@ main =
 mainLoop :: MainContext -> MainState -> IO ()
 mainLoop
     ctx@MainContext{ window }
-    st@MainState{ fpsCounter, coreContext = coreContext@CoreContext{ renderer }, gameState } =
+    st@MainState{ fpsCounter, coreContext = coreContext@CoreContext{ renderer }, appState } =
   do
     case fpsCounter ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
@@ -73,13 +80,16 @@ mainLoop
       Nothing -> do
         let
           uiContext = UIContext
-            { cursor = Rect 8 200
+            { cursor = Rect 8 (V2 400 200)
+            , defaultSize = V2 80 20
+            , layoutGap = 4
+            , scaleFactor = 1
             , theme = Theme
               { borderColor = V4 191 191 191 255
               , highlightColor = V4 31 171 171 255
               }
             }
-          (stateChange, UIState{ renderStack }) = run uiContext events (ui gameState)
+          (stateChange, UIState{ renderStack }) = run uiContext events (ui appState)
 
         SDL.rendererDrawColor renderer $= V4 0 0 0 255
         SDL.clear renderer
@@ -87,24 +97,26 @@ mainLoop
         SDL.present renderer
 
         fpsCounter' <- FpsCounter.record fpsCounter
-        mainLoop ctx st{ fpsCounter = fpsCounter', gameState = stateChange gameState }
+        mainLoop ctx st{ fpsCounter = fpsCounter', appState = stateChange appState }
 
-ui ::Text -> UIComponent Text
-ui gs =
-  (<>) <$> local (set (#cursor . #xy . _y) 208) (button "5" (const "5")) <*>
+ui :: AppState -> UIComponent AppState
+ui appState =
+  SystemMap.systemMap appState
+  {-
   Layout.vertical
-    [ Sized 20 (text gs)
+    [ Sized 20 (label gs)
     , Stretched (button "1" (const "1"))
     , Stretched $ Layout.horizontal
-      [ Sized 40 (text "A")
-      , Sized 40 (text "A")
+      [ DefaultSized (label "A")
+      , DefaultSized (label "A")
       , Stretched (button "2" (const "2"))
-      , Sized 40 (text "A")
-      , Sized 40 (text "A")
+      , Sized 40 (label "A")
+      , Sized 40 (label "A")
       ]
-    , Sized 20 (button "3" (const "3"))
-    , Sized 20 (button "4" (const "4"))
+    , DefaultSized (button "3" (const "3"))
+    , DefaultSized (button "4" (const "4"))
     ]
+    -}
 
 fontPath :: String
 fontPath = "data/liberation-fonts-ttf-2.00.1/LiberationSans-Regular.ttf"

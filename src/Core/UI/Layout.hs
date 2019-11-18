@@ -14,6 +14,7 @@ import Data.Bifunctor (bimap)
 
 data Constrained a
   = Sized Double a
+  | DefaultSized a
   | Stretched a
   deriving (Generic)
 
@@ -28,14 +29,18 @@ box
   -> [Constrained (UIComponent a)]
   -> UIComponent a
 box axisLens children = do
-  UIContext{ cursor } <- ask
+  UIContext{ cursor, defaultSize, layoutGap } <- ask
   let
+    defaultSizeOnAxis =  view axisLens defaultSize
     Rect cursorPos cursorSize = cursor
-    sizeToDistribute = view axisLens cursorSize
+    sizeToDistribute =
+      view axisLens cursorSize
+      - fromIntegral (length children - 1) * layoutGap
 
     (totalGivenSize, stretchedCount) = children
       & map (\case
           Sized size _ -> Left size
+          DefaultSized _ -> Left defaultSizeOnAxis
           _ -> Right ()
         )
       & partitionEithers
@@ -50,11 +55,12 @@ box axisLens children = do
         let
           (sizeOnAxis, child) = case constraintedChild of
             Sized s c -> (s, c)
+            DefaultSized c -> (defaultSizeOnAxis, c)
             Stretched c -> (stretchedSize, c)
           localCursor = Rect
             (over axisLens (+ usedSizeOnAxis) cursorPos)
             (set axisLens sizeOnAxis cursorSize)
-          usedSizeOnAxis' = usedSizeOnAxis + sizeOnAxis
+          usedSizeOnAxis' = usedSizeOnAxis + sizeOnAxis + layoutGap
         in
           local (set #cursor localCursor) child
             & fmap (<> stateChange)

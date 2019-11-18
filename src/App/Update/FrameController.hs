@@ -9,7 +9,6 @@ import qualified App.UIBuilder.UIBuilder as UIBuilder
 import qualified App.UIBuilder.Widget as Widget
 import qualified App.Update.ColonyWindow as ColonyWindow
 import qualified App.Update.ScreenOverlay as ScreenOverlay
-import qualified App.Update.SystemMap as SystemMap
 import qualified App.Update.UIState as UIState
 import qualified SDL
 
@@ -39,7 +38,6 @@ update gs = do
   gs' <- gs & (
       fmap UIBuilder.group' handleUI
       >=> fmap UIBuilder.group' ScreenOverlay.update
-      >=> SystemMap.update
     )
 
   timeStep <- use #timeStepPerFrame

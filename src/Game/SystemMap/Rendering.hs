@@ -1,4 +1,4 @@
-module App.Render.SystemMap
+module Game.SystemMap.Rendering
   ( render )
 where
 
@@ -8,10 +8,8 @@ import qualified App.Common.Camera as Camera
 import qualified App.Common.Rect as Rect
 import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
-import qualified App.Render.Render as Render
-import qualified Data.Vector.Storable as Vector
-import qualified Linear as Linear
-import qualified SDL
+import qualified Core.CachedTextRenderer as CachedTextRenderer
+import qualified Core.RenderedText as RenderedText
 
 import App.Common.Camera (Camera(..))
 import App.Common.IdMap (IdMap)
@@ -20,9 +18,17 @@ import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Ship (Ship(..))
-import App.Render.Render (Render)
+import Core.CachedTextRenderer (CachedTextRenderer(..))
+import Core.CoreContext (CoreContext(..))
+
+import qualified Data.Vector.Storable as Vector
+import qualified Linear as Linear
+import qualified SDL
+
 import Data.Vector.Storable (Vector)
 import SDL (($=))
+
+type Render a = ReaderT CoreContext IO a
 
 render :: Camera (Local Double) Double -> GameState -> Render ()
 render camera GameState{ rootBody, bodyOrbitalStates, ships } = do
@@ -34,6 +40,7 @@ render camera GameState{ rootBody, bodyOrbitalStates, ships } = do
 
 data RenderBodyEnv = RenderBodyEnv
   { renderer :: SDL.Renderer
+  , cachedTextRenderer :: CachedTextRenderer
   , camera :: Camera (Local Double) Double
   , cameraCenter :: V2 (Local Double)
   , cameraRadiusSq :: Local Double
@@ -43,10 +50,11 @@ data RenderBodyEnv = RenderBodyEnv
 
 renderBodyEnv :: Camera (Local Double) Double -> IdMap Body OrbitalState -> Render RenderBodyEnv
 renderBodyEnv camera orbitalStates = do
-  renderer <- view #renderer
+  CoreContext{ renderer, cachedTextRenderer } <- ask
   let cameraRadiusSq = Camera.boundingCircleRadiusSq camera
   pure RenderBodyEnv
     { renderer
+    , cachedTextRenderer
     , camera
     , cameraCenter = Camera.screenToPoint camera (camera ^. #eyeTo)
     , cameraRadiusSq
@@ -56,7 +64,7 @@ renderBodyEnv camera orbitalStates = do
 
 renderBody :: RenderBodyEnv -> Maybe (V2 Double) -> Body -> Render Bool
 renderBody
-    env@RenderBodyEnv{ renderer, camera, cameraCenter, cameraRadiusSq, cameraRadius, orbitalStates }
+    env@RenderBodyEnv{ renderer, cachedTextRenderer, camera, cameraCenter, cameraRadiusSq, cameraRadius, orbitalStates }
     parentDrawnCenter
     Body{ bodyId, name = bodyName, orbitRadius, children } =
   case orbitalStates ^. at bodyId of
@@ -95,7 +103,8 @@ renderBody
             | all id childrenVisible = bodyName
             | otherwise = bodyName <> "..."
           labelRect = Rect.fromMinSize (floor <$> (bodyCenter & _y +~ 8)) (V2 256 40)
-      Render.text labelRect label
+      renderedText <- cachedTextRenderer & CachedTextRenderer.render label
+      RenderedText.render renderer labelRect renderedText
 
 renderShip :: Camera (Local Double) Double -> Ship -> Render ()
 renderShip camera Ship{ Ship.position } = do
