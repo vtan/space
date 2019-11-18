@@ -25,6 +25,7 @@ data UIContext = UIContext
   , defaultSize :: V2 Double
   , layoutGap :: Double
   , scaleFactor :: Double
+  , scaledScreenSize :: V2 Double
   , theme :: Theme
   }
   deriving (Generic)
@@ -42,6 +43,10 @@ run context events component =
     (Endo stateChange, uiState) = runState (runReaderT component context) initialState
   in
     (stateChange, uiState)
+
+empty :: UIComponent s
+empty =
+  pure mempty
 
 concat :: [UIComponent s] -> UIComponent s
 concat =

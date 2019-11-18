@@ -17,14 +17,16 @@ import Game.AppState (AppState(..))
 
 import qualified SDL
 
-update :: [SDL.Event] -> AppState -> (ReaderT CoreContext IO (), AppState)
-update events appState@AppState{ timeStep } =
+update :: V2 Int -> [SDL.Event] -> AppState -> (ReaderT CoreContext IO (), AppState)
+update screenSize events appState@AppState{ timeStep } =
   let
+    scaleFactor = 1
     uiContext = UIContext
       { cursor = Rect 0 0
       , defaultSize = V2 80 20
       , layoutGap = 4
-      , scaleFactor = 1
+      , scaleFactor = scaleFactor
+      , scaledScreenSize = scaleFactor *^ fmap fromIntegral screenSize
       , theme = Theme
         { borderColor = V4 191 191 191 255
         , highlightColor = V4 31 171 171 255

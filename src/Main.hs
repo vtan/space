@@ -26,7 +26,8 @@ data MainContext = MainContext
   { window :: SDL.Window }
 
 data MainState = MainState
-  { fpsCounter :: FpsCounter.Counter
+  { screenSize :: V2 Int
+  , fpsCounter :: FpsCounter.Counter
   , coreContext :: CoreContext
   , appState :: AppState
   }
@@ -55,7 +56,7 @@ main =
 
     mainLoop
       MainContext{ window }
-      MainState{ fpsCounter, coreContext, appState }
+      MainState{ screenSize, fpsCounter, coreContext, appState }
 
     SDL.TTF.quit
     SDL.quit
@@ -63,7 +64,7 @@ main =
 mainLoop :: MainContext -> MainState -> IO ()
 mainLoop
     ctx@MainContext{ window }
-    st@MainState{ fpsCounter, coreContext = coreContext@CoreContext{ renderer }, appState } =
+    st@MainState{ screenSize, fpsCounter, coreContext = coreContext@CoreContext{ renderer }, appState } =
   do
     case fpsCounter ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
@@ -73,7 +74,7 @@ mainLoop
     case events & find (\case QuitEvent -> True; _ -> False) of
       Just _ -> pure ()
       Nothing -> do
-        let (render, appState') = Controller.update events appState
+        let (render, appState') = Controller.update screenSize events appState
 
         SDL.rendererDrawColor renderer $= V4 0 0 0 255
         SDL.clear renderer

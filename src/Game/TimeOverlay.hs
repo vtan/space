@@ -14,20 +14,28 @@ import App.Common.Rect (Rect(..))
 import App.Dimension.Time (Time)
 import App.Model.GameState (GameState(..))
 import Core.UI.Layout (Constrained(..))
-import Core.UI.UI (UIComponent)
+import Core.UI.UI (UIComponent, UIContext(..))
 import Game.AppState (AppState(..))
 
 timeOverlay :: AppState -> UIComponent AppState
 timeOverlay AppState{ gameState = GameState{ time } } =
   let
+    size = V2 400 100
     nextButton = Widgets.button "next" (over #gameState TimeStepLogic.jumpToNextMidnight)
     timeButtons = timeChoices & map \(label, choice) ->
       Widgets.button label (set #timeStep choice)
-  in
-    UI.cursorAt (Rect (V2 0 0) (V2 400 100)) $
+  in do
+    UIContext{ scaledScreenSize } <- ask
+    let
+      V2 x _ = scaledScreenSize - size - 4
+      position = V2 x 4
+    UI.cursorAt (Rect position size) $
       Layout.vertical
         [ DefaultSized $ Layout.horizontal (map Stretched (nextButton : timeButtons))
-        , DefaultSized $ Widgets.label (display time)
+        , DefaultSized $ Layout.horizontal
+            [ Stretched UI.empty
+            , Sized 150 $ Widgets.label (display time)
+            ]
         ]
 
 timeChoices :: [(Text, Maybe (Time Int))]
