@@ -3,15 +3,23 @@ module Game.UIState where
 import App.Prelude
 
 import qualified App.Dimension.Local as Local
+import qualified Game.ColonyWindowState as ColonyWindowState
 
 import App.Common.Camera (Camera(..))
 import App.Dimension.Local (Local(..))
+import Game.ColonyWindowState (ColonyWindowState)
 
 data UIState = UIState
   { camera :: Camera (Local Double) Double
   , draggingCamera :: Bool
+  , colonyWindow :: ColonyWindowState
+  , openWindow :: Maybe (OpenWindow)
   }
   deriving (Generic)
+
+data OpenWindow
+  = ColonyWindow
+  deriving (Generic, Eq)
 
 initial :: V2 Double -> UIState
 initial screenSize = UIState
@@ -22,4 +30,6 @@ initial screenSize = UIState
     , scale = V2 200 (-200)
     }
   , draggingCamera = False
+  , colonyWindow = ColonyWindowState.initial
+  , openWindow = Nothing
   }

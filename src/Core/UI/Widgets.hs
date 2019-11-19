@@ -1,5 +1,7 @@
 module Core.UI.Widgets
-  ( label, label', button )
+  ( label, label', button, toggleLabel
+  , list, window
+  )
 where
 
 import App.Prelude
@@ -7,11 +9,13 @@ import App.Prelude
 import qualified App.Common.Rect as Rect
 import qualified Core.CachedTextRenderer as CachedTextRenderer
 import qualified Core.RenderedText as RenderedText
+import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 
 import App.Common.EventPatterns (pattern MousePressEvent)
 import App.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
+import Core.UI.Layout (Constrained)
 import Core.UI.Theme (Theme(..))
 import Core.UI.UI (UI, UIComponent, UIContext(..))
 
@@ -44,6 +48,62 @@ button str onClick = do
     SDL.drawRect renderer rect
   text str
   pure (if clicked then Endo onClick else mempty)
+
+toggleLabel :: Text -> Bool -> (s -> s) -> UIComponent s
+toggleLabel str isActive onClick = do
+  UIContext{ cursor, theme = Theme{ selectionBackgroundColor } } <- ask
+  clicked <- clickedInside cursor
+  scaledCursor <- UI.scaleRect cursor
+  UI.render $ ask >>= \CoreContext{ renderer } -> do
+    let rect = Just scaledCursor
+    when isActive $ do
+      SDL.rendererDrawColor renderer $= selectionBackgroundColor
+      SDL.fillRect renderer rect
+  text str
+  pure (if clicked then Endo onClick else mempty)
+
+list
+  :: forall a i s. Eq i
+  => (a -> i)
+  -> (a -> Text)
+  -> [a]
+  -> Maybe i
+  -> (Maybe i -> s -> s)
+  -> UIComponent s
+list toIndex toText items selectedIndex onSelect =
+  local (set #layoutGap 0) $
+    Layout.vertical (map toChild items)
+      where
+        toChild :: a -> Constrained (UIComponent s)
+        toChild item =
+          let
+            index = toIndex item
+            isActive = elem index selectedIndex
+            onClick = onSelect (Just index)
+          in
+            Layout.DefaultSized (toggleLabel (toText item) isActive onClick)
+
+window :: Text -> UIComponent s -> UIComponent s
+window title child = do
+  let decorationHeight = 20
+  UIContext{ cursor, theme = Theme{ backgroundColor, windowDecorationColor } } <- ask
+  do
+    decoration <- UI.scaleRect (set (#wh . _y) decorationHeight cursor)
+    body <- UI.scaleRect $
+      cursor
+        & over (#xy . _y) (+ decorationHeight)
+        & over (#wh . _y) (subtract decorationHeight)
+    UI.render $ ask >>= \CoreContext{ renderer } -> do
+      SDL.rendererDrawColor renderer $= windowDecorationColor
+      SDL.fillRect renderer (Just decoration)
+      SDL.rendererDrawColor renderer $= backgroundColor
+      SDL.fillRect renderer (Just body)
+  result <- Layout.vertical
+    [ Layout.Sized 20 (label' title)
+    , Layout.Stretched child
+    ]
+  _ <- clickedInside cursor
+  pure result
 
 text :: Text -> UI ()
 text str = do
