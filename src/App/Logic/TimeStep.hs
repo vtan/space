@@ -7,9 +7,7 @@ import App.Prelude
 import qualified App.Common.IdMap as IdMap
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
-import qualified App.Logic.Colony as Logic.Colony
 import qualified App.Logic.Mining as Logic.Mining
-import qualified App.Logic.ShipBuilding as Logic.ShipBuilding
 import qualified App.Model.Body as Body
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
@@ -17,7 +15,6 @@ import qualified App.Model.Ship as Ship
 import App.Common.Id (Id(..))
 import App.Dimension.Time (Time)
 import App.Model.Body (Body(..))
-import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))
 
@@ -68,17 +65,4 @@ productionTick gs@GameState{ colonies } =
 productionTickOnColony :: Id Body -> GameState -> GameState
 productionTickOnColony bodyId =
   Logic.Building.build bodyId
-  >>> Logic.ShipBuilding.build bodyId
   >>> Logic.Mining.mine bodyId
-  >>> shrinkPopulation bodyId
-
-shrinkPopulation :: Id Body -> GameState -> GameState
-shrinkPopulation bodyId gs =
-  fromMaybe gs $ do
-    body <- gs ^. #bodies . at bodyId
-    colony@Colony{ population } <- gs ^. #colonies . at bodyId
-    maxPopulation <- Logic.Colony.colonyMaxPopulation body colony
-    pure $
-      if population > maxPopulation
-      then gs & #colonies . at bodyId . _Just . #population .~ (population + maxPopulation) `div` 2
-      else gs

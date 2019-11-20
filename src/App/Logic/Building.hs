@@ -2,7 +2,6 @@ module App.Logic.Building where
 
 import App.Prelude
 
-import qualified App.Common.Queue as Queue
 import qualified App.Dimension.Time as Time
 import qualified App.Logic.Util as Logic.Util
 import qualified App.Model.Installation as Installation
@@ -97,42 +96,3 @@ enqueue installation colony@Colony{ bodyId, stockpile, buildQueue } gs =
     gs
       & #colonies . at bodyId . _Just .~ colony'
       & Just
-
--- Assumes diff is either -1 or 1.
-changeQuantityInQueue :: Int -> Int -> Colony -> GameState -> GameState
-changeQuantityInQueue queueIndex diff colony@Colony{ bodyId, buildQueue, stockpile } gs =
-  fromMaybe gs $ do
-    (newQueue, BuildTask{ installation }) <-
-      buildQueue & Queue.update queueIndex
-        ( \task@BuildTask{ quantity } ->
-            let newQuantity = quantity + diff
-            in if newQuantity > 0
-            then Just task{ quantity = newQuantity }
-            else Nothing
-        )
-    let cost = fromIntegral diff *^ resourcesNeeded installation
-    stockpileAfterCost <- Logic.Util.payResources stockpile cost
-    gs
-      & #colonies . at bodyId . _Just .~ colony
-        { buildQueue = newQueue
-        , stockpile = stockpileAfterCost
-        }
-      & Just
-
-moveUpInQueue :: Int -> Colony -> GameState -> Maybe GameState
-moveUpInQueue queueIndex Colony{ bodyId, buildQueue } gs = do
-  newQueue <- buildQueue & Queue.moveUp queueIndex
-  gs
-    & #colonies . at bodyId . _Just . #buildQueue .~ newQueue
-    & Just
-
-moveDownInQueue :: Int -> Colony -> GameState -> Maybe GameState
-moveDownInQueue queueIndex Colony{ bodyId, buildQueue } gs = do
-  newQueue <- buildQueue & Queue.moveDown queueIndex
-  gs
-    & #colonies . at bodyId . _Just . #buildQueue .~ newQueue
-    & Just
-
-toggleInstallInQueue :: Int -> Colony -> GameState -> GameState
-toggleInstallInQueue queueIndex Colony{ bodyId } gs =
-  gs & #colonies . at bodyId . _Just . #buildQueue . ix queueIndex . #installWhenDone %~ not

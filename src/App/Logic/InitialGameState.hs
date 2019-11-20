@@ -3,7 +3,6 @@ module App.Logic.InitialGameState where
 import App.Prelude
 
 import qualified App.Common.IdMap as IdMap
-import qualified App.Logic.ShipBuilding as Logic.ShipBuilding
 import qualified App.Model.Body as Body
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
@@ -51,10 +50,7 @@ initial = GameState
         }
       )
     ]
-  , ships = IdMap.fromEntities (view #shipId)
-      ( Body.statesAtTime 0 theRootBody ^.. at (Id 2) . _Just <&> \orbitalState ->
-          Logic.ShipBuilding.shipBuiltAt (Id 2) orbitalState (Id 0) Ship.FreighterType 1
-      )
+  , ships = mempty
   , time = 0
   }
 
