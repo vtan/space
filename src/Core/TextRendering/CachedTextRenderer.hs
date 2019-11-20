@@ -1,11 +1,11 @@
-module Core.CachedTextRenderer where
+module Core.TextRendering.CachedTextRenderer where
 
 import GlobalImports
 
-import qualified Core.TextRenderer as TextRenderer
+import qualified Core.TextRendering.TextRenderer as TextRenderer
 
-import Core.RenderedText (RenderedText(..))
-import Core.TextRenderer (TextRenderer(..))
+import Core.TextRendering.RenderedText (RenderedText(..))
+import Core.TextRendering.TextRenderer (TextRenderer(..))
 
 import qualified Data.HashMap.Strict as HashMap
 import qualified SDL

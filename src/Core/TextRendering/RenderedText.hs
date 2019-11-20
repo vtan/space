@@ -1,4 +1,4 @@
-module Core.RenderedText
+module Core.TextRendering.RenderedText
   ( RenderedText(..)
   , render )
 where

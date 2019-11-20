@@ -1,4 +1,4 @@
-module Core.TextRenderer
+module Core.TextRendering.TextRenderer
   ( TextRenderer(..)
   , render
   )
@@ -6,7 +6,7 @@ where
 
 import GlobalImports
 
-import Core.RenderedText (RenderedText(..))
+import Core.TextRendering.RenderedText (RenderedText(..))
 
 import qualified SDL
 import qualified SDL.Font as SDL.TTF

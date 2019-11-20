@@ -4,7 +4,7 @@ where
 
 import GlobalImports
 
-import Core.CachedTextRenderer (CachedTextRenderer(..))
+import Core.TextRendering.CachedTextRenderer (CachedTextRenderer(..))
 
 import qualified SDL
 

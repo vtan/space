@@ -3,11 +3,11 @@ module Game.UIState where
 import GlobalImports
 
 import qualified Game.Dimension.Local as Local
-import qualified Game.ColonyWindowState as ColonyWindowState
+import qualified Game.Colonies.ColonyWindowState as ColonyWindowState
 
 import Game.Common.Camera (Camera(..))
 import Game.Dimension.Local (Local(..))
-import Game.ColonyWindowState (ColonyWindowState)
+import Game.Colonies.ColonyWindowState (ColonyWindowState)
 
 data UIState = UIState
   { camera :: Camera (Local Double) Double

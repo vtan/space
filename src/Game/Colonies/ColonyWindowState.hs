@@ -1,4 +1,4 @@
-module Game.ColonyWindowState
+module Game.Colonies.ColonyWindowState
   ( ColonyWindowState(..)
   , initial
   )

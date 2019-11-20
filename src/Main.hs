@@ -4,13 +4,13 @@ import GlobalImports
 
 import qualified Core.Common.FpsCounter as FpsCounter
 import qualified App.Logic.InitialGameState as InitialGameState
-import qualified Core.CachedTextRenderer as CachedTextRenderer
+import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
 import qualified Game.Controller as Controller
 import qualified Game.UIState as UIState
 
 import Core.Common.EventPatterns
 import Core.CoreContext (CoreContext(..))
-import Core.TextRenderer (TextRenderer(..))
+import Core.TextRendering.TextRenderer (TextRenderer(..))
 import Game.AppState (AppState(..))
 
 import qualified SDL

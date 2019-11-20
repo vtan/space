@@ -1,4 +1,4 @@
-module Game.ColonyWindow
+module Game.Colonies.ColonyWindow
   ( colonyWindow )
 where
 

@@ -7,8 +7,8 @@ where
 import GlobalImports
 
 import qualified Core.Common.Rect as Rect
-import qualified Core.CachedTextRenderer as CachedTextRenderer
-import qualified Core.RenderedText as RenderedText
+import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
+import qualified Core.TextRendering.RenderedText as RenderedText
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 

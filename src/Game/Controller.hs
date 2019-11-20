@@ -6,7 +6,7 @@ import GlobalImports
 
 import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified Core.UI.UI as UI
-import qualified Game.ColonyWindow as ColonyWindow
+import qualified Game.Colonies.ColonyWindow as ColonyWindow
 import qualified Game.SystemMap.Component as SystemMap
 import qualified Game.TimeOverlay as TimeOverlay
 import qualified Game.UIState as UIState
