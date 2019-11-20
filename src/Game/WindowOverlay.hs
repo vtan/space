@@ -4,18 +4,14 @@ where
 
 import App.Prelude
 
-import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 import qualified Game.UIState as UIState
 
-import App.Common.Display (display)
 import App.Common.Rect (Rect(..))
-import App.Dimension.Time (Time)
-import App.Model.GameState (GameState(..))
 import Core.UI.Layout (Constrained(..))
-import Core.UI.UI (UIComponent, UIContext(..))
+import Core.UI.UI (UIComponent)
 import Game.AppState (AppState(..))
 
 windowOverlay :: AppState -> UIComponent AppState
