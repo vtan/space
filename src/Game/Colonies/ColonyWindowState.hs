@@ -6,8 +6,8 @@ where
 
 import GlobalImports
 
-import Game.Common.Id (Id)
 import App.Model.Body (Body)
+import Game.Common.Id (Id)
 
 data ColonyWindowState = ColonyWindowState
   { selectedBodyId :: Maybe (Id Body) }

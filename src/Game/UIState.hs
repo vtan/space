@@ -5,9 +5,9 @@ import GlobalImports
 import qualified Game.Dimension.Local as Local
 import qualified Game.Colonies.ColonyWindowState as ColonyWindowState
 
+import Game.Colonies.ColonyWindowState (ColonyWindowState)
 import Game.Common.Camera (Camera(..))
 import Game.Dimension.Local (Local(..))
-import Game.Colonies.ColonyWindowState (ColonyWindowState)
 
 data UIState = UIState
   { camera :: Camera (Local Double) Double

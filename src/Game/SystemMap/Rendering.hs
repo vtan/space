@@ -4,22 +4,22 @@ where
 
 import GlobalImports
 
-import qualified Game.Common.Camera as Camera
-import qualified Core.Common.Rect as Rect
 import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
+import qualified Core.Common.Rect as Rect
 import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
 import qualified Core.TextRendering.RenderedText as RenderedText
+import qualified Game.Common.Camera as Camera
 
-import Game.Common.Camera (Camera(..))
-import Game.Common.IdMap (IdMap)
-import Game.Dimension.Local (Local(..))
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Ship (Ship(..))
-import Core.TextRendering.CachedTextRenderer (CachedTextRenderer(..))
 import Core.CoreContext (CoreContext(..))
+import Core.TextRendering.CachedTextRenderer (CachedTextRenderer(..))
+import Game.Common.Camera (Camera(..))
+import Game.Common.IdMap (IdMap)
+import Game.Dimension.Local (Local(..))
 
 import qualified Data.Vector.Storable as Vector
 import qualified Linear as Linear

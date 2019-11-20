@@ -12,9 +12,9 @@ import qualified Core.TextRendering.RenderedText as RenderedText
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 
+import Core.CoreContext (CoreContext(..))
 import Core.Common.EventPatterns (pattern MousePressEvent)
 import Core.Common.Rect (Rect(..))
-import Core.CoreContext (CoreContext(..))
 import Core.UI.Layout (Constrained)
 import Core.UI.Theme (Theme(..))
 import Core.UI.UI (UI, UIComponent, UIContext(..))

@@ -4,8 +4,8 @@ where
 
 import GlobalImports
 
-import qualified Game.Common.Camera as Camera
 import qualified Core.UI.UI as UI
+import qualified Game.Common.Camera as Camera
 import qualified Game.SystemMap.Rendering as SystemMap.Rendering
 
 import Core.Common.EventPatterns

@@ -2,9 +2,10 @@ module Game.Common.IdMap where
 
 import GlobalImports
 
+import Game.Common.Id (Id(..), getInt)
+
 import qualified Data.IntMap as IntMap
 
-import Game.Common.Id (Id(..), getInt)
 import Control.Lens (Lens', Traversal')
 
 newtype IdMap i a = IdMap { getIntMap :: IntMap a }

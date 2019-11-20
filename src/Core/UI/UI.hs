@@ -4,8 +4,8 @@ import GlobalImports
 
 import qualified Core.Common.Rect as Rect
 
-import Core.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
+import Core.Common.Rect (Rect(..))
 import Core.UI.Theme (Theme(..))
 
 import qualified Control.Monad.State as State

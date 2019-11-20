@@ -4,20 +4,18 @@ where
 
 import GlobalImports
 
-import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified App.Model.Body as Body
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 
-import Game.Common.Display (display)
-import Core.Common.Rect (Rect(..))
-import Game.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
+import Core.Common.Rect (Rect(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 import Game.AppState (AppState(..))
+import Game.Common.Display (display)
 
 colonyWindow :: AppState -> UIComponent AppState
 colonyWindow AppState{ gameState, uiState } =

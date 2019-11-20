@@ -4,9 +4,9 @@ where
 
 import GlobalImports
 
-import Game.Dimension.Time (Time)
 import App.Model.GameState (GameState)
 import Game.UIState (UIState)
+import Game.Dimension.Time (Time)
 
 data AppState = AppState
   { gameState :: GameState

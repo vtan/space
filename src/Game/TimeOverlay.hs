@@ -9,13 +9,13 @@ import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 
-import Game.Common.Display (display)
-import Core.Common.Rect (Rect(..))
-import Game.Dimension.Time (Time)
 import App.Model.GameState (GameState(..))
+import Core.Common.Rect (Rect(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 import Game.AppState (AppState(..))
+import Game.Common.Display (display)
+import Game.Dimension.Time (Time)
 
 timeOverlay :: AppState -> UIComponent AppState
 timeOverlay AppState{ gameState = GameState{ time } } =
