@@ -1,6 +1,6 @@
 module App.Model.ShipBuildingTask where
 
-import App.Prelude
+import GlobalImports
 
 import qualified App.Model.Ship as Ship
 

@@ -1,10 +1,10 @@
-module App.Common.FpsCounter
+module Core.Common.FpsCounter
   ( Counter
   , new, record
   )
 where
 
-import App.Prelude
+import GlobalImports
 
 import qualified GHC.Stats as GHC
 import qualified SDL.Raw

@@ -2,7 +2,7 @@ module Game.Controller
   ( update )
 where
 
-import App.Prelude
+import GlobalImports
 
 import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified Core.UI.UI as UI
@@ -12,7 +12,7 @@ import qualified Game.TimeOverlay as TimeOverlay
 import qualified Game.UIState as UIState
 import qualified Game.WindowOverlay as WindowOverlay
 
-import App.Common.Rect (Rect(..))
+import Core.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
 import Core.UI.Theme (Theme(..))
 import Core.UI.UI (UIComponent, UIContext(..), UIState(..))

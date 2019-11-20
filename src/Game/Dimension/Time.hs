@@ -1,10 +1,10 @@
-module App.Dimension.Time where
+module Game.Dimension.Time where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.Display as Display
+import qualified Game.Common.Display as Display
 
-import App.Common.Display (Display, display)
+import Game.Common.Display (Display, display)
 
 newtype Time a = Time { toSeconds :: a }
   deriving (Generic, Show, Eq, Ord, Enum, Num, Integral, Real, Functor)

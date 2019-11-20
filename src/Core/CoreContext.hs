@@ -2,7 +2,7 @@ module Core.CoreContext
   ( CoreContext(..) )
 where
 
-import App.Prelude
+import GlobalImports
 
 import Core.CachedTextRenderer (CachedTextRenderer(..))
 

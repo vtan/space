@@ -2,18 +2,18 @@ module App.Logic.TimeStep
   ( stepTime, jumpToNextMidnight )
 where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.IdMap as IdMap
-import qualified App.Dimension.Time as Time
+import qualified Game.Common.IdMap as IdMap
+import qualified Game.Dimension.Time as Time
 import qualified App.Logic.Building as Logic.Building
 import qualified App.Logic.Mining as Logic.Mining
 import qualified App.Model.Body as Body
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 
-import App.Common.Id (Id(..))
-import App.Dimension.Time (Time)
+import Game.Common.Id (Id(..))
+import Game.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Ship (Ship(..))

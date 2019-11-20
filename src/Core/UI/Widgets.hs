@@ -4,16 +4,16 @@ module Core.UI.Widgets
   )
 where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.Rect as Rect
+import qualified Core.Common.Rect as Rect
 import qualified Core.CachedTextRenderer as CachedTextRenderer
 import qualified Core.RenderedText as RenderedText
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 
-import App.Common.EventPatterns (pattern MousePressEvent)
-import App.Common.Rect (Rect(..))
+import Core.Common.EventPatterns (pattern MousePressEvent)
+import Core.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
 import Core.UI.Layout (Constrained)
 import Core.UI.Theme (Theme(..))

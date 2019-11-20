@@ -1,6 +1,6 @@
 module App.Model.Mineral where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Control.Lens as Lens
 

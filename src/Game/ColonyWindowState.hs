@@ -4,9 +4,9 @@ module Game.ColonyWindowState
   )
 where
 
-import App.Prelude
+import GlobalImports
 
-import App.Common.Id (Id)
+import Game.Common.Id (Id)
 import App.Model.Body (Body)
 
 data ColonyWindowState = ColonyWindowState

@@ -1,6 +1,6 @@
-module App.Common.Id where
+module Game.Common.Id where
 
-import App.Prelude
+import GlobalImports
 
 newtype Id i = Id { getInt :: Int }
   deriving (Show, Eq, Ord)

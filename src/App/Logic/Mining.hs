@@ -1,12 +1,12 @@
 module App.Logic.Mining where
 
-import App.Prelude
+import GlobalImports
 
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Mineral as Mineral
 import qualified Data.HashMap.Strict as HashMap
 
-import App.Common.Id (Id(..))
+import Game.Common.Id (Id(..))
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))

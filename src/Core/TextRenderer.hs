@@ -4,7 +4,7 @@ module Core.TextRenderer
   )
 where
 
-import App.Prelude
+import GlobalImports
 
 import Core.RenderedText (RenderedText(..))
 

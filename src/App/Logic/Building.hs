@@ -1,14 +1,14 @@
 module App.Logic.Building where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Dimension.Time as Time
+import qualified Game.Dimension.Time as Time
 import qualified App.Logic.Util as Logic.Util
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 
-import App.Common.Id (Id(..))
-import App.Dimension.Time (Time)
+import Game.Common.Id (Id(..))
+import Game.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.BuildTask (BuildTask(..))
 import App.Model.Colony (Colony(..))

@@ -1,6 +1,6 @@
-module App.Common.Util where
+module Core.Common.Util where
 
-import App.Prelude
+import GlobalImports
 
 import Control.Lens (Lens')
 

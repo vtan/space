@@ -1,6 +1,6 @@
-module App.Dimension.Local where
+module Game.Dimension.Local where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Control.Lens as Lens
 

@@ -1,15 +1,15 @@
 module App.Logic.InitialGameState where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.IdMap as IdMap
+import qualified Game.Common.IdMap as IdMap
 import qualified App.Model.Body as Body
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
 import qualified App.Model.Ship as Ship
 import qualified Data.HashMap.Strict as HashMap
 
-import App.Common.Id (Id(..))
+import Game.Common.Id (Id(..))
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.GameState (GameState(..))

@@ -1,6 +1,6 @@
 module Core.UI.Theme where
 
-import App.Prelude
+import GlobalImports
 
 data Theme = Theme
   { borderColor :: V4 Word8

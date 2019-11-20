@@ -1,6 +1,6 @@
-module App.Common.Rect where
+module Core.Common.Rect where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Linear.Affine as Lin
 import qualified SDL

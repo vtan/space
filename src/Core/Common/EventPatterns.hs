@@ -1,6 +1,6 @@
-module App.Common.EventPatterns where
+module Core.Common.EventPatterns where
 
-import App.Prelude
+import GlobalImports
 
 import qualified SDL
 import qualified SDL.Internal.Numbered

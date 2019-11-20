@@ -1,14 +1,14 @@
-module App.Dimension.Speed where
+module Game.Dimension.Speed where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.Display as Display
-import qualified App.Dimension.Local as Local
-import qualified App.Dimension.Time as Time
+import qualified Game.Common.Display as Display
+import qualified Game.Dimension.Local as Local
+import qualified Game.Dimension.Time as Time
 
-import App.Common.Display (Display, display)
-import App.Dimension.Local (Local)
-import App.Dimension.Time (Time)
+import Game.Common.Display (Display, display)
+import Game.Dimension.Local (Local)
+import Game.Dimension.Time (Time)
 
 newtype Speed a = Speed { getAuPerSec :: a }
   deriving (Show, Generic)

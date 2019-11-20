@@ -2,14 +2,14 @@ module Game.SystemMap.Component
   ( systemMap )
 where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.Camera as Camera
+import qualified Game.Common.Camera as Camera
 import qualified Core.UI.UI as UI
 import qualified Game.SystemMap.Rendering as SystemMap.Rendering
 
-import App.Common.EventPatterns
-import App.Common.Util (clamp)
+import Core.Common.EventPatterns
+import Core.Common.Util (clamp)
 import Core.UI.UI (UIComponent)
 import Game.AppState (AppState(..))
 import Game.UIState (UIState(..))

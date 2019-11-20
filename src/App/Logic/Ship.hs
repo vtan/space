@@ -1,11 +1,11 @@
 module App.Logic.Ship where
 
-import App.Prelude
+import GlobalImports
 
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 
-import App.Common.Id (Id(..))
+import Game.Common.Id (Id(..))
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.Resource (Resource)

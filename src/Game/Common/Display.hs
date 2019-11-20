@@ -1,6 +1,6 @@
-module App.Common.Display where
+module Game.Common.Display where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Data.Text.Lazy as LazyText
 import qualified Data.Text.Lazy.Builder as TextBuilder

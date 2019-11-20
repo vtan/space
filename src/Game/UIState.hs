@@ -1,12 +1,12 @@
 module Game.UIState where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Dimension.Local as Local
+import qualified Game.Dimension.Local as Local
 import qualified Game.ColonyWindowState as ColonyWindowState
 
-import App.Common.Camera (Camera(..))
-import App.Dimension.Local (Local(..))
+import Game.Common.Camera (Camera(..))
+import Game.Dimension.Local (Local(..))
 import Game.ColonyWindowState (ColonyWindowState)
 
 data UIState = UIState

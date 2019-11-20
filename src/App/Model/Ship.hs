@@ -1,10 +1,10 @@
 module App.Model.Ship where
 
-import App.Prelude
+import GlobalImports
 
-import App.Common.Id (Id)
-import App.Dimension.Local (Local)
-import App.Dimension.Speed (Speed)
+import Game.Common.Id (Id)
+import Game.Dimension.Local (Local)
+import Game.Dimension.Speed (Speed)
 import App.Model.Body (Body)
 import App.Model.PlottedPath (PlottedPath)
 import App.Model.Resource (Resource)

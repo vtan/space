@@ -1,10 +1,10 @@
 module App.Model.Resource where
 
-import App.Prelude
+import GlobalImports
 
 import qualified App.Model.Installation as Installation
 
-import App.Common.Display (Display, display)
+import Game.Common.Display (Display, display)
 import App.Model.Installation (Installation(..))
 
 data Resource

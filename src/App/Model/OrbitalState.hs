@@ -1,8 +1,8 @@
 module App.Model.OrbitalState where
 
-import App.Prelude
+import GlobalImports
 
-import App.Dimension.Local (Local)
+import Game.Dimension.Local (Local)
 
 data OrbitalState = OrbitalState
   { position :: V2 (Local Double)

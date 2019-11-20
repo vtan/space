@@ -1,6 +1,6 @@
 module App.Logic.Util where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Data.HashMap.Strict as HashMap
 

@@ -1,8 +1,8 @@
-module App.Common.Camera where
+module Game.Common.Camera where
 
-import App.Prelude
+import GlobalImports
 
-import App.Common.Rect (Rect(..))
+import Core.Common.Rect (Rect(..))
 
 data Camera a b = Camera
   { conversion :: AnIso' a b

@@ -2,18 +2,18 @@ module Game.SystemMap.Rendering
   ( render )
 where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.Camera as Camera
-import qualified App.Common.Rect as Rect
+import qualified Game.Common.Camera as Camera
+import qualified Core.Common.Rect as Rect
 import qualified App.Model.Body as Body
 import qualified App.Model.Ship as Ship
 import qualified Core.CachedTextRenderer as CachedTextRenderer
 import qualified Core.RenderedText as RenderedText
 
-import App.Common.Camera (Camera(..))
-import App.Common.IdMap (IdMap)
-import App.Dimension.Local (Local(..))
+import Game.Common.Camera (Camera(..))
+import Game.Common.IdMap (IdMap)
+import Game.Dimension.Local (Local(..))
 import App.Model.Body (Body(..))
 import App.Model.GameState (GameState(..))
 import App.Model.OrbitalState (OrbitalState(..))

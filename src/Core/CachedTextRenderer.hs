@@ -1,6 +1,6 @@
 module Core.CachedTextRenderer where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Core.TextRenderer as TextRenderer
 

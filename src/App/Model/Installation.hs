@@ -1,6 +1,6 @@
 module App.Model.Installation where
 
-import App.Prelude
+import GlobalImports
 
 data Installation
   = Infrastructure

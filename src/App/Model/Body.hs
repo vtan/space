@@ -1,13 +1,13 @@
 module App.Model.Body where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Linear as Lin
 
-import App.Common.Id (Id)
-import App.Common.IdMap (IdMap)
-import App.Dimension.Local (Local(..))
-import App.Dimension.Time (Time)
+import Game.Common.Id (Id)
+import Game.Common.IdMap (IdMap)
+import Game.Dimension.Local (Local(..))
+import Game.Dimension.Time (Time)
 import App.Model.OrbitalState (OrbitalState(..))
 import Numeric.Extras (fmod)
 

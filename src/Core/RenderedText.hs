@@ -3,9 +3,9 @@ module Core.RenderedText
   , render )
 where
 
-import App.Prelude
+import GlobalImports
 
-import App.Common.Rect (Rect(..))
+import Core.Common.Rect (Rect(..))
 
 import qualified SDL
 

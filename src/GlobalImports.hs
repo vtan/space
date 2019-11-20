@@ -1,4 +1,4 @@
-module App.Prelude
+module GlobalImports
   ( module X
   , TextBuilder
   )

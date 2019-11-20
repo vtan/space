@@ -1,10 +1,10 @@
 module Core.UI.UI where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Common.Rect as Rect
+import qualified Core.Common.Rect as Rect
 
-import App.Common.Rect (Rect(..))
+import Core.Common.Rect (Rect(..))
 import Core.CoreContext (CoreContext(..))
 import Core.UI.Theme (Theme(..))
 

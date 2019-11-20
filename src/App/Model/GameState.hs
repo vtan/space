@@ -1,9 +1,9 @@
 module App.Model.GameState where
 
-import App.Prelude
+import GlobalImports
 
-import App.Common.IdMap (IdMap)
-import App.Dimension.Time (Time)
+import Game.Common.IdMap (IdMap)
+import Game.Dimension.Time (Time)
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
 import App.Model.Mineral (Mineral(..))

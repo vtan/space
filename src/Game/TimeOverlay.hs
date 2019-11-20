@@ -2,16 +2,16 @@ module Game.TimeOverlay
   ( timeOverlay )
 where
 
-import App.Prelude
+import GlobalImports
 
 import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 
-import App.Common.Display (display)
-import App.Common.Rect (Rect(..))
-import App.Dimension.Time (Time)
+import Game.Common.Display (display)
+import Core.Common.Rect (Rect(..))
+import Game.Dimension.Time (Time)
 import App.Model.GameState (GameState(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))

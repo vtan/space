@@ -2,9 +2,9 @@ module Game.AppState
   ( AppState(..) )
 where
 
-import App.Prelude
+import GlobalImports
 
-import App.Dimension.Time (Time)
+import Game.Dimension.Time (Time)
 import App.Model.GameState (GameState)
 import Game.UIState (UIState)
 

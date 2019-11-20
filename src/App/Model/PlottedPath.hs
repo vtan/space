@@ -4,17 +4,17 @@ module App.Model.PlottedPath
   )
 where
 
-import App.Prelude
+import GlobalImports
 
-import qualified App.Dimension.Speed as Speed
-import qualified App.Dimension.Time as Time
+import qualified Game.Dimension.Speed as Speed
+import qualified Game.Dimension.Time as Time
 import qualified App.Model.Body as Body
 import qualified Linear as Lin
 
-import App.Common.Id (Id)
-import App.Dimension.Local (Local)
-import App.Dimension.Speed (Speed)
-import App.Dimension.Time (Time)
+import Game.Common.Id (Id)
+import Game.Dimension.Local (Local)
+import Game.Dimension.Speed (Speed)
+import Game.Dimension.Time (Time)
 import App.Model.Body (Body)
 
 data PlottedPath = PlottedPath

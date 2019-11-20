@@ -4,9 +4,9 @@ module Core.UI.Layout
   )
 where
 
-import App.Prelude
+import GlobalImports
 
-import App.Common.Rect (Rect(..))
+import Core.Common.Rect (Rect(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 
 import Control.Lens (Lens')

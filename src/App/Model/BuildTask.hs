@@ -1,6 +1,6 @@
 module App.Model.BuildTask where
 
-import App.Prelude
+import GlobalImports
 
 import App.Model.Installation (Installation)
 

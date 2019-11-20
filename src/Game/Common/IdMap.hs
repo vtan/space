@@ -1,10 +1,10 @@
-module App.Common.IdMap where
+module Game.Common.IdMap where
 
-import App.Prelude
+import GlobalImports
 
 import qualified Data.IntMap as IntMap
 
-import App.Common.Id (Id(..), getInt)
+import Game.Common.Id (Id(..), getInt)
 import Control.Lens (Lens', Traversal')
 
 newtype IdMap i a = IdMap { getIntMap :: IntMap a }
@@ -14,7 +14,7 @@ fromList :: [(Id i, a)] -> IdMap i a
 fromList = IdMap . IntMap.fromList . over (mapped . _1) getInt
 
 fromEntities :: (a -> Id i) -> [a] -> IdMap i a
-fromEntities f xs = IdMap . IntMap.fromList $ App.Prelude.zip (map (getInt . f) xs) xs
+fromEntities f xs = IdMap . IntMap.fromList $ GlobalImports.zip (map (getInt . f) xs) xs
 
 nextId :: IdMap i a -> Id i
 nextId (IdMap xs) =
