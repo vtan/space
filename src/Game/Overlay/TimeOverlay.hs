@@ -1,4 +1,4 @@
-module Game.TimeOverlay
+module Game.Overlay.TimeOverlay
   ( timeOverlay )
 where
 

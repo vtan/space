@@ -7,9 +7,9 @@ import GlobalImports
 import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified Core.UI.UI as UI
 import qualified Game.UIState as UIState
-import qualified Game.TimeOverlay as TimeOverlay
-import qualified Game.WindowOverlay as WindowOverlay
 import qualified Game.Colonies.ColonyWindow as ColonyWindow
+import qualified Game.Overlay.TimeOverlay as TimeOverlay
+import qualified Game.Overlay.WindowOverlay as WindowOverlay
 import qualified Game.SystemMap.Component as SystemMap
 
 import Core.CoreContext (CoreContext(..))

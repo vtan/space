@@ -1,4 +1,4 @@
-module Game.WindowOverlay
+module Game.Overlay.WindowOverlay
   ( windowOverlay )
 where
 
