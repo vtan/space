@@ -9,13 +9,13 @@ import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 
-import Game.Bodies.Body (Body(..))
 import Core.Common.Rect (Rect(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 import Game.AppState (AppState(..))
-import Game.Common.Display (display)
 import Game.GameState (GameState(..))
+import Game.Bodies.Body (Body(..))
+import Game.Common.Display (display)
 
 colonyWindow :: AppState -> UIComponent AppState
 colonyWindow AppState{ gameState, uiState } =

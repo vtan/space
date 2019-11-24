@@ -8,14 +8,15 @@ import GlobalImports
 
 import qualified Game.Dimension.Speed as Speed
 import qualified Game.Dimension.Time as Time
-import qualified Game.Bodies.Body as Body
+import qualified Game.Bodies.OrbitTree as OrbitTree
 import qualified Linear as Lin
 
+import Game.Bodies.Body (Body)
+import Game.Bodies.OrbitTree (OrbitTree)
 import Game.Common.Id (Id)
 import Game.Dimension.Local (Local)
 import Game.Dimension.Speed (Speed)
 import Game.Dimension.Time (Time)
-import Game.Bodies.Body (Body)
 
 data PlottedPath = PlottedPath
   { startTime :: Time Int
@@ -25,14 +26,14 @@ data PlottedPath = PlottedPath
   }
   deriving (Generic, Show)
 
-plot :: Time Int -> V2 (Local Double) -> Speed Double -> Id Body -> Body -> Maybe PlottedPath
-plot startTime startPos speed bodyId rootBody = do
+plot :: Time Int -> V2 (Local Double) -> Speed Double -> Id Body -> OrbitTree -> Maybe PlottedPath
+plot startTime startPos speed bodyId rootOrbit = do
   (beforeCrudeApprox, _) <- approxArrival (16 & Time.hours) 0
   (beforeFinerApprox, _) <- approxArrival (30 & Time.minutes) beforeCrudeApprox
   (_, endDtime) <- approxArrival Time.oneSecond beforeFinerApprox
   let
     endTime = startTime + endDtime
-    endPos = Body.statesAtTime endTime rootBody ^?! at bodyId . _Just . #position
+    endPos = OrbitTree.statesAtTime endTime rootOrbit ^?! at bodyId . _Just . #position
   pure PlottedPath{ startTime, startPos, endTime, endPos }
   where
     approxArrival :: Time Int -> Time Int -> Maybe (Time Int, Time Int)
@@ -42,7 +43,7 @@ plot startTime startPos speed bodyId rootBody = do
             in reach * reach
           !distSq =
             let time = startTime + dtime
-                pos = Body.statesAtTime time rootBody ^?! at bodyId . _Just . #position
+                pos = OrbitTree.statesAtTime time rootOrbit ^?! at bodyId . _Just . #position
             in Lin.qd startPos pos
           !dtime' = dtime + timeStep
           approxTime =

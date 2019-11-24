@@ -2,10 +2,10 @@ module App.Model.Ship where
 
 import GlobalImports
 
+import Game.Bodies.Body (Body)
 import Game.Common.Id (Id)
 import Game.Dimension.Local (Local)
 import Game.Dimension.Speed (Speed)
-import Game.Bodies.Body (Body)
 import App.Model.PlottedPath (PlottedPath)
 import Game.Bodies.Resource (Resource)
 

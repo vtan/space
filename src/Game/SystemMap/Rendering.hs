@@ -4,19 +4,20 @@ where
 
 import GlobalImports
 
-import qualified Game.Bodies.Body as Body
+import qualified Game.Bodies.OrbitTree as Body
 import qualified App.Model.Ship as Ship
 import qualified Core.Common.Rect as Rect
 import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
 import qualified Core.TextRendering.RenderedText as RenderedText
 import qualified Game.Common.Camera as Camera
 
-import Game.Bodies.Body (Body(..))
-import Game.Bodies.OrbitalState (OrbitalState(..))
 import App.Model.Ship (Ship(..))
 import Core.CoreContext (CoreContext(..))
 import Core.TextRendering.CachedTextRenderer (CachedTextRenderer(..))
 import Game.GameState (GameState(..))
+import Game.Bodies.Body (Body(..))
+import Game.Bodies.OrbitTree (OrbitTree(..))
+import Game.Bodies.OrbitalState (OrbitalState(..))
 import Game.Common.Camera (Camera(..))
 import Game.Common.IdMap (IdMap)
 import Game.Dimension.Local (Local(..))
@@ -31,8 +32,8 @@ import SDL (($=))
 type Render a = ReaderT CoreContext IO a
 
 render :: Camera (Local Double) Double -> GameState -> Render ()
-render camera GameState{ rootBody, bodyOrbitalStates, ships } = do
-  _ <- renderBodyEnv camera bodyOrbitalStates >>= \env -> renderBody env Nothing rootBody
+render camera GameState{ orbitTree, bodyOrbitalStates, bodies, ships } = do
+  _ <- renderBodyEnv camera bodyOrbitalStates bodies >>= \env -> renderBody env Nothing orbitTree
   for_ ships (renderShip camera)
 
 data RenderBodyEnv = RenderBodyEnv
@@ -43,10 +44,11 @@ data RenderBodyEnv = RenderBodyEnv
   , cameraRadiusSq :: Local Double
   , cameraRadius :: Local Double
   , orbitalStates :: IdMap Body OrbitalState
+  , bodies :: IdMap Body Body
   }
 
-renderBodyEnv :: Camera (Local Double) Double -> IdMap Body OrbitalState -> Render RenderBodyEnv
-renderBodyEnv camera orbitalStates = do
+renderBodyEnv :: Camera (Local Double) Double -> IdMap Body OrbitalState -> IdMap Body Body -> Render RenderBodyEnv
+renderBodyEnv camera orbitalStates bodies = do
   CoreContext{ renderer, cachedTextRenderer } <- ask
   let cameraRadiusSq = Camera.boundingCircleRadiusSq camera
   pure RenderBodyEnv
@@ -57,13 +59,14 @@ renderBodyEnv camera orbitalStates = do
     , cameraRadiusSq
     , cameraRadius = sqrt cameraRadiusSq
     , orbitalStates
+    , bodies
     }
 
-renderBody :: RenderBodyEnv -> Maybe (V2 Double) -> Body -> Render Bool
+renderBody :: RenderBodyEnv -> Maybe (V2 Double) -> OrbitTree -> Render Bool
 renderBody
-    env@RenderBodyEnv{ renderer, cachedTextRenderer, camera, cameraCenter, cameraRadiusSq, cameraRadius, orbitalStates }
+    env@RenderBodyEnv{ renderer, cachedTextRenderer, camera, cameraCenter, cameraRadiusSq, cameraRadius, orbitalStates, bodies }
     parentDrawnCenter
-    Body{ bodyId, name = bodyName, orbitRadius, children } =
+    OrbitTree{ bodyId, orbitRadius, children } =
   case orbitalStates ^. at bodyId of
     Just OrbitalState{ position, orbitCenter } -> do
       let !bodyCenter = Camera.pointToScreen camera position
@@ -76,10 +79,11 @@ renderBody
                 in (orbitVisible && bodyParentQd > 8 * 8, bodyVisible && bodyParentQd > 16 * 16)
               Nothing ->
                 (orbitVisible, bodyVisible)
+          !bodyName = fromMaybe "???" (preview (at bodyId . _Just . #name) bodies)
       when drawOrbit (renderVisibleOrbit orbitCenter)
       when drawBody (renderVisibleBody bodyCenter)
       childrenVisible <- for children (renderBody env (Just bodyCenter))
-      when drawBody (renderBodyLabel bodyCenter childrenVisible)
+      when drawBody (renderBodyLabel bodyName bodyCenter childrenVisible)
       pure drawBody
     Nothing -> pure False
   where
@@ -91,11 +95,11 @@ renderBody
 
     renderVisibleBody bodyCenter = do
       let bodyPoints = bodyCircle
-            & Vector.map ((Body.drawnRadius *^) >>> (bodyCenter +) >>> fmap round >>> SDL.P)
+            & Vector.map ((bodyRadius *^) >>> (bodyCenter +) >>> fmap round >>> SDL.P)
       SDL.rendererDrawColor renderer $= bodyColor
       SDL.drawLines renderer bodyPoints
 
-    renderBodyLabel bodyCenter childrenVisible = do
+    renderBodyLabel bodyName bodyCenter childrenVisible = do
       let label
             | all id childrenVisible = bodyName
             | otherwise = bodyName <> "..."
@@ -123,6 +127,9 @@ circle size =
     n <- [0 .. size] :: [Int]
     let t = fromIntegral n / fromIntegral size * 2 * pi
     pure $ V2 (cos t) (sin t)
+
+bodyRadius :: Double
+bodyRadius = 6
 
 orbitColor, bodyColor, shipColor :: V4 Word8
 orbitColor = V4 0x00 0xcf 0xcf 0xff

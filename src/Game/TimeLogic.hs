@@ -6,13 +6,13 @@ import GlobalImports
 
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
-import qualified Game.Bodies.Body as Body
+import qualified Game.Bodies.OrbitTree as OrbitTree
 import qualified Game.Common.IdMap as IdMap
 import qualified Game.Dimension.Time as Time
 
 import App.Model.Ship (Ship(..))
 import Game.GameState (GameState(..))
-import Game.Bodies.Body (Body(..))
+import Game.Bodies.Body (Body)
 import Game.Common.Id (Id(..))
 import Game.Dimension.Time (Time)
 
@@ -36,7 +36,7 @@ jumpTimeTo :: Time Int -> GameState -> GameState
 jumpTimeTo time gs =
   gs
     & #time .~ time
-    & #bodyOrbitalStates .~ Body.statesAtTime time (gs ^. #rootBody)
+    & #bodyOrbitalStates .~ OrbitTree.statesAtTime time (gs ^. #orbitTree)
     & (\gs' -> gs' & #ships . traversed %~ updateShip gs')
 
 updateShip :: GameState -> Ship -> Ship
