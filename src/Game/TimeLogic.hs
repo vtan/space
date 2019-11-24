@@ -7,6 +7,7 @@ import GlobalImports
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
 import qualified Game.Bodies.OrbitTree as OrbitTree
+import qualified Game.Colonies.MiningLogic as MiningLogic
 import qualified Game.Common.IdMap as IdMap
 import qualified Game.Dimension.Time as Time
 
@@ -61,4 +62,5 @@ productionTick gs@GameState{ colonies } =
     & foldl' (flip productionTickOnColony) gs
 
 productionTickOnColony :: Id Body -> GameState -> GameState
-productionTickOnColony bodyId = id
+productionTickOnColony bodyId =
+  MiningLogic.mineOnColony bodyId

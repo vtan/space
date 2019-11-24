@@ -4,7 +4,6 @@ where
 
 import GlobalImports
 
-import qualified Game.Bodies.OrbitTree as Body
 import qualified App.Model.Ship as Ship
 import qualified Core.Common.Rect as Rect
 import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
