@@ -1,10 +1,13 @@
 module Core.UI.Layout
   ( Constrained(..)
   , horizontal, vertical
+  , indent
   )
 where
 
 import GlobalImports
+
+import qualified Core.UI.UI as UI
 
 import Core.Common.Rect (Rect(..))
 import Core.UI.UI (UIComponent, UIContext(..))
@@ -23,6 +26,10 @@ horizontal = box _x
 
 vertical :: [Constrained (UIComponent a)] -> UIComponent a
 vertical = box _y
+
+indent :: Double -> UIComponent a -> UIComponent a
+indent indentation child =
+  horizontal [Sized indentation UI.empty, Stretched child]
 
 box
   :: Lens' (V2 Double) Double

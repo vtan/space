@@ -7,3 +7,9 @@ data ResourceOnBody = ResourceOnBody
   , accessibility :: Double
   }
   deriving (Show, Generic, Eq)
+
+empty :: ResourceOnBody
+empty = ResourceOnBody
+  { available = 0
+  , accessibility = 0
+  }
