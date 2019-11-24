@@ -5,9 +5,9 @@ import GlobalImports
 import Game.Common.Id (Id)
 import Game.Dimension.Local (Local)
 import Game.Dimension.Speed (Speed)
-import App.Model.Body (Body)
+import Game.Bodies.Body (Body)
 import App.Model.PlottedPath (PlottedPath)
-import App.Model.Resource (Resource)
+import Game.Bodies.Resource (Resource)
 
 data Ship = Ship
   { shipId :: Id Ship

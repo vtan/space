@@ -6,7 +6,7 @@ where
 
 import GlobalImports
 
-import App.Model.Body (Body)
+import Game.Bodies.Body (Body)
 import Game.Common.Id (Id)
 
 data ColonyWindowState = ColonyWindowState

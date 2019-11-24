@@ -4,15 +4,15 @@ where
 
 import GlobalImports
 
-import qualified App.Model.Body as Body
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
+import qualified Game.Bodies.Body as Body
 import qualified Game.Common.IdMap as IdMap
 import qualified Game.Dimension.Time as Time
 
-import App.Model.Body (Body(..))
 import App.Model.Ship (Ship(..))
 import Game.GameState (GameState(..))
+import Game.Bodies.Body (Body(..))
 import Game.Common.Id (Id(..))
 import Game.Dimension.Time (Time)
 

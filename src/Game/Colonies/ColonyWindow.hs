@@ -4,12 +4,12 @@ where
 
 import GlobalImports
 
-import qualified App.Model.Body as Body
+import qualified Game.Bodies.Body as Body
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 
-import App.Model.Body (Body(..))
+import Game.Bodies.Body (Body(..))
 import Core.Common.Rect (Rect(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))

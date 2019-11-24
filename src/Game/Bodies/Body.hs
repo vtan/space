@@ -1,14 +1,14 @@
-module App.Model.Body where
+module Game.Bodies.Body where
 
 import GlobalImports
 
 import qualified Linear as Lin
 
+import Game.Bodies.OrbitalState (OrbitalState(..))
 import Game.Common.Id (Id)
 import Game.Common.IdMap (IdMap)
 import Game.Dimension.Local (Local(..))
 import Game.Dimension.Time (Time)
-import App.Model.OrbitalState (OrbitalState(..))
 import Numeric.Extras (fmod)
 
 data Body = Body

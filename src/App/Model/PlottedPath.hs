@@ -8,14 +8,14 @@ import GlobalImports
 
 import qualified Game.Dimension.Speed as Speed
 import qualified Game.Dimension.Time as Time
-import qualified App.Model.Body as Body
+import qualified Game.Bodies.Body as Body
 import qualified Linear as Lin
 
 import Game.Common.Id (Id)
 import Game.Dimension.Local (Local)
 import Game.Dimension.Speed (Speed)
 import Game.Dimension.Time (Time)
-import App.Model.Body (Body)
+import Game.Bodies.Body (Body)
 
 data PlottedPath = PlottedPath
   { startTime :: Time Int

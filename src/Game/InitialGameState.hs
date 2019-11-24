@@ -2,18 +2,16 @@ module Game.InitialGameState where
 
 import GlobalImports
 
-import qualified App.Model.Body as Body
-import qualified App.Model.Installation as Installation
-import qualified App.Model.Resource as Resource
+import qualified Game.Bodies.Body as Body
+import qualified Game.Colonies.Building as Building
+import qualified Game.Bodies.Resource as Resource
 import qualified Game.Common.IdMap as IdMap
 
-import App.Model.Body (Body(..))
-import App.Model.Colony (Colony(..))
-import App.Model.Mineral (Mineral(..))
-import Game.Common.Id (Id(..))
 import Game.GameState (GameState(..))
-
-import qualified Data.HashMap.Strict as HashMap
+import Game.Bodies.Body (Body(..))
+import Game.Bodies.ResourceOnBody (ResourceOnBody(..))
+import Game.Colonies.Colony (Colony(..))
+import Game.Common.Id (Id(..))
 
 initial :: GameState
 initial = GameState
@@ -24,15 +22,13 @@ initial = GameState
   , bodyOrbitalStates = Body.statesAtTime 0 theRootBody
   , bodyMinerals = IdMap.fromList
     [ ( Id @Body 2
-      , [ (Resource.Cadrium, Mineral{ available = 10000, accessibility = 0.4 })
-        , (Resource.Erchanite, Mineral{ available = 5000, accessibility = 0.4 })
-        , (Resource.Tellerite, Mineral{ available = 2000, accessibility = 0.4 })
+      , [ (Resource.Resource1, ResourceOnBody{ available = 10000, accessibility = 0.4 })
+        , (Resource.Resource2, ResourceOnBody{ available = 5000, accessibility = 0.4 })
         ]
       )
     , ( Id @Body 3
-      , [ (Resource.Cadrium, Mineral{ available = 10000, accessibility = 0.8 })
-        , (Resource.Erchanite, Mineral{ available = 10000, accessibility = 0.8 })
-        , (Resource.Tellerite, Mineral{ available = 10000, accessibility = 0.8 })
+      , [ (Resource.Resource1, ResourceOnBody{ available = 10000, accessibility = 0.8 })
+        , (Resource.Resource2, ResourceOnBody{ available = 10000, accessibility = 0.8 })
         ]
       )
     ]
@@ -40,13 +36,8 @@ initial = GameState
     [ ( Id @Body 2
       , Colony
         { bodyId = Id 2
-        , population = 10000000000
-        , isHomeworld = True
-        , stockpile = [ (Resource.Cadrium, 2500), (Resource.Erchanite, 2500), (Resource.Tellerite, 2500) ]
-        , installations = [ (Installation.Mine, 1), (Installation.Factory, 5), (Installation.Shipyard, 5)]
-        , buildQueue = []
-        , shipBuildingTask = Nothing
-        , miningPriorities = zip Resource.minerals (repeat 1) & HashMap.fromList
+        , resources = [ (Resource.Resource1, 2500), (Resource.Resource2, 2500) ]
+        , buildings = [ (Building.Mine Resource.Resource1, 1), (Building.Mine Resource.Resource2, 5) ]
         }
       )
     ]

@@ -1,4 +1,4 @@
-module App.Model.OrbitalState where
+module Game.Bodies.OrbitalState where
 
 import GlobalImports
 
