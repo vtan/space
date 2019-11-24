@@ -66,7 +66,7 @@ main =
 mainLoop :: MainContext -> MainState -> IO ()
 mainLoop
     ctx@MainContext{ window }
-    st@MainState{ screenSize, fpsCounter, coreContext = coreContext@CoreContext{ renderer }, appState } =
+    st@MainState{ screenSize, fpsCounter, coreContext = coreContext@CoreContext{ renderer, cachedTextRenderer }, appState } =
   do
     case fpsCounter ^. #updatedText of
       Just text -> SDL.windowTitle window $= text
@@ -82,6 +82,8 @@ mainLoop
         SDL.clear renderer
         runReaderT render coreContext
         SDL.present renderer
+
+        CachedTextRenderer.clean cachedTextRenderer
 
         fpsCounter' <- FpsCounter.record fpsCounter
         mainLoop ctx st{ fpsCounter = fpsCounter', appState = appState' }
