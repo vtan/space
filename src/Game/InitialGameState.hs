@@ -1,19 +1,19 @@
-module App.Logic.InitialGameState where
+module Game.InitialGameState where
 
 import GlobalImports
 
-import qualified Game.Common.IdMap as IdMap
 import qualified App.Model.Body as Body
 import qualified App.Model.Installation as Installation
 import qualified App.Model.Resource as Resource
-import qualified App.Model.Ship as Ship
-import qualified Data.HashMap.Strict as HashMap
+import qualified Game.Common.IdMap as IdMap
 
-import Game.Common.Id (Id(..))
 import App.Model.Body (Body(..))
 import App.Model.Colony (Colony(..))
-import App.Model.GameState (GameState(..))
 import App.Model.Mineral (Mineral(..))
+import Game.Common.Id (Id(..))
+import Game.GameState (GameState(..))
+
+import qualified Data.HashMap.Strict as HashMap
 
 initial :: GameState
 initial = GameState

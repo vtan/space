@@ -4,16 +4,16 @@ where
 
 import GlobalImports
 
-import qualified App.Logic.TimeStep as TimeStepLogic
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
+import qualified Game.TimeLogic as TimeLogic
 
-import App.Model.GameState (GameState(..))
 import Core.Common.Rect (Rect(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 import Game.AppState (AppState(..))
+import Game.GameState (GameState(..))
 import Game.Common.Display (display)
 import Game.Dimension.Time (Time)
 
@@ -21,7 +21,7 @@ timeOverlay :: AppState -> UIComponent AppState
 timeOverlay AppState{ gameState = GameState{ time } } =
   let
     size = V2 400 100
-    nextButton = Widgets.button "next" (over #gameState TimeStepLogic.jumpToNextMidnight)
+    nextButton = Widgets.button "next" (over #gameState TimeLogic.jumpToNextMidnight)
     timeButtons = timeChoices & map \(label, choice) ->
       Widgets.button label (set #timeStep choice)
   in do

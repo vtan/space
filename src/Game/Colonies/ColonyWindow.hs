@@ -10,12 +10,12 @@ import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 
 import App.Model.Body (Body(..))
-import App.Model.GameState (GameState(..))
 import Core.Common.Rect (Rect(..))
 import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent, UIContext(..))
 import Game.AppState (AppState(..))
 import Game.Common.Display (display)
+import Game.GameState (GameState(..))
 
 colonyWindow :: AppState -> UIComponent AppState
 colonyWindow AppState{ gameState, uiState } =

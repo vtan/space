@@ -3,9 +3,9 @@ module Main (main) where
 import GlobalImports
 
 import qualified Core.Common.FpsCounter as FpsCounter
-import qualified App.Logic.InitialGameState as InitialGameState
 import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
 import qualified Game.Controller as Controller
+import qualified Game.InitialGameState as InitialGameState
 import qualified Game.UIState as UIState
 
 import Core.Common.EventPatterns

@@ -1,4 +1,4 @@
-module App.Model.GameState where
+module Game.GameState where
 
 import GlobalImports
 

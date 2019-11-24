@@ -1,22 +1,20 @@
-module App.Logic.TimeStep
+module Game.TimeLogic
   ( stepTime, jumpToNextMidnight )
 where
 
 import GlobalImports
 
-import qualified Game.Common.IdMap as IdMap
-import qualified Game.Dimension.Time as Time
-import qualified App.Logic.Building as Logic.Building
-import qualified App.Logic.Mining as Logic.Mining
 import qualified App.Model.Body as Body
 import qualified App.Model.PlottedPath as PlottedPath
 import qualified App.Model.Ship as Ship
+import qualified Game.Common.IdMap as IdMap
+import qualified Game.Dimension.Time as Time
 
+import App.Model.Body (Body(..))
+import App.Model.Ship (Ship(..))
+import Game.GameState (GameState(..))
 import Game.Common.Id (Id(..))
 import Game.Dimension.Time (Time)
-import App.Model.Body (Body(..))
-import App.Model.GameState (GameState(..))
-import App.Model.Ship (Ship(..))
 
 stepTime :: Time Int -> GameState -> GameState
 stepTime dt gs =
@@ -63,6 +61,4 @@ productionTick gs@GameState{ colonies } =
     & foldl' (flip productionTickOnColony) gs
 
 productionTickOnColony :: Id Body -> GameState -> GameState
-productionTickOnColony bodyId =
-  Logic.Building.build bodyId
-  >>> Logic.Mining.mine bodyId
+productionTickOnColony bodyId = id

@@ -4,7 +4,7 @@ where
 
 import GlobalImports
 
-import App.Model.GameState (GameState)
+import Game.GameState (GameState)
 import Game.UIState (UIState)
 import Game.Dimension.Time (Time)
 

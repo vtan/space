@@ -12,11 +12,11 @@ import qualified Core.TextRendering.RenderedText as RenderedText
 import qualified Game.Common.Camera as Camera
 
 import App.Model.Body (Body(..))
-import App.Model.GameState (GameState(..))
 import App.Model.OrbitalState (OrbitalState(..))
 import App.Model.Ship (Ship(..))
 import Core.CoreContext (CoreContext(..))
 import Core.TextRendering.CachedTextRenderer (CachedTextRenderer(..))
+import Game.GameState (GameState(..))
 import Game.Common.Camera (Camera(..))
 import Game.Common.IdMap (IdMap)
 import Game.Dimension.Local (Local(..))
