@@ -5,6 +5,7 @@ import GlobalImports
 import Game.Common.Display (Display, display)
 
 import qualified Data.HashMap.Strict as HashMap
+import qualified Data.List as List
 
 import Linear ((^-^))
 
@@ -22,6 +23,14 @@ instance Display Resource where
 
 all :: [Resource]
 all = [minBound .. maxBound]
+
+displayCost :: HashMap Resource Double -> TextBuilder
+displayCost resources =
+  resources
+    & imap (\resource quantity -> display quantity <> " " <> display resource)
+    & toList
+    & List.intersperse ", "
+    & fold
 
 spend :: HashMap Resource Double -> HashMap Resource Double -> Maybe (HashMap Resource Double)
 spend resources cost =

@@ -30,6 +30,10 @@ oneDay = 1 & days
 nextMidnight :: Integral a => Time a -> Time a
 nextMidnight time = (time `quot` oneDay + 1) * oneDay
 
+addDays :: Integral a => a -> Time a -> Date a
+addDays d time =
+  Date ((time `quot` oneDay + fromIntegral d) * oneDay)
+
 daysInMonth :: Num a => a
 daysInMonth = 30
 

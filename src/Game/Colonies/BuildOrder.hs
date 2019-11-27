@@ -9,6 +9,6 @@ data BuildOrder = BuildOrder
   { target :: Building
   , quantity :: Int
   , spentResources :: HashMap Resource Double
-  , spentBuildEffort :: Double
+  , spentBuildEffort :: Int
   }
   deriving (Generic, Show)
