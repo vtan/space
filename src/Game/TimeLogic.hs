@@ -63,4 +63,5 @@ productionTick gs@GameState{ colonies } =
 
 productionTickOnColony :: Id Body -> GameState -> GameState
 productionTickOnColony bodyId =
-  MiningLogic.mineOnColony bodyId
+  MiningLogic.onProductionTick bodyId
+

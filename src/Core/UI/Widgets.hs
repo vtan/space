@@ -31,9 +31,9 @@ label =
 
 label' :: Text -> UIComponent s
 label' str =
-  const mempty <$> text str
+  const mempty <$> text' str
 
-button :: Text -> (s -> s) -> UIComponent s
+button :: TextBuilder -> (s -> s) -> UIComponent s
 button str onClick = do
   UIContext{ cursor, theme = Theme{ borderColor, highlightColor } } <- ask
   clicked <- clickedInside cursor
@@ -49,7 +49,7 @@ button str onClick = do
   text str
   pure (if clicked then Endo onClick else mempty)
 
-toggleLabel :: Text -> Bool -> (s -> s) -> UIComponent s
+toggleLabel :: TextBuilder -> Bool -> (s -> s) -> UIComponent s
 toggleLabel str isActive onClick = do
   UIContext{ cursor, theme = Theme{ selectionBackgroundColor } } <- ask
   clicked <- clickedInside cursor
@@ -65,7 +65,7 @@ toggleLabel str isActive onClick = do
 list
   :: forall a i s. Eq i
   => (a -> i)
-  -> (a -> Text)
+  -> (a -> TextBuilder)
   -> [a]
   -> Maybe i
   -> (Maybe i -> s -> s)
@@ -105,8 +105,12 @@ window title child = do
   _ <- clickedInside cursor
   pure result
 
-text :: Text -> UI ()
-text str = do
+text :: TextBuilder -> UI ()
+text =
+  text' . LazyText.toStrict . TextBuilder.toLazyText
+
+text' :: Text -> UI ()
+text' str = do
   UIContext{ cursor, scaleFactor } <- ask
   let scaledCursor = scaleFactor *^ cursor
   UI.render $ ask >>= \CoreContext{ renderer, cachedTextRenderer } -> do

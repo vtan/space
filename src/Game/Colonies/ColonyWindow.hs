@@ -11,6 +11,7 @@ import qualified Game.Bodies.Body as Body
 import qualified Game.Bodies.Resource as Resource
 import qualified Game.Bodies.ResourceOnBody as ResourceOnBody
 import qualified Game.Colonies.Building as Building
+import qualified Game.Colonies.BuildingLogic as BuildingLogic
 import qualified Game.Colonies.MiningLogic as MiningLogic
 import qualified Game.Common.Display as Display
 
@@ -20,7 +21,9 @@ import Core.UI.UI (UIComponent)
 import Game.AppState (AppState(..))
 import Game.Bodies.Body (Body(..))
 import Game.Bodies.ResourceOnBody (ResourceOnBody(..))
+import Game.Colonies.BuildOrder (BuildOrder)
 import Game.Colonies.Colony (Colony(..))
+import Game.Colonies.ColonyWindowState (ColonyWindowState(..))
 import Game.Common.Display (display)
 
 colonyWindow :: AppState -> UIComponent AppState
@@ -31,17 +34,17 @@ colonyWindow AppState{ gameState, uiState } =
         [ Sized 200 bodyList
         , Stretched $ Layout.vertical
             [ Sized 120 (bodyPanel selectedBody selectedColony)
-            , Stretched (colonyPanel selectedBody selectedColony)
+            , Stretched (colonyPanel selectedBody selectedColony colonyWindowState)
             ]
         ]
   where
-    selectedBodyId = view (#colonyWindow . #selectedBodyId) uiState
+    colonyWindowState@ColonyWindowState{ selectedBodyId } = view #colonyWindow uiState
     selectedBody = selectedBodyId >>= \i -> view (#bodies . at i) gameState
     selectedColony = selectedBodyId >>= \i -> view (#colonies . at i) gameState
 
     bodyList = Widgets.list
       Body.bodyId
-      Body.name
+      (display . Body.name)
       (toList (view #bodies gameState))
       selectedBodyId
       (set (#uiState . #colonyWindow . #selectedBodyId))
@@ -82,11 +85,14 @@ bodyPanel body colony =
           , Stretched . Layout.indent 16 $ Layout.vertical (header : resourceRows)
           ]
 
-colonyPanel :: Maybe Body -> Maybe Colony -> UIComponent AppState
-colonyPanel bodyMay colonyMay =
+colonyPanel :: Maybe Body -> Maybe Colony -> ColonyWindowState -> UIComponent AppState
+colonyPanel bodyMay colonyMay windowState =
   case (bodyMay, colonyMay) of
     (Just body, Just colony) ->
-      Layout.vertical [ Stretched (miningPanel body colony) ]
+      Layout.vertical
+        [ Sized 200 (miningPanel body colony)
+        , Sized 100 (buildingPanel colony windowState)
+        ]
     _ -> UI.empty
 
 miningPanel :: Body -> Colony -> UIComponent AppState
@@ -113,3 +119,39 @@ miningPanel Body{ resources } Colony{ buildings } =
                 ]
           )
     ]
+
+buildingPanel :: Colony -> ColonyWindowState -> UIComponent AppState
+buildingPanel colony@Colony{ buildOrder } windowState =
+  Layout.vertical
+    [ DefaultSized (Widgets.label' "Building")
+    , Stretched . Layout.indent 16 $
+        case buildOrder of
+          Just order -> buildingInProgressPanel order colony
+          Nothing -> buildingIdlePanel colony windowState
+    ]
+
+buildingIdlePanel :: Colony -> ColonyWindowState -> UIComponent AppState
+buildingIdlePanel Colony{ bodyId } ColonyWindowState{ selectedBuilding }=
+  Layout.horizontal
+    [ Sized 120 $
+        Widgets.list
+          id
+          display
+          Building.all
+          selectedBuilding
+          (set (#uiState . #colonyWindow . #selectedBuilding))
+    , Stretched $ Layout.vertical
+        [ DefaultSized (Widgets.label' "Resource cost: TODO")
+        , DefaultSized $ Layout.horizontal
+            [ Stretched $ Widgets.button
+                "Build"
+                ( case selectedBuilding of
+                    Just building -> over #gameState (BuildingLogic.start building 1 bodyId)
+                    Nothing -> id
+                )
+            ]
+        ]
+    ]
+
+buildingInProgressPanel :: BuildOrder -> Colony -> UIComponent AppState
+buildingInProgressPanel _ _ = Widgets.label' "You're building something"

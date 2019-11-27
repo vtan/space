@@ -23,7 +23,7 @@ timeOverlay AppState{ gameState = GameState{ time } } =
     size = V2 400 100
     nextButton = Widgets.button "next" (over #gameState TimeLogic.jumpToNextMidnight)
     timeButtons = timeChoices & map \(label, choice) ->
-      Widgets.button label (set #timeStep choice)
+      Widgets.button (display label) (set #timeStep choice)
   in do
     UIContext{ scaledScreenSize } <- ask
     let

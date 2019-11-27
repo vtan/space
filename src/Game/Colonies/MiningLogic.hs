@@ -17,8 +17,8 @@ dailyOutput :: Int -> ResourceOnBody -> Double
 dailyOutput mines ResourceOnBody{ available, accessibility } =
   min available (accessibility * 10 * fromIntegral mines)
 
-mineOnColony :: Id Body -> GameState -> GameState
-mineOnColony bodyId gs =
+onProductionTick :: Id Body -> GameState -> GameState
+onProductionTick bodyId gs =
   foldl'
     ( \acc resource ->
         let

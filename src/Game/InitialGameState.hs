@@ -27,6 +27,7 @@ initial = GameState
         { bodyId = Id 2
         , resources = [ (Resource.Resource1, 2500), (Resource.Resource2, 2500) ]
         , buildings = [ (Building.Mine Resource.Resource1, 1), (Building.Mine Resource.Resource2, 5) ]
+        , buildOrder = Nothing
         }
       )
     ]
