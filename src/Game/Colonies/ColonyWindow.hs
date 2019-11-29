@@ -124,17 +124,25 @@ miningPanel Body{ resources } Colony{ buildings } =
     ]
 
 buildingPanel :: Colony -> ColonyWindowState -> Time Int -> UIComponent AppState
-buildingPanel colony@Colony{ buildOrder } windowState now =
+buildingPanel colony@Colony{ buildOrder, buildings } windowState now =
   Layout.vertical
     [ DefaultSized (Widgets.label' "Building")
-    , Stretched . Layout.indent 16 $
-        case buildOrder of
-          Just order -> buildingInProgressPanel order colony now
-          Nothing -> buildingIdlePanel colony windowState
+    , Stretched . Layout.indent 16 $ Layout.vertical
+        [ DefaultSized . Widgets.label $
+            let factories = view (at Building.Factory . non 0) buildings
+            in "Factories: " <> display factories
+        , Stretched $
+            case buildOrder of
+              Just order -> buildingInProgressPanel order colony now
+              Nothing -> buildingIdlePanel colony windowState now
+        ]
     ]
 
-buildingIdlePanel :: Colony -> ColonyWindowState -> UIComponent AppState
-buildingIdlePanel Colony{ bodyId } ColonyWindowState{ selectedBuilding }=
+buildingIdlePanel :: Colony -> ColonyWindowState -> Time Int -> UIComponent AppState
+buildingIdlePanel
+    colony@Colony{ bodyId }
+    ColonyWindowState{ selectedBuilding, buildingQuantity }
+    now =
   Layout.horizontal
     [ Sized 120 $
         Widgets.list
@@ -143,25 +151,41 @@ buildingIdlePanel Colony{ bodyId } ColonyWindowState{ selectedBuilding }=
           Building.all
           selectedBuilding
           (set (#uiState . #colonyWindow . #selectedBuilding))
+    , Sized 64 $
+        Widgets.list
+          id
+          (\quantity -> "x" <> display quantity)
+          [1, 10, 100, 1000, 10000]
+          (Just buildingQuantity)
+          (\q -> set (#uiState . #colonyWindow . #buildingQuantity) (fromMaybe 1 q))
     , Stretched $
         case selectedBuilding of
           Nothing -> Widgets.label' "Select a building"
           Just building ->
             Layout.vertical
               [ DefaultSized . Widgets.label $
-                  let cost = BuildingLogic.resourceCostFor building
+                  let cost = fromIntegral buildingQuantity *^ BuildingLogic.resourceCostFor building
                   in "Resource cost: " <> Resource.displayCost cost
+              , DefaultSized . Widgets.label $
+                  let
+                    finishDate = fromMaybe "" do
+                      daysToComplete <- BuildingLogic.ticksToBuild colony building buildingQuantity
+                      pure $ display (Time.addDays daysToComplete now)
+                  in "Finish date: " <> finishDate
               , DefaultSized $ Layout.horizontal
                   [ Stretched $ Widgets.button
                       "Build"
-                      (over #gameState (BuildingLogic.start building 1 bodyId))
+                      ( over #gameState (BuildingLogic.start building buildingQuantity bodyId)
+                      . set (#uiState . #colonyWindow . #selectedBuilding) Nothing
+                      . set (#uiState . #colonyWindow . #buildingQuantity) 1
+                      )
                   ]
               ]
     ]
 
 buildingInProgressPanel :: BuildOrder -> Colony -> Time Int -> UIComponent AppState
 buildingInProgressPanel
-    order@BuildOrder{ target, quantity, spentResources }
+    order@BuildOrder{ target, quantity, lockedResources }
     colony@Colony{ bodyId }
     now =
   Layout.vertical
@@ -172,7 +196,7 @@ buildingInProgressPanel
             daysToComplete <- BuildingLogic.remainingTicksToComplete colony order
             pure $ display (Time.addDays daysToComplete now)
         in "Finish date: " <> finishDate
-    , DefaultSized (Widgets.label ("Resource cost: " <> Resource.displayCost spentResources))
+    , DefaultSized (Widgets.label ("Resource cost: " <> Resource.displayCost lockedResources))
     , DefaultSized $ Widgets.button
         "Cancel"
         (over #gameState (BuildingLogic.cancel order bodyId))

@@ -21,14 +21,14 @@ data GameState = GameState
   }
   deriving (Show, Generic)
 
-getBody :: Id Body -> GameState -> Body
-getBody bodyId GameState{ bodies }=
+expectBody :: Id Body -> GameState -> Body
+expectBody bodyId GameState{ bodies }=
   fromMaybe err (view (at bodyId) bodies)
   where
     err = error ("Body not found: " ++ show bodyId)
 
-getColony :: Id Body -> GameState -> Colony
-getColony bodyId GameState{ colonies }=
+expectColony :: Id Body -> GameState -> Colony
+expectColony bodyId GameState{ colonies }=
   fromMaybe err (view (at bodyId) colonies)
   where
     err = error ("Colony not found: " ++ show bodyId)

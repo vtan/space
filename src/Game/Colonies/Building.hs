@@ -20,4 +20,6 @@ instance Display Building where
     Factory -> "Factory"
 
 all :: [Building]
-all = Mine <$> Resource.all
+all =
+  (Mine <$> Resource.all)
+  ++ [Factory]

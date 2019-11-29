@@ -8,7 +8,8 @@ import Game.Colonies.Building (Building)
 data BuildOrder = BuildOrder
   { target :: Building
   , quantity :: Int
-  , spentResources :: HashMap Resource Double
+  , lockedResources :: HashMap Resource Double
+  , lockedResourcesPerQuantity :: HashMap Resource Double
   , spentBuildEffort :: Int
   }
   deriving (Generic, Show)

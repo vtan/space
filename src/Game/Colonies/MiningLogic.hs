@@ -22,8 +22,8 @@ onProductionTick bodyId gs =
   foldl'
     ( \acc resource ->
         let
-          Colony{ buildings } = GameState.getColony bodyId gs
-          Body{ resources } = GameState.getBody bodyId gs
+          Colony{ buildings } = GameState.expectColony bodyId gs
+          Body{ resources } = GameState.expectBody bodyId gs
           mines = view (at (Mine resource) . non 0) buildings
           resourceOnBody = fromMaybe ResourceOnBody.empty $ view (at resource) resources
           mined = dailyOutput mines resourceOnBody
