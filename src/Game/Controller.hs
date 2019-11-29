@@ -4,6 +4,7 @@ where
 
 import GlobalImports
 
+import qualified Core.UI.Theme as Theme
 import qualified Core.UI.UI as UI
 import qualified Game.UIState as UIState
 import qualified Game.Colonies.ColonyWindow as ColonyWindow
@@ -14,7 +15,6 @@ import qualified Game.TimeLogic as TimeLogic
 
 import Core.CoreContext (CoreContext(..))
 import Core.Common.Rect (Rect(..))
-import Core.UI.Theme (Theme(..))
 import Core.UI.UI (UIComponent, UIContext(..), UIState(..))
 import Game.AppState (AppState(..))
 
@@ -30,13 +30,7 @@ update screenSize events appState@AppState{ timeStep } =
       , layoutGap = 4
       , scaleFactor = scaleFactor
       , scaledScreenSize = (1 / scaleFactor) *^ fmap fromIntegral screenSize
-      , theme = Theme
-        { borderColor = V4 191 191 191 255
-        , highlightColor = V4 31 171 171 255
-        , backgroundColor = V4 31 31 31 255
-        , selectionBackgroundColor = V4 31 171 171 255
-        , windowDecorationColor = V4 91 91 91 255
-        }
+      , theme = Theme.theme
       }
     (stateChangeFromUi, UIState{ renderStack }) = UI.run uiContext events (ui appState)
     appState' = appState

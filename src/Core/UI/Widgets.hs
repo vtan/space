@@ -35,13 +35,13 @@ label' str =
 
 button :: TextBuilder -> (s -> s) -> UIComponent s
 button str onClick = do
-  UIContext{ cursor, theme = Theme{ borderColor, highlightColor } } <- ask
+  UIContext{ cursor, theme = Theme{ borderColor, widgetBackgroundColor, highlightColor } } <- ask
   clicked <- clickedInside cursor
   scaledCursor <- UI.scaleRect cursor
   UI.render $ ask >>= \CoreContext{ renderer } -> do
     let
       rect = Just scaledCursor
-      backgroundColor = if clicked then highlightColor else V4 0 0 0 255
+      backgroundColor = if clicked then highlightColor else widgetBackgroundColor
     SDL.rendererDrawColor renderer $= backgroundColor
     SDL.fillRect renderer rect
     SDL.rendererDrawColor renderer $= borderColor
@@ -51,14 +51,15 @@ button str onClick = do
 
 toggleLabel :: TextBuilder -> Bool -> (s -> s) -> UIComponent s
 toggleLabel str isActive onClick = do
-  UIContext{ cursor, theme = Theme{ selectionBackgroundColor } } <- ask
+  UIContext{ cursor, theme = Theme{ widgetBackgroundColor, selectionBackgroundColor } } <- ask
   clicked <- clickedInside cursor
   scaledCursor <- UI.scaleRect cursor
   UI.render $ ask >>= \CoreContext{ renderer } -> do
-    let rect = Just scaledCursor
-    when isActive $ do
-      SDL.rendererDrawColor renderer $= selectionBackgroundColor
-      SDL.fillRect renderer rect
+    let
+      rect = Just scaledCursor
+      color = if isActive then selectionBackgroundColor else widgetBackgroundColor
+    SDL.rendererDrawColor renderer $= color
+    SDL.fillRect renderer rect
   text str
   pure (if clicked then Endo onClick else mempty)
 
