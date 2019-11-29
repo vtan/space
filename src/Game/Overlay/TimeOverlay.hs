@@ -6,7 +6,7 @@ import GlobalImports
 
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
-import qualified Core.UI.Widgets as Widgets
+import qualified Core.UI.Widget as Widget
 import qualified Game.TimeLogic as TimeLogic
 
 import Core.Common.Rect (Rect(..))
@@ -21,9 +21,9 @@ timeOverlay :: AppState -> UIComponent AppState
 timeOverlay AppState{ gameState = GameState{ time } } =
   let
     size = V2 400 100
-    nextButton = Widgets.button "next" (over #gameState TimeLogic.jumpToNextMidnight)
+    nextButton = Widget.button "next" (over #gameState TimeLogic.jumpToNextMidnight)
     timeButtons = timeChoices & map \(label, choice) ->
-      Widgets.button (display label) (set #timeStep choice)
+      Widget.button (display label) (set #timeStep choice)
   in do
     UIContext{ scaledScreenSize } <- ask
     let
@@ -34,7 +34,7 @@ timeOverlay AppState{ gameState = GameState{ time } } =
         [ DefaultSized $ Layout.horizontal (map Stretched (nextButton : timeButtons))
         , DefaultSized $ Layout.horizontal
             [ Stretched UI.empty
-            , Sized 150 $ Widgets.label (display time)
+            , Sized 150 $ Widget.label (display time)
             ]
         ]
 

@@ -6,7 +6,7 @@ import GlobalImports
 
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
-import qualified Core.UI.Widgets as Widgets
+import qualified Core.UI.Widget as Widget
 import qualified Game.UIState as UIState
 
 import Core.Common.Rect (Rect(..))
@@ -19,7 +19,7 @@ windowOverlay _ =
   UI.cursorAt (Rect (V2 4 4) (V2 80 20)) $
     Layout.horizontal [
       Stretched $
-        Widgets.button "Colonies" (onClick UIState.ColonyWindow)
+        Widget.button "Colonies" (onClick UIState.ColonyWindow)
     ]
   where
     onClick :: UIState.OpenWindow -> AppState -> AppState

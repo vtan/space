@@ -6,7 +6,7 @@ import GlobalImports
 
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
-import qualified Core.UI.Widgets as Widgets
+import qualified Core.UI.Widget as Widget
 import qualified Game.Bodies.Body as Body
 import qualified Game.Bodies.OrbitTree as OrbitTree
 import qualified Game.Bodies.Resource as Resource
@@ -33,7 +33,7 @@ import Game.Dimension.Time (Time)
 colonyWindow :: AppState -> UIComponent AppState
 colonyWindow AppState{ gameState, uiState } =
   UI.cursorAt (Rect (V2 8 32) (V2 800 600) ) $
-    Widgets.window "Colonies" $
+    Widget.window "Colonies" $
       Layout.horizontal
         [ Sized 200 bodyList
         , Stretched $ Layout.vertical
@@ -51,7 +51,7 @@ colonyWindow AppState{ gameState, uiState } =
       & concatMap (\(level, OrbitTree{ bodyId }) ->
           maybeToList (view (#bodies . at bodyId) gameState) & map (level, )
         )
-    bodyList = Widgets.list
+    bodyList = Widget.list
       (Body.bodyId . snd)
       (\(level, Body{ name }) -> fold (replicate level "  │ ") <> display name)
       bodiesWithLevel
@@ -66,9 +66,9 @@ bodyPanel body colony =
       let
         header = DefaultSized . Layout.horizontal $
           [ Sized 100 UI.empty ]
-          ++ toList (fmap (const . Sized 100  $ Widgets.label' "Stockpiled") colony)
-          ++ [ Sized 100 (Widgets.label' "Mineable")
-          , Sized 100 (Widgets.label' "Accessibility")
+          ++ toList (fmap (const . Sized 100  $ Widget.label' "Stockpiled") colony)
+          ++ [ Sized 100 (Widget.label' "Mineable")
+          , Sized 100 (Widget.label' "Accessibility")
           ]
         resourceRows = Resource.all & map \resource ->
           let
@@ -77,20 +77,20 @@ bodyPanel body colony =
               & fromMaybe ResourceOnBody.empty
           in
             DefaultSized . Layout.horizontal $
-              [ Sized 100 (Widgets.label (display resource)) ]
+              [ Sized 100 (Widget.label (display resource)) ]
               ++ (
                 case colony of
                   Nothing -> []
                   Just Colony{ resources = stockpile } ->
                     let stockpiled = view (at resource . non 0) stockpile
-                    in [ Sized 100 (Widgets.label (Display.fixed 0 stockpiled <> " t"))]
+                    in [ Sized 100 (Widget.label (Display.fixed 0 stockpiled <> " t"))]
               )
-              ++ [ Sized 100 (Widgets.label (Display.fixed 0 available <> " t"))
-              , Sized 100 (Widgets.label (Display.percent accessibility))
+              ++ [ Sized 100 (Widget.label (Display.fixed 0 available <> " t"))
+              , Sized 100 (Widget.label (Display.percent accessibility))
               ]
       in
         Layout.vertical
-          [ DefaultSized (Widgets.label' "Resources")
+          [ DefaultSized (Widget.label' "Resources")
           , Stretched . Layout.indent 16 $ Layout.vertical (header : resourceRows)
           ]
 
@@ -107,12 +107,12 @@ colonyPanel bodyMay colonyMay windowState now =
 miningPanel :: Body -> Colony -> UIComponent AppState
 miningPanel Body{ resources } Colony{ buildings } =
   Layout.vertical
-    [ DefaultSized (Widgets.label' "Mining")
+    [ DefaultSized (Widget.label' "Mining")
     , Stretched . Layout.indent 16 . Layout.vertical $
         [ DefaultSized $ Layout.horizontal
             [ Sized 100 UI.empty
-            , Sized 100 (Widgets.label' "Mines")
-            , Sized 200 (Widgets.label' "Monthly output")
+            , Sized 100 (Widget.label' "Mines")
+            , Sized 200 (Widget.label' "Monthly output")
             ]
         ]
         ++ (Resource.all & map \resource ->
@@ -122,9 +122,9 @@ miningPanel Body{ resources } Colony{ buildings } =
               monthlyOutput = 30 * MiningLogic.dailyOutput mines resourceOnBody
             in
               DefaultSized $ Layout.horizontal
-                [ Sized 100 (Widgets.label (display resource))
-                , Sized 100 (Widgets.label (display mines))
-                , Sized 100 (Widgets.label (Display.fixed 0 monthlyOutput <> " t"))
+                [ Sized 100 (Widget.label (display resource))
+                , Sized 100 (Widget.label (display mines))
+                , Sized 100 (Widget.label (Display.fixed 0 monthlyOutput <> " t"))
                 ]
           )
     ]
@@ -132,9 +132,9 @@ miningPanel Body{ resources } Colony{ buildings } =
 buildingPanel :: Colony -> ColonyWindowState -> Time Int -> UIComponent AppState
 buildingPanel colony@Colony{ buildOrder, buildings } windowState now =
   Layout.vertical
-    [ DefaultSized (Widgets.label' "Building")
+    [ DefaultSized (Widget.label' "Building")
     , Stretched . Layout.indent 16 $ Layout.vertical
-        [ DefaultSized . Widgets.label $
+        [ DefaultSized . Widget.label $
             let factories = view (at Building.Factory . non 0) buildings
             in "Factories: " <> display factories
         , Stretched $
@@ -151,14 +151,14 @@ buildingIdlePanel
     now =
   Layout.horizontal
     [ Sized 120 $
-        Widgets.list
+        Widget.list
           id
           display
           Building.all
           selectedBuilding
           (set (#uiState . #colonyWindow . #selectedBuilding))
     , Sized 64 $
-        Widgets.list
+        Widget.list
           id
           (\quantity -> "x" <> display quantity)
           [1, 10, 100, 1000, 10000]
@@ -166,20 +166,20 @@ buildingIdlePanel
           (\q -> set (#uiState . #colonyWindow . #buildingQuantity) (fromMaybe 1 q))
     , Stretched $
         case selectedBuilding of
-          Nothing -> Widgets.label' "Select a building"
+          Nothing -> Widget.label' "Select a building"
           Just building ->
             Layout.vertical
-              [ DefaultSized . Widgets.label $
+              [ DefaultSized . Widget.label $
                   let cost = fromIntegral buildingQuantity *^ BuildingLogic.resourceCostFor building
                   in "Resource cost: " <> Resource.displayCost cost
-              , DefaultSized . Widgets.label $
+              , DefaultSized . Widget.label $
                   let
                     finishDate = fromMaybe "" do
                       daysToComplete <- BuildingLogic.ticksToBuild colony building buildingQuantity
                       pure $ display (Time.addDays daysToComplete now)
                   in "Finish date: " <> finishDate
               , DefaultSized $ Layout.horizontal
-                  [ Stretched $ Widgets.button
+                  [ Stretched $ Widget.button
                       "Build"
                       ( over #gameState (BuildingLogic.start building buildingQuantity bodyId)
                       . set (#uiState . #colonyWindow . #selectedBuilding) Nothing
@@ -195,15 +195,15 @@ buildingInProgressPanel
     colony@Colony{ bodyId }
     now =
   Layout.vertical
-    [ DefaultSized (Widgets.label ("Currently building: " <> display target <> " x" <> display quantity))
-    , DefaultSized . Widgets.label $
+    [ DefaultSized (Widget.label ("Currently building: " <> display target <> " x" <> display quantity))
+    , DefaultSized . Widget.label $
         let
           finishDate = fromMaybe "" do
             daysToComplete <- BuildingLogic.remainingTicksToComplete colony order
             pure $ display (Time.addDays daysToComplete now)
         in "Finish date: " <> finishDate
-    , DefaultSized (Widgets.label ("Resource cost: " <> Resource.displayCost lockedResources))
-    , DefaultSized $ Widgets.button
+    , DefaultSized (Widget.label ("Resource cost: " <> Resource.displayCost lockedResources))
+    , DefaultSized $ Widget.button
         "Cancel"
         (over #gameState (BuildingLogic.cancel order bodyId))
     ]

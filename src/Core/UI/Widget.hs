@@ -1,4 +1,4 @@
-module Core.UI.Widgets
+module Core.UI.Widget
   ( label, label', button, toggleLabel
   , list, window
   )
