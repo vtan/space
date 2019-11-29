@@ -4,13 +4,11 @@ where
 
 import GlobalImports
 
-import qualified App.Model.Ship as Ship
 import qualified Core.Common.Rect as Rect
 import qualified Core.TextRendering.CachedTextRenderer as CachedTextRenderer
 import qualified Core.TextRendering.RenderedText as RenderedText
 import qualified Game.Common.Camera as Camera
 
-import App.Model.Ship (Ship(..))
 import Core.CoreContext (CoreContext(..))
 import Core.TextRendering.CachedTextRenderer (CachedTextRenderer(..))
 import Game.GameState (GameState(..))
@@ -20,6 +18,7 @@ import Game.Bodies.OrbitalState (OrbitalState(..))
 import Game.Common.Camera (Camera(..))
 import Game.Common.IdMap (IdMap)
 import Game.Dimension.Local (Local(..))
+import Game.Ships.Ship (Ship(..))
 
 import qualified Data.Vector.Storable as Vector
 import qualified Linear as Linear
@@ -107,10 +106,10 @@ renderBody
       RenderedText.render renderer 1 labelRect renderedText
 
 renderShip :: Camera (Local Double) Double -> Ship -> Render ()
-renderShip camera Ship{ Ship.position } = do
+renderShip camera Ship{ position } = do
   let center = Camera.pointToScreen camera position
       points = shipCircle
-        & Vector.map ((Ship.drawnRadius *^) >>> (center +) >>> fmap round >>> SDL.P)
+        & Vector.map ((shipRadius *^) >>> (center +) >>> fmap round >>> SDL.P)
   renderer <- view #renderer
   SDL.rendererDrawColor renderer $= shipColor
   SDL.drawLines renderer points
@@ -129,6 +128,9 @@ circle size =
 
 bodyRadius :: Double
 bodyRadius = 6
+
+shipRadius :: Double
+shipRadius = 6
 
 orbitColor, bodyColor, shipColor :: V4 Word8
 orbitColor = V4 0x00 0xcf 0xcf 0xff

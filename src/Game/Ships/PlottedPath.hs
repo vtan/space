@@ -1,4 +1,4 @@
-module App.Model.PlottedPath
+module Game.Ships.PlottedPath
   ( PlottedPath(..)
   , plot, atTime
   )
@@ -9,7 +9,6 @@ import GlobalImports
 import qualified Game.Dimension.Speed as Speed
 import qualified Game.Dimension.Time as Time
 import qualified Game.Bodies.OrbitTree as OrbitTree
-import qualified Linear as Lin
 
 import Game.Bodies.Body (Body)
 import Game.Bodies.OrbitTree (OrbitTree)
@@ -17,6 +16,8 @@ import Game.Common.Id (Id)
 import Game.Dimension.Local (Local)
 import Game.Dimension.Speed (Speed)
 import Game.Dimension.Time (Time)
+
+import qualified Linear as Lin
 
 data PlottedPath = PlottedPath
   { startTime :: Time Int

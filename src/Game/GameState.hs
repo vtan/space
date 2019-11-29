@@ -9,7 +9,7 @@ import Game.Colonies.Colony (Colony)
 import Game.Common.Id (Id)
 import Game.Common.IdMap (IdMap)
 import Game.Dimension.Time (Time)
-import App.Model.Ship (Ship)
+import Game.Ships.Ship (Ship)
 
 data GameState = GameState
   { orbitTree :: OrbitTree
