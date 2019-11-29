@@ -8,6 +8,7 @@ import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widgets as Widgets
 import qualified Game.Bodies.Body as Body
+import qualified Game.Bodies.OrbitTree as OrbitTree
 import qualified Game.Bodies.Resource as Resource
 import qualified Game.Bodies.ResourceOnBody as ResourceOnBody
 import qualified Game.Colonies.Building as Building
@@ -21,6 +22,7 @@ import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent)
 import Game.AppState (AppState(..))
 import Game.Bodies.Body (Body(..))
+import Game.Bodies.OrbitTree (OrbitTree(..))
 import Game.Bodies.ResourceOnBody (ResourceOnBody(..))
 import Game.Colonies.BuildOrder (BuildOrder(..))
 import Game.Colonies.Colony (Colony(..))
@@ -35,7 +37,7 @@ colonyWindow AppState{ gameState, uiState } =
       Layout.horizontal
         [ Sized 200 bodyList
         , Stretched $ Layout.vertical
-            [ Sized 120 (bodyPanel selectedBody selectedColony)
+            [ Sized 100 (bodyPanel selectedBody selectedColony)
             , Stretched (colonyPanel selectedBody selectedColony colonyWindowState now)
             ]
         ]
@@ -45,10 +47,14 @@ colonyWindow AppState{ gameState, uiState } =
     selectedBody = selectedBodyId >>= \i -> view (#bodies . at i) gameState
     selectedColony = selectedBodyId >>= \i -> view (#colonies . at i) gameState
 
+    bodiesWithLevel = OrbitTree.depthFirst (view #orbitTree gameState)
+      & concatMap (\(level, OrbitTree{ bodyId }) ->
+          maybeToList (view (#bodies . at bodyId) gameState) & map (level, )
+        )
     bodyList = Widgets.list
-      Body.bodyId
-      (display . Body.name)
-      (toList (view #bodies gameState))
+      (Body.bodyId . snd)
+      (\(level, Body{ name }) -> fold (replicate level "  │ ") <> display name)
+      bodiesWithLevel
       selectedBodyId
       (set (#uiState . #colonyWindow . #selectedBodyId))
 
@@ -93,7 +99,7 @@ colonyPanel bodyMay colonyMay windowState now =
   case (bodyMay, colonyMay) of
     (Just body, Just colony) ->
       Layout.vertical
-        [ Sized 200 (miningPanel body colony)
+        [ Sized 100 (miningPanel body colony)
         , Sized 100 (buildingPanel colony windowState now)
         ]
     _ -> UI.empty

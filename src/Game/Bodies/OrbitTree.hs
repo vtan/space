@@ -34,3 +34,10 @@ relStatesAtTime origin time OrbitTree{ bodyId, orbitRadius, phaseAtEpoch, angula
         }
       childStates = children & foldMap (relStatesAtTime pos time)
   in childStates & at bodyId .~ Just state
+
+depthFirst :: OrbitTree -> [(Int, OrbitTree)]
+depthFirst = depthFirstWithDepth 0
+  where
+    depthFirstWithDepth :: Int -> OrbitTree -> [(Int, OrbitTree)]
+    depthFirstWithDepth depth tree@OrbitTree{ children } =
+      (depth, tree) : concatMap (depthFirstWithDepth (depth + 1)) children
