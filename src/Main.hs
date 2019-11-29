@@ -20,6 +20,7 @@ import qualified SDL.Raw
 import Control.Exception (SomeException, displayException, handle)
 import Control.Monad.Reader (runReaderT)
 import Data.String (fromString)
+import Linear.Affine (Point(P))
 import System.IO (hPutStrLn, stderr)
 
 data MainContext = MainContext
@@ -72,11 +73,12 @@ mainLoop
       Just text -> SDL.windowTitle window $= text
       Nothing -> pure ()
 
+    P mousePosition <- SDL.getAbsoluteMouseLocation
     events <- SDL.pollEvents
     case events & find (\case QuitEvent -> True; _ -> False) of
       Just _ -> pure ()
       Nothing -> do
-        let (render, appState') = Controller.update screenSize events appState
+        let (render, appState') = Controller.update screenSize mousePosition events appState
 
         SDL.rendererDrawColor renderer $= V4 0 0 0 255
         SDL.clear renderer

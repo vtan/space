@@ -43,7 +43,7 @@ colonyWindow AppState{ gameState, uiState } =
         ]
   where
     now = view #time gameState
-    colonyWindowState@ColonyWindowState{ selectedBodyId } = view #colonyWindow uiState
+    colonyWindowState@ColonyWindowState{ selectedBodyId, bodyScrollOffset } = view #colonyWindow uiState
     selectedBody = selectedBodyId >>= \i -> view (#bodies . at i) gameState
     selectedColony = selectedBodyId >>= \i -> view (#colonies . at i) gameState
 
@@ -51,12 +51,14 @@ colonyWindow AppState{ gameState, uiState } =
       & concatMap (\(level, OrbitTree{ bodyId }) ->
           maybeToList (view (#bodies . at bodyId) gameState) & map (level, )
         )
-    bodyList = Widget.list
+    bodyList = Widget.scrollList
       (Body.bodyId . snd)
       (\(level, Body{ name }) -> fold (replicate level "  │ ") <> display name)
       bodiesWithLevel
       selectedBodyId
-      (set (#uiState . #colonyWindow . #selectedBodyId))
+      bodyScrollOffset
+      (set (#uiState . #colonyWindow . #selectedBodyId) . Just)
+      (set (#uiState . #colonyWindow . #bodyScrollOffset))
 
 bodyPanel :: Maybe Body -> Maybe Colony -> UIComponent AppState
 bodyPanel body colony =

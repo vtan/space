@@ -12,6 +12,7 @@ import Game.Common.Id (Id)
 
 data ColonyWindowState = ColonyWindowState
   { selectedBodyId :: Maybe (Id Body)
+  , bodyScrollOffset :: Double
   , selectedBuilding :: Maybe (Building)
   , buildingQuantity :: Int
   }
@@ -20,6 +21,7 @@ data ColonyWindowState = ColonyWindowState
 initial :: ColonyWindowState
 initial = ColonyWindowState
   { selectedBodyId = Nothing
+  , bodyScrollOffset = 0
   , selectedBuilding = Nothing
   , buildingQuantity = 1
   }

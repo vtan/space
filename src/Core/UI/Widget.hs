@@ -1,6 +1,6 @@
 module Core.UI.Widget
   ( label, label', button, toggleLabel
-  , list, window
+  , list, scrollList, window
   )
 where
 
@@ -13,8 +13,9 @@ import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 
 import Core.CoreContext (CoreContext(..))
-import Core.Common.EventPatterns (pattern MousePressEvent)
+import Core.Common.EventPatterns (pattern MousePressEvent, pattern MouseWheelEvent)
 import Core.Common.Rect (Rect(..))
+import Core.Common.Util (clamp)
 import Core.UI.Layout (Constrained)
 import Core.UI.Theme (Theme(..))
 import Core.UI.UI (UI, UIComponent, UIContext(..))
@@ -84,6 +85,81 @@ list toIndex toText items selectedIndex onSelect =
           in
             Layout.DefaultSized (toggleLabel (toText item) isActive onClick)
 
+scrollList
+  :: forall a i s. Eq i
+  => (a -> i)
+  -> (a -> TextBuilder)
+  -> [a]
+  -> Maybe i
+  -> Double
+  -> (i -> s -> s)
+  -> (Double -> s -> s)
+  -> UIComponent s
+scrollList toIndex toText items selectedIndex scrollPosition onSelect onScroll = do
+  UIContext
+    { cursor = cursor@(Rect (V2 _ cursorTop) (V2 _ cursorHeight))
+    , scaleFactor
+    , scaledMousePosition
+    , defaultSize = V2 _ itemHeight
+    , theme = Theme{ borderColor, widgetBackgroundColor, highlightColor }
+    } <- ask
+  scaledCursor <- UI.scaleRect cursor
+
+  let baseItemCursor = cursor & set (#wh . _y) itemHeight
+  scrollOffsetChange <-
+    if Rect.contains cursor scaledMousePosition
+    then
+      UI.consumeEvents' \case
+          MouseWheelEvent direction -> Just (-32 * fromIntegral direction)
+          _ -> Nothing
+        & fmap sum
+        & fmap \change ->
+            if change == 0
+            then Nothing
+            else
+              let maxOffset = max 0 (itemHeight * fromIntegral (length items) - cursorHeight)
+              in Just (clamp 0 (scrollPosition + change) maxOffset)
+    else
+      pure Nothing
+  clickedItem <- listToMaybe <$> UI.consumeEvents' \case
+    MousePressEvent SDL.ButtonLeft scaledPosition ->
+      let
+        position@(V2 _ y) = (1 / scaleFactor) *^ fmap fromIntegral scaledPosition
+        clickedIndex = floor ((y - cursorTop + scrollPosition) / itemHeight)
+      in
+        if Rect.contains cursor position
+        then preview (ix clickedIndex) items
+        else Nothing
+    _ -> Nothing
+
+  UI.renderWithClipRect scaledCursor $ ask >>= \CoreContext{ renderer } -> do
+    let listRect = Just scaledCursor
+    SDL.rendererDrawColor renderer $= widgetBackgroundColor
+    SDL.fillRect renderer listRect
+    SDL.rendererDrawColor renderer $= borderColor
+    SDL.drawRect renderer listRect
+
+    -- TODO do not render items outside viewport
+    ifor_ items \index item -> do
+      let
+        itemCursor = baseItemCursor & over (#xy . _y) \y ->
+          itemHeight * fromIntegral index + y - scrollPosition
+        isActive = elem (toIndex item) selectedIndex
+        rect = scaleFactor *^ itemCursor
+      when isActive do
+        SDL.rendererDrawColor renderer $= highlightColor
+        SDL.fillRect renderer (Just (Rect.toSdl (fmap (round @Double @CInt) rect)))
+      renderText scaleFactor rect (LazyText.toStrict . TextBuilder.toLazyText . toText $ item)
+
+  pure $ fold @[]
+    [ case scrollOffsetChange of
+        Just offset -> Endo (onScroll offset)
+        Nothing -> mempty
+    , case clickedItem of
+        Just item -> Endo (onSelect (toIndex item))
+        Nothing -> mempty
+    ]
+
 window :: Text -> UIComponent s -> UIComponent s
 window title child = do
   let decorationHeight = 20
@@ -114,10 +190,13 @@ text' :: Text -> UI ()
 text' str = do
   UIContext{ cursor, scaleFactor } <- ask
   let scaledCursor = scaleFactor *^ cursor
-  UI.render $ ask >>= \CoreContext{ renderer, cachedTextRenderer } -> do
+  UI.render $ renderText scaleFactor scaledCursor str
+
+renderText :: Double -> Rect Double -> Text -> ReaderT CoreContext IO ()
+renderText scaleFactor cursor str =
+  ask >>= \CoreContext{ renderer, cachedTextRenderer } -> do
     renderedText <- cachedTextRenderer & CachedTextRenderer.render str
-    RenderedText.render renderer scaleFactor scaledCursor renderedText
-  pure ()
+    RenderedText.render renderer scaleFactor cursor renderedText
 
 clickedInside :: Rect Double -> UI Bool
 clickedInside rect = do

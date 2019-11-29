@@ -10,6 +10,7 @@ import Core.UI.Theme (Theme(..))
 
 import qualified Control.Monad.State as State
 import qualified Data.List as List
+import qualified Data.StateVar as StateVar
 import qualified SDL
 
 import Control.Monad.Reader (ReaderT, runReaderT)
@@ -26,6 +27,7 @@ data UIContext = UIContext
   , layoutGap :: Double
   , scaleFactor :: Double
   , scaledScreenSize :: V2 Double
+  , scaledMousePosition :: V2 Double
   , theme :: Theme
   }
   deriving (Generic)
@@ -59,10 +61,33 @@ consumeEvents predicate = do
   State.modify' (set #events remaining)
   pure consumed
 
+consumeEvents' :: (SDL.Event -> Maybe a) -> UI [a]
+consumeEvents' predicate = do
+  allEvents <- State.gets events
+  let
+    predicate' event =
+      case predicate event of
+        Just a -> Right a
+        Nothing -> Left event
+    (remaining, consumed) = partitionEithers (map predicate' allEvents)
+  State.modify' (set #events remaining)
+  pure consumed
+
 render :: ReaderT CoreContext IO () -> UI ()
 render renderAction =
   modifying #renderStack $ \(currentLayer :| rest) ->
     (currentLayer *> renderAction) :| rest
+
+renderWithClipRect :: SDL.Rectangle CInt -> ReaderT CoreContext IO () -> UI ()
+renderWithClipRect rect renderAction =
+  render do
+    CoreContext{ renderer } <- ask
+    previousRect <- mfilter (/= zeroSdlRect) <$> StateVar.get (SDL.rendererClipRect renderer)
+    SDL.rendererClipRect renderer $= Just rect
+    renderAction
+    SDL.rendererClipRect renderer $= previousRect
+  where
+    zeroSdlRect = SDL.Rectangle 0 0
 
 pushRenderStack :: UI ()
 pushRenderStack =

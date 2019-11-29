@@ -20,8 +20,8 @@ import Game.AppState (AppState(..))
 
 import qualified SDL
 
-update :: V2 Int -> [SDL.Event] -> AppState -> (ReaderT CoreContext IO (), AppState)
-update screenSize events appState@AppState{ timeStep } =
+update :: V2 Int -> V2 CInt  -> [SDL.Event] -> AppState -> (ReaderT CoreContext IO (), AppState)
+update screenSize mousePosition events appState@AppState{ timeStep } =
   let
     scaleFactor = 1
     uiContext = UIContext
@@ -29,7 +29,8 @@ update screenSize events appState@AppState{ timeStep } =
       , defaultSize = V2 80 20
       , layoutGap = 4
       , scaleFactor = scaleFactor
-      , scaledScreenSize = (1 / scaleFactor) *^ fmap fromIntegral screenSize
+      , scaledScreenSize = fmap fromIntegral screenSize ^/ scaleFactor
+      , scaledMousePosition = fmap fromIntegral mousePosition ^/ scaleFactor
       , theme = Theme.theme
       }
     (stateChangeFromUi, UIState{ renderStack }) = UI.run uiContext events (ui appState)
