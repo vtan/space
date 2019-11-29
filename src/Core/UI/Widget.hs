@@ -1,7 +1,5 @@
 module Core.UI.Widget
-  ( label, label', button, toggleLabel
-  , list, scrollList, window
-  )
+  ( label, label', button, list, window )
 where
 
 import GlobalImports
@@ -50,42 +48,7 @@ button str onClick = do
   text str
   pure (if clicked then Endo onClick else mempty)
 
-toggleLabel :: TextBuilder -> Bool -> (s -> s) -> UIComponent s
-toggleLabel str isActive onClick = do
-  UIContext{ cursor, theme = Theme{ widgetBackgroundColor, selectionBackgroundColor } } <- ask
-  clicked <- clickedInside cursor
-  scaledCursor <- UI.scaleRect cursor
-  UI.render $ ask >>= \CoreContext{ renderer } -> do
-    let
-      rect = Just scaledCursor
-      color = if isActive then selectionBackgroundColor else widgetBackgroundColor
-    SDL.rendererDrawColor renderer $= color
-    SDL.fillRect renderer rect
-  text str
-  pure (if clicked then Endo onClick else mempty)
-
 list
-  :: forall a i s. Eq i
-  => (a -> i)
-  -> (a -> TextBuilder)
-  -> [a]
-  -> Maybe i
-  -> (Maybe i -> s -> s)
-  -> UIComponent s
-list toIndex toText items selectedIndex onSelect =
-  local (set #layoutGap 0) $
-    Layout.vertical (map toChild items)
-      where
-        toChild :: a -> Constrained (UIComponent s)
-        toChild item =
-          let
-            index = toIndex item
-            isActive = elem index selectedIndex
-            onClick = onSelect (Just index)
-          in
-            Layout.DefaultSized (toggleLabel (toText item) isActive onClick)
-
-scrollList
   :: forall a i s. Eq i
   => (a -> i)
   -> (a -> TextBuilder)
@@ -95,7 +58,7 @@ scrollList
   -> (i -> s -> s)
   -> (Double -> s -> s)
   -> UIComponent s
-scrollList toIndex toText items selectedIndex scrollPosition onSelect onScroll = do
+list toIndex toText items selectedIndex scrollPosition onSelect onScroll = do
   UIContext
     { cursor = cursor@(Rect (V2 _ cursorTop) (V2 _ cursorHeight))
     , scaleFactor
@@ -109,7 +72,7 @@ scrollList toIndex toText items selectedIndex scrollPosition onSelect onScroll =
   scrollOffsetChange <-
     if Rect.contains cursor scaledMousePosition
     then
-      UI.consumeEvents' \case
+      UI.consumeEvents \case
           MouseWheelEvent direction -> Just (-32 * fromIntegral direction)
           _ -> Nothing
         & fmap sum
@@ -121,7 +84,7 @@ scrollList toIndex toText items selectedIndex scrollPosition onSelect onScroll =
               in Just (clamp 0 (scrollPosition + change) maxOffset)
     else
       pure Nothing
-  clickedItem <- listToMaybe <$> UI.consumeEvents' \case
+  clickedItem <- listToMaybe <$> UI.consumeEvents \case
     MousePressEvent SDL.ButtonLeft scaledPosition ->
       let
         position@(V2 _ y) = (1 / scaleFactor) *^ fmap fromIntegral scaledPosition
@@ -202,6 +165,7 @@ clickedInside :: Rect Double -> UI Bool
 clickedInside rect = do
   UIContext{ scaleFactor } <- ask
   fmap (not . null) . UI.consumeEvents $ \case
-    MousePressEvent SDL.ButtonLeft position ->
-      Rect.contains rect ((1 / scaleFactor) *^ fmap fromIntegral position)
-    _ -> False
+    MousePressEvent SDL.ButtonLeft position
+      | Rect.contains rect ((1 / scaleFactor) *^ fmap fromIntegral position) ->
+          Just ()
+    _ -> Nothing

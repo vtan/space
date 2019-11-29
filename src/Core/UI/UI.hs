@@ -54,15 +54,8 @@ concat :: [UIComponent s] -> UIComponent s
 concat =
   fmap fold . sequence
 
-consumeEvents :: (SDL.Event -> Bool) -> UI [SDL.Event]
+consumeEvents :: (SDL.Event -> Maybe a) -> UI [a]
 consumeEvents predicate = do
-  allEvents <- State.gets events
-  let (consumed, remaining) = List.partition predicate allEvents
-  State.modify' (set #events remaining)
-  pure consumed
-
-consumeEvents' :: (SDL.Event -> Maybe a) -> UI [a]
-consumeEvents' predicate = do
   allEvents <- State.gets events
   let
     predicate' event =

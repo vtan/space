@@ -43,7 +43,7 @@ colonyWindow AppState{ gameState, uiState } =
         ]
   where
     now = view #time gameState
-    colonyWindowState@ColonyWindowState{ selectedBodyId, bodyScrollOffset } = view #colonyWindow uiState
+    colonyWindowState@ColonyWindowState{ selectedBodyId, selectedBodyIdScroll } = view #colonyWindow uiState
     selectedBody = selectedBodyId >>= \i -> view (#bodies . at i) gameState
     selectedColony = selectedBodyId >>= \i -> view (#colonies . at i) gameState
 
@@ -51,14 +51,14 @@ colonyWindow AppState{ gameState, uiState } =
       & concatMap (\(level, OrbitTree{ bodyId }) ->
           maybeToList (view (#bodies . at bodyId) gameState) & map (level, )
         )
-    bodyList = Widget.scrollList
+    bodyList = Widget.list
       (Body.bodyId . snd)
       (\(level, Body{ name }) -> fold (replicate level "  │ ") <> display name)
       bodiesWithLevel
       selectedBodyId
-      bodyScrollOffset
+      selectedBodyIdScroll
       (set (#uiState . #colonyWindow . #selectedBodyId) . Just)
-      (set (#uiState . #colonyWindow . #bodyScrollOffset))
+      (set (#uiState . #colonyWindow . #selectedBodyIdScroll))
 
 bodyPanel :: Maybe Body -> Maybe Colony -> UIComponent AppState
 bodyPanel body colony =
@@ -102,7 +102,7 @@ colonyPanel bodyMay colonyMay windowState now =
     (Just body, Just colony) ->
       Layout.vertical
         [ Sized 100 (miningPanel body colony)
-        , Sized 100 (buildingPanel colony windowState now)
+        , Sized 160 (buildingPanel colony windowState now)
         ]
     _ -> UI.empty
 
@@ -149,7 +149,7 @@ buildingPanel colony@Colony{ buildOrder, buildings } windowState now =
 buildingIdlePanel :: Colony -> ColonyWindowState -> Time Int -> UIComponent AppState
 buildingIdlePanel
     colony@Colony{ bodyId }
-    ColonyWindowState{ selectedBuilding, buildingQuantity }
+    ColonyWindowState{ selectedBuilding, selectedBuildingScroll, buildingQuantity, buildingQuantityScroll }
     now =
   Layout.horizontal
     [ Sized 120 $
@@ -158,14 +158,18 @@ buildingIdlePanel
           display
           Building.all
           selectedBuilding
-          (set (#uiState . #colonyWindow . #selectedBuilding))
+          selectedBuildingScroll
+          (set (#uiState . #colonyWindow . #selectedBuilding) . Just)
+          (set (#uiState . #colonyWindow . #selectedBuildingScroll))
     , Sized 64 $
         Widget.list
           id
           (\quantity -> "x" <> display quantity)
           [1, 10, 100, 1000, 10000]
           (Just buildingQuantity)
-          (\q -> set (#uiState . #colonyWindow . #buildingQuantity) (fromMaybe 1 q))
+          buildingQuantityScroll
+          (set (#uiState . #colonyWindow . #buildingQuantity))
+          (set (#uiState . #colonyWindow . #buildingQuantityScroll))
     , Stretched $
         case selectedBuilding of
           Nothing -> Widget.label' "Select a building"
