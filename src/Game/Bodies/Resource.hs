@@ -24,8 +24,8 @@ instance Display Resource where
 all :: [Resource]
 all = [minBound .. maxBound]
 
-displayCost :: HashMap Resource Double -> TextBuilder
-displayCost resources =
+displayWithQuantities :: HashMap Resource Double -> TextBuilder
+displayWithQuantities resources =
   resources
     & imap (\resource quantity -> display quantity <> " " <> display resource)
     & toList

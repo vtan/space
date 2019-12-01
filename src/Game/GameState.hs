@@ -27,8 +27,14 @@ expectBody bodyId GameState{ bodies }=
   where
     err = error ("Body not found: " ++ show bodyId)
 
+expectOrbitalState :: Id Body -> GameState -> OrbitalState
+expectOrbitalState bodyId GameState{ bodyOrbitalStates }=
+  fromMaybe err (view (at bodyId) bodyOrbitalStates)
+  where
+    err = error ("Orbital state not found for body " ++ show bodyId)
+
 expectColony :: Id Body -> GameState -> Colony
 expectColony bodyId GameState{ colonies }=
   fromMaybe err (view (at bodyId) colonies)
   where
-    err = error ("Colony not found: " ++ show bodyId)
+    err = error ("Colony not found for body " ++ show bodyId)

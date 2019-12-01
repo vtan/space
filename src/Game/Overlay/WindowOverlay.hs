@@ -16,11 +16,13 @@ import Game.AppState (AppState(..))
 
 windowOverlay :: AppState -> UIComponent AppState
 windowOverlay _ =
-  UI.cursorAt (Rect (V2 4 4) (V2 80 20)) $
-    Layout.horizontal [
-      Stretched $
-        Widget.button "Colonies" (onClick UIState.ColonyWindow)
-    ]
+  UI.cursorAt (Rect (V2 4 4) (V2 160 20)) $
+    Layout.horizontal
+      [ Stretched $
+          Widget.button "Colonies" (onClick UIState.ColonyWindow)
+      , Stretched $
+          Widget.button "Ships" (onClick UIState.ShipWindow)
+      ]
   where
     onClick :: UIState.OpenWindow -> AppState -> AppState
     onClick clicked =

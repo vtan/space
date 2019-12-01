@@ -11,7 +11,7 @@ import Game.Dimension.Local (Local)
 import Game.Dimension.Time (Time)
 
 newtype Speed a = Speed { getAuPerSec :: a }
-  deriving (Show, Generic)
+  deriving (Show, Generic, Num, Fractional)
 
 kmPerSec :: Fractional a => a -> Speed a
 kmPerSec = (/ auToKm) >>> Speed

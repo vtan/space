@@ -4,9 +4,11 @@ import GlobalImports
 
 import qualified Game.Bodies.Body as Body
 import qualified Game.Bodies.OrbitTree as OrbitTree
-import qualified Game.Colonies.Building as Building
 import qualified Game.Bodies.Resource as Resource
+import qualified Game.Colonies.Building as Building
 import qualified Game.Common.IdMap as IdMap
+import qualified Game.Ships.Ship as Ship
+import qualified Game.Ships.ShipLogic as ShipLogic
 
 import Game.GameState (GameState(..))
 import Game.Bodies.Body (Body(..))
@@ -38,6 +40,7 @@ initial = GameState
   , ships = mempty
   , time = 0
   }
+    & ShipLogic.new (Id 0) (head Ship.designs) (Id 2)
 
 theBodies :: IdMap Body Body
 theBodies = IdMap.fromEntities Body.bodyId

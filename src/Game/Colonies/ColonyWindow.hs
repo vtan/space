@@ -177,7 +177,7 @@ buildingIdlePanel
             Layout.vertical
               [ DefaultSized . Widget.label $
                   let cost = fromIntegral buildingQuantity *^ BuildingLogic.resourceCostFor building
-                  in "Resource cost: " <> Resource.displayCost cost
+                  in "Resource cost: " <> Resource.displayWithQuantities cost
               , DefaultSized . Widget.label $
                   let
                     finishDate = fromMaybe "" do
@@ -208,7 +208,7 @@ buildingInProgressPanel
             daysToComplete <- BuildingLogic.remainingTicksToComplete colony order
             pure $ display (Time.addDays daysToComplete now)
         in "Finish date: " <> finishDate
-    , DefaultSized (Widget.label ("Resource cost: " <> Resource.displayCost lockedResources))
+    , DefaultSized (Widget.label ("Resource cost: " <> Resource.displayWithQuantities lockedResources))
     , DefaultSized $ Widget.button
         "Cancel"
         (over #gameState (BuildingLogic.cancel order bodyId))

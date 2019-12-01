@@ -10,6 +10,7 @@ import qualified Game.UIState as UIState
 import qualified Game.Colonies.ColonyWindow as ColonyWindow
 import qualified Game.Overlay.TimeOverlay as TimeOverlay
 import qualified Game.Overlay.WindowOverlay as WindowOverlay
+import qualified Game.Ships.ShipWindow as ShipWindow
 import qualified Game.SystemMap.Component as SystemMap
 import qualified Game.TimeLogic as TimeLogic
 
@@ -56,5 +57,6 @@ ui appState =
   where
     openWindow = case view (#uiState . #openWindow) appState of
       Just UIState.ColonyWindow -> ColonyWindow.colonyWindow
+      Just UIState.ShipWindow -> ShipWindow.shipWindow
       Nothing -> const UI.empty
 
