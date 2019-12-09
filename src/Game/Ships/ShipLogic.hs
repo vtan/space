@@ -11,7 +11,7 @@ import Game.Common.Id (Id(..))
 import Game.Bodies.Body (Body(..))
 import Game.Bodies.OrbitalState (OrbitalState(..))
 import Game.Dimension.Speed (Speed(..))
-import Game.Ships.Ship (Ship(..), ShipDesign(..), ShipModule(..), ShipOrder(..))
+import Game.Ships.Ship (Ship(..), ShipDesign(..), ShipModule(..), ShipMovement(..))
 
 import Data.String (fromString)
 
@@ -21,11 +21,11 @@ new shipId design initialBodyId gs =
     name = "Ship " <> fromString (show (getInt shipId))
     OrbitalState{ position } = GameState.expectOrbitalState initialBodyId gs
     speed = speedOfDesign design
-    order = Nothing
+    movement = Nothing
     attachedToBody = Just initialBodyId
     cargoCapacity = cargoCapacityOfDesign design
     loadedCargo = mempty
-    ship = Ship{ shipId, name, design, position, speed, order, attachedToBody, cargoCapacity, loadedCargo }
+    ship = Ship{ shipId, name, design, position, speed, movement, attachedToBody, cargoCapacity, loadedCargo }
   in
     gs & set (#ships . at shipId) (Just ship)
 
@@ -39,18 +39,28 @@ cargoCapacityOfDesign :: ShipDesign -> Double
 cargoCapacityOfDesign ShipDesign{ modules } =
   50 * fromIntegral (view (at CargoModule . non 0) modules)
 
+setMovement :: Ship -> Id Body -> GameState -> GameState
+setMovement ship@Ship{ shipId, position, speed } bodyId gs@GameState{ orbitTree, time = now } =
+  case PlottedPath.plot now position speed bodyId orbitTree of
+    Just path ->
+      let ship' = ship
+            { movement = Just ShipMovement{ bodyId, path }
+            , attachedToBody = Nothing
+            }
+      in gs & set (#ships . at shipId . _Just) ship'
+    Nothing -> gs
+
 update :: GameState -> Ship -> Ship
-update gs ship =
-  case ship ^. #order of
-    Just MoveToBody{ path, bodyId } ->
-      let now = gs ^. #time
-          arrived = now >= path ^. #endTime
+update gs ship@Ship{ movement } =
+  case movement of
+    Just ShipMovement{ path, bodyId } ->
+      let now = view #time gs
+          arrived = now >= view #endTime path
       in ship
-        & #position .~ (path & PlottedPath.atTime now)
-        & (if arrived then #order .~ Nothing else id)
-        & #attachedToBody .~ (if arrived then Just bodyId else Nothing)
+        & set #position (PlottedPath.atTime now path)
+        & (if arrived then set #movement Nothing else id)
+        & set #attachedToBody (if arrived then Just bodyId else Nothing)
     Nothing ->
-      case ship ^. #attachedToBody >>= (\b -> gs ^? #bodyOrbitalStates . at b . _Just . #position) of
-        Just position ->
-          ship & #position .~ position
+      case view #attachedToBody ship >>= (\b -> preview (#bodyOrbitalStates . at b . _Just . #position) gs) of
+        Just position -> set #position position ship
         Nothing -> ship

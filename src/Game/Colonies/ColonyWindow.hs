@@ -7,8 +7,7 @@ import GlobalImports
 import qualified Core.UI.Layout as Layout
 import qualified Core.UI.UI as UI
 import qualified Core.UI.Widget as Widget
-import qualified Game.Bodies.Body as Body
-import qualified Game.Bodies.OrbitTree as OrbitTree
+import qualified Game.Bodies.BodyList as BodyList
 import qualified Game.Bodies.Resource as Resource
 import qualified Game.Bodies.ResourceOnBody as ResourceOnBody
 import qualified Game.Colonies.Building as Building
@@ -22,7 +21,6 @@ import Core.UI.Layout (Constrained(..))
 import Core.UI.UI (UIComponent)
 import Game.AppState (AppState(..))
 import Game.Bodies.Body (Body(..))
-import Game.Bodies.OrbitTree (OrbitTree(..))
 import Game.Bodies.ResourceOnBody (ResourceOnBody(..))
 import Game.Colonies.BuildOrder (BuildOrder(..))
 import Game.Colonies.Colony (Colony(..))
@@ -31,7 +29,7 @@ import Game.Common.Display (display)
 import Game.Dimension.Time (Time)
 
 colonyWindow :: AppState -> UIComponent AppState
-colonyWindow AppState{ gameState, uiState } =
+colonyWindow appState@AppState{ gameState, uiState } =
   UI.cursorAt (Rect (V2 8 32) (V2 800 600) ) $
     Widget.window "Colonies" $
       Layout.horizontal
@@ -43,22 +41,13 @@ colonyWindow AppState{ gameState, uiState } =
         ]
   where
     now = view #time gameState
-    colonyWindowState@ColonyWindowState{ selectedBodyId, selectedBodyIdScroll } = view #colonyWindow uiState
+    colonyWindowState@ColonyWindowState{ selectedBodyId } = view #colonyWindow uiState
     selectedBody = selectedBodyId >>= \i -> view (#bodies . at i) gameState
     selectedColony = selectedBodyId >>= \i -> view (#colonies . at i) gameState
-
-    bodiesWithLevel = OrbitTree.depthFirst (view #orbitTree gameState)
-      & concatMap (\(level, OrbitTree{ bodyId }) ->
-          maybeToList (view (#bodies . at bodyId) gameState) & map (level, )
-        )
-    bodyList = Widget.list
-      (Body.bodyId . snd)
-      (\(level, Body{ name }) -> fold (replicate level "  │ ") <> display name)
-      bodiesWithLevel
-      selectedBodyId
-      selectedBodyIdScroll
-      (set (#uiState . #colonyWindow . #selectedBodyId) . Just)
-      (set (#uiState . #colonyWindow . #selectedBodyIdScroll))
+    bodyList = BodyList.bodyList
+      (#uiState . #colonyWindow . #selectedBodyId)
+      (#uiState . #colonyWindow . #selectedBodyIdScroll)
+      appState
 
 bodyPanel :: Maybe Body -> Maybe Colony -> UIComponent AppState
 bodyPanel body colony =

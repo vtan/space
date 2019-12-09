@@ -16,18 +16,17 @@ data Ship = Ship
   , design :: ShipDesign
   , position :: V2 (Local Double)
   , speed :: Speed Double
-  , order :: Maybe ShipOrder
+  , movement :: Maybe ShipMovement
   , attachedToBody :: Maybe (Id Body)
   , cargoCapacity :: Double
   , loadedCargo :: HashMap Resource Double
   }
   deriving (Show, Generic)
 
-data ShipOrder
-  = MoveToBody
-    { bodyId :: Id Body
-    , path :: PlottedPath
-    }
+data ShipMovement = ShipMovement
+  { bodyId :: Id Body
+  , path :: PlottedPath
+  }
   deriving (Show, Generic)
 
 data ShipDesign = ShipDesign
