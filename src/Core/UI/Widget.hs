@@ -112,7 +112,7 @@ list toIndex toText items selectedIndex scrollPosition onSelect onScroll = do
       when isActive do
         SDL.rendererDrawColor renderer $= highlightColor
         SDL.fillRect renderer (Just (Rect.toSdl (fmap (round @Double @CInt) rect)))
-      renderText scaleFactor rect (LazyText.toStrict . TextBuilder.toLazyText . toText $ item)
+      renderText rect (LazyText.toStrict . TextBuilder.toLazyText . toText $ item)
 
   pure $ fold @[]
     [ case scrollOffsetChange of
@@ -153,13 +153,13 @@ text' :: Text -> UI ()
 text' str = do
   UIContext{ cursor, scaleFactor } <- ask
   let scaledCursor = scaleFactor *^ cursor
-  UI.render $ renderText scaleFactor scaledCursor str
+  UI.render $ renderText scaledCursor str
 
-renderText :: Double -> Rect Double -> Text -> ReaderT CoreContext IO ()
-renderText scaleFactor cursor str =
+renderText :: Rect Double -> Text -> ReaderT CoreContext IO ()
+renderText cursor str =
   ask >>= \CoreContext{ renderer, cachedTextRenderer } -> do
     renderedText <- cachedTextRenderer & CachedTextRenderer.render str
-    RenderedText.render renderer scaleFactor cursor renderedText
+    RenderedText.render renderer (fmap round cursor) renderedText
 
 clickedInside :: Rect Double -> UI Bool
 clickedInside rect = do
