@@ -33,11 +33,11 @@ jumpToNextMidnight gs@GameState{ time } =
   gs & stepTime (Time.nextMidnight time - time)
 
 jumpTimeTo :: Time Int -> GameState -> GameState
-jumpTimeTo time gs =
+jumpTimeTo time gs@GameState{ ships } =
   gs
     & #time .~ time
     & #bodyOrbitalStates .~ OrbitTree.statesAtTime time (gs ^. #orbitTree)
-    & (\gs' -> gs' & #ships . traversed %~ ShipLogic.update gs')
+    & (\gs' -> foldl' (flip ShipLogic.update) gs' ships)
 
 productionTick :: GameState -> GameState
 productionTick gs@GameState{ colonies } =

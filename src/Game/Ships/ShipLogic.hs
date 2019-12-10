@@ -3,6 +3,7 @@ module Game.Ships.ShipLogic where
 import GlobalImports
 
 import qualified Game.GameState as GameState
+import qualified Game.Colonies.ColonyLogic as ColonyLogic
 import qualified Game.Dimension.Speed as Speed
 import qualified Game.Dimension.Time as Time
 import qualified Game.Ships.PlottedPath as PlottedPath
@@ -90,8 +91,18 @@ cancelMovement shipId ShipMovement{ sourceBodyId, path } gs =
         else id
       )
 
-update :: GameState -> Ship -> Ship
-update gs ship@Ship{ movement } =
+update :: Ship -> GameState -> GameState
+update ship@Ship{ shipId, order } gs =
+  let
+    ship' = updateMovement ship gs
+    gs' = gs & set (#ships . at shipId . _Just) ship'
+  in
+    case order of
+      Just o -> updateOrder ship o gs'
+      Nothing -> gs'
+
+updateMovement :: Ship -> GameState -> Ship
+updateMovement ship@Ship{ movement } gs =
   case movement of
     Just ShipMovement{ path, destinationBodyId } ->
       let now = view #time gs
@@ -104,3 +115,18 @@ update gs ship@Ship{ movement } =
       case view #attachedToBody ship >>= (\b -> preview (#bodyOrbitalStates . at b . _Just . #position) gs) of
         Just position -> set #position position ship
         Nothing -> ship
+
+updateOrder :: Ship -> ShipOrder -> GameState -> GameState
+updateOrder Ship{ shipId, attachedToBody, design } order gs@GameState{ time = now } =
+  case order of
+    Colonize{ endTime } ->
+      if now >= endTime
+      then
+        let
+          bodyId = fromMaybe (error "Founding colony with unattached ship") attachedToBody
+          colonyModules = view (#modules . at ColonyModule . non 0) design
+        in
+          gs
+            & ColonyLogic.foundColony bodyId colonyModules
+            & set (#ships . at shipId . _Just . #order) Nothing
+      else gs
