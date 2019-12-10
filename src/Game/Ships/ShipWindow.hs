@@ -60,16 +60,16 @@ selectedShipPanel appState ship@Ship{ speed, cargoCapacity, loadedCargo, movemen
     ]
 
 currentOrderPanel :: AppState -> Ship -> UIComponent AppState
-currentOrderPanel AppState{ gameState } Ship{ shipId, movement } =
+currentOrderPanel AppState{ gameState } ship@Ship{ movement } =
   Layout.vertical $
     case movement of
-      Just ShipMovement{ bodyId, path = PlottedPath{ endTime }} ->
+      Just ShipMovement{ destinationBodyId, path = PlottedPath{ endTime }} ->
         [ DefaultSized . Widget.label $
-            let Body{ name } = GameState.expectBody bodyId gameState
+            let Body{ name } = GameState.expectBody destinationBodyId gameState
             in "Flying to " <> display name <> ", arriving at " <> display endTime
         , DefaultSized $ Widget.button
             "Cancel order"
-            (set (#gameState . #ships . at shipId . _Just . #movement) Nothing)
+            (over #gameState (ShipLogic.cancelOrder ship))
         ]
       Nothing -> []
 

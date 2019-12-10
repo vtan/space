@@ -24,7 +24,8 @@ data Ship = Ship
   deriving (Show, Generic)
 
 data ShipMovement = ShipMovement
-  { bodyId :: Id Body
+  { sourceBodyId :: Maybe (Id Body)
+  , destinationBodyId :: Id Body
   , path :: PlottedPath
   }
   deriving (Show, Generic)
