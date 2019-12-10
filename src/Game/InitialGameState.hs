@@ -41,6 +41,7 @@ initial = GameState
   , time = 0
   }
     & ShipLogic.new (Id 0) (head Ship.designs) (Id 2)
+    & ShipLogic.new (Id 1) (head $ drop 1 Ship.designs) (Id 2)
 
 theBodies :: IdMap Body Body
 theBodies = IdMap.fromEntities Body.bodyId

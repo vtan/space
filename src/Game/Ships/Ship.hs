@@ -8,6 +8,7 @@ import Game.Common.Display (Display(..))
 import Game.Common.Id (Id)
 import Game.Dimension.Local (Local)
 import Game.Dimension.Speed (Speed)
+import Game.Dimension.Time (Time)
 import Game.Ships.PlottedPath (PlottedPath)
 
 data Ship = Ship
@@ -17,6 +18,7 @@ data Ship = Ship
   , position :: V2 (Local Double)
   , speed :: Speed Double
   , movement :: Maybe ShipMovement
+  , order :: Maybe ShipOrder
   , attachedToBody :: Maybe (Id Body)
   , cargoCapacity :: Double
   , loadedCargo :: HashMap Resource Double
@@ -28,6 +30,20 @@ data ShipMovement = ShipMovement
   , destinationBodyId :: Id Body
   , path :: PlottedPath
   }
+  deriving (Show, Generic)
+
+data ShipOrderType
+  = FlyToType
+  | ColonizeType
+  deriving (Show, Generic, Eq, Enum, Bounded)
+
+instance Display ShipOrderType where
+  display = \case
+    FlyToType -> "Fly to"
+    ColonizeType -> "Colonize"
+
+data ShipOrder
+  = Colonize { endTime :: Time Int }
   deriving (Show, Generic)
 
 data ShipDesign = ShipDesign
@@ -42,9 +58,15 @@ designs =
       { name = "Cargo ship"
       , modules = [(CargoModule, 1)]
       }
+  , ShipDesign
+      { name = "Colony ship"
+      , modules = [(ColonyModule, 1)]
+      }
   ]
 
-data ShipModule = CargoModule
+data ShipModule
+  = CargoModule
+  | ColonyModule
   deriving (Show, Generic, Eq)
 
 instance Hashable ShipModule
@@ -52,3 +74,4 @@ instance Hashable ShipModule
 instance Display ShipModule where
   display = \case
     CargoModule -> "Cargo module"
+    ColonyModule -> "Colony module"
