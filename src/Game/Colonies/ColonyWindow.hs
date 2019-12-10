@@ -35,7 +35,7 @@ colonyWindow appState@AppState{ gameState, uiState } =
       Layout.horizontal
         [ Sized 200 bodyList
         , Stretched $ Layout.vertical
-            [ Sized 100 (bodyPanel selectedBody selectedColony)
+            [ Sized 128 (bodyPanel selectedBody selectedColony)
             , Stretched (colonyPanel selectedBody selectedColony colonyWindowState now)
             ]
         ]
@@ -53,7 +53,7 @@ bodyPanel :: Maybe Body -> Maybe Colony -> UIComponent AppState
 bodyPanel body colony =
   case body of
     Nothing -> UI.empty
-    Just Body{ resources } ->
+    Just Body{ resources, colonyCost } ->
       let
         header = DefaultSized . Layout.horizontal $
           [ Sized 100 UI.empty ]
@@ -81,7 +81,11 @@ bodyPanel body colony =
               ]
       in
         Layout.vertical
-          [ DefaultSized (Widget.label' "Resources")
+          [ DefaultSized . Widget.label $
+              case colonyCost of
+                Just cost -> "Colony cost: " <> display cost
+                Nothing -> "Uncolonizable"
+          , DefaultSized (Widget.label' "Resources")
           , Stretched . Layout.indent 16 $ Layout.vertical (header : resourceRows)
           ]
 

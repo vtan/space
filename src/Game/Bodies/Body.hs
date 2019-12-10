@@ -10,5 +10,6 @@ data Body = Body
   { bodyId :: Id Body
   , name :: Text
   , resources :: HashMap Resource ResourceOnBody
+  , colonyCost :: Maybe Double
   }
   deriving (Show, Generic)

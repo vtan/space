@@ -44,37 +44,37 @@ initial = GameState
 
 theBodies :: IdMap Body Body
 theBodies = IdMap.fromEntities Body.bodyId
-  [ Body{ bodyId = Id 8 , name = "Sol", resources = [] }
-  , Body{ bodyId = Id 0, name = "Mercury", resources = [] }
-  , Body{ bodyId = Id 1, name = "Venus", resources = [] }
-  , Body{ bodyId = Id 2, name = "Earth", resources =
+  [ Body{ bodyId = Id 8 , name = "Sol", colonyCost = Nothing, resources = [] }
+  , Body{ bodyId = Id 0, name = "Mercury", colonyCost = Just 4, resources = [] }
+  , Body{ bodyId = Id 1, name = "Venus", colonyCost = Just 5, resources = [] }
+  , Body{ bodyId = Id 2, name = "Earth", colonyCost = Just 0, resources =
       [ (Resource.Resource1, ResourceOnBody{ available = 10000, accessibility = 0.4 })
       , (Resource.Resource2, ResourceOnBody{ available = 5000, accessibility = 0.4 })
       ]
     }
-  , Body{ bodyId = Id 9, name = "Luna", resources = [] }
-  , Body{ bodyId = Id 3, name = "Mars", resources =
+  , Body{ bodyId = Id 9, name = "Luna", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 3, name = "Mars", colonyCost = Just 2, resources =
       [ (Resource.Resource1, ResourceOnBody{ available = 10000, accessibility = 0.8 })
       , (Resource.Resource2, ResourceOnBody{ available = 10000, accessibility = 0.8 })
       ]
     }
-  , Body{ bodyId = Id 10, name = "Phobos", resources = [] }
-  , Body{ bodyId = Id 11, name = "Deimos", resources = [] }
-  , Body{ bodyId = Id 4, name = "Jupiter", resources = [] }
-  , Body{ bodyId = Id 12, name = "Io", resources = [] }
-  , Body{ bodyId = Id 13, name = "Europa", resources = [] }
-  , Body{ bodyId = Id 14, name = "Ganymede", resources = [] }
-  , Body{ bodyId = Id 15, name = "Callisto", resources = [] }
-  , Body{ bodyId = Id 5, name = "Saturn", resources = [] }
-  , Body{ bodyId = Id 16, name = "Mimas", resources = [] }
-  , Body{ bodyId = Id 17, name = "Enceladus", resources = [] }
-  , Body{ bodyId = Id 18, name = "Tethys", resources = [] }
-  , Body{ bodyId = Id 19, name = "Dione", resources = [] }
-  , Body{ bodyId = Id 20, name = "Rhea", resources = [] }
-  , Body{ bodyId = Id 21, name = "Titan", resources = [] }
-  , Body{ bodyId = Id 22, name = "Iapetus", resources = [] }
-  , Body{ bodyId = Id 6, name = "Uranus", resources = [] }
-  , Body{ bodyId = Id 7, name = "Neptune", resources = [] }
+  , Body{ bodyId = Id 10, name = "Phobos", colonyCost = Just 4, resources = [] }
+  , Body{ bodyId = Id 11, name = "Deimos", colonyCost = Just 8, resources = [] }
+  , Body{ bodyId = Id 4, name = "Jupiter", colonyCost = Nothing, resources = [] }
+  , Body{ bodyId = Id 12, name = "Io", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 13, name = "Europa", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 14, name = "Ganymede", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 15, name = "Callisto", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 5, name = "Saturn", colonyCost = Nothing, resources = [] }
+  , Body{ bodyId = Id 16, name = "Mimas", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 17, name = "Enceladus", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 18, name = "Tethys", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 19, name = "Dione", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 20, name = "Rhea", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 21, name = "Titan", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 22, name = "Iapetus", colonyCost = Just 3, resources = [] }
+  , Body{ bodyId = Id 6, name = "Uranus", colonyCost = Nothing, resources = [] }
+  , Body{ bodyId = Id 7, name = "Neptune", colonyCost = Nothing, resources = [] }
   ]
 
 theOrbitTree :: OrbitTree
